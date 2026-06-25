@@ -2,26 +2,30 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import logoLight from '../assets/logo-light.png'
 
+const API = 'http://localhost:5000/api'
+
 export default function Login() {
   const [darkMode, setDarkMode] = useState(true)
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ email: '', password: '', nom: '', confirm: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [showResend, setShowResend] = useState(false)
   const navigate = useNavigate()
 
   const theme = {
-    bg:       darkMode ? '#0F1117' : '#F7F8FA',
-    card:     darkMode ? '#1A1D27' : '#FFFFFF',
-    text:     darkMode ? '#F0F0F0' : '#111111',
-    textSub:  darkMode ? '#9CA3AF' : '#6B7280',
-    border:   darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-    input:    darkMode ? '#0F1117' : '#F7F8FA',
-    accent:   '#1D9E75',
+    bg:        darkMode ? '#0F1117' : '#F7F8FA',
+    card:      darkMode ? '#1A1D27' : '#FFFFFF',
+    text:      darkMode ? '#F0F0F0' : '#111111',
+    textSub:   darkMode ? '#9CA3AF' : '#6B7280',
+    border:    darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+    input:     darkMode ? '#0F1117' : '#F7F8FA',
+    accent:    '#1D9E75',
     accentDim: darkMode ? 'rgba(29,158,117,0.15)' : 'rgba(29,158,117,0.1)',
   }
 
-  const f = patch => { setForm(p => ({ ...p, ...patch })); setError('') }
+  const f = patch => { setForm(p => ({ ...p, ...patch })); setError(''); setSuccess('') }
 
   const handleSubmit = async () => {
     if (!form.email || !form.password) { setError('Email et mot de passe requis.'); return }
@@ -30,8 +34,52 @@ export default function Login() {
       if (form.password !== form.confirm) { setError('Les mots de passe ne correspondent pas.'); return }
       if (form.password.length < 6) { setError('Mot de passe trop court (6 caracteres min).'); return }
     }
-    setLoading(true)
-    setTimeout(() => { setLoading(false); navigate('/') }, 1200)
+    setLoading(true); setError(''); setSuccess('')
+    try {
+      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register'
+      const body = mode === 'login'
+        ? { email: form.email, password: form.password }
+        : { nom: form.nom, email: form.email, password: form.password }
+      const res = await fetch(`${API}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.message || 'Erreur serveur')
+        if (data.message === 'Veuillez confirmer votre email avant de vous connecter.') setShowResend(true)
+        setLoading(false); return
+      }
+      if (mode === 'register') {
+        setSuccess('Inscription reussie ! Verifiez votre email pour activer votre compte.')
+        setLoading(false); return
+      }
+      localStorage.setItem('izi360_token', data.token)
+      localStorage.setItem('izi360_user', JSON.stringify(data.user))
+      navigate('/')
+    } catch {
+      setError('Impossible de contacter le serveur.')
+      setLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    setLoading(true); setError(''); setSuccess('')
+    try {
+      const res = await fetch(`${API}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email })
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.message); setLoading(false); return }
+      setSuccess(data.message)
+      setShowResend(false)
+    } catch {
+      setError('Impossible de contacter le serveur.')
+    }
+    setLoading(false)
   }
 
   const inp = {
@@ -62,7 +110,7 @@ export default function Login() {
 
         <div style={{ display: 'flex', gap: '4px', backgroundColor: theme.bg, borderRadius: '10px', padding: '4px', marginBottom: '24px' }}>
           {['login', 'register'].map(m => (
-            <button key={m} onClick={() => { setMode(m); setError('') }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: mode === m ? theme.accent : 'transparent', color: mode === m ? '#fff' : theme.textSub, fontSize: '13px', fontWeight: '600', fontFamily: 'inherit' }}>
+            <button key={m} onClick={() => { setMode(m); setError(''); setSuccess(''); setShowResend(false) }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: mode === m ? theme.accent : 'transparent', color: mode === m ? '#fff' : theme.textSub, fontSize: '13px', fontWeight: '600', fontFamily: 'inherit' }}>
               {m === 'login' ? 'Connexion' : 'Inscription'}
             </button>
           ))}
@@ -89,22 +137,32 @@ export default function Login() {
               <input style={inp} type="password" placeholder="••••••••" value={form.confirm} onChange={e => f({ confirm: e.target.value })} />
             </div>
           )}
+
           {error && (
-            <div style={{ backgroundColor: 'rgba(226,75,74,0.1)', border: '1px solid rgba(226,75,74,0.3)', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', color: '#E24B4A' }}>
-              {error}
-            </div>
+            <p style={{ color: '#E24B4A', fontSize: '13px', margin: '0', textAlign: 'center' }}>{error}</p>
           )}
-          {mode === 'login' && (
+
+          {success && (
+            <p style={{ color: '#1D9E75', fontSize: '13px', margin: '0', textAlign: 'center' }}>{success}</p>
+          )}
+
+          {showResend && (
+            <p onClick={handleResend} style={{ color: theme.accent, fontSize: '13px', margin: '0', cursor: 'pointer', textDecoration: 'underline', textAlign: 'center' }}>
+              Renvoyer l'email de confirmation
+            </p>
+          )}
+
+          {mode === 'login' && !showResend && (
             <div style={{ textAlign: 'right' }}>
-              <button style={{ background: 'none', border: 'none', color: theme.accent, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>Mot de passe oublie ?</button>
+              <button onClick={() => navigate('/forgot-password')} style={{ background: 'none', border: 'none', color: theme.accent, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>Mot de passe oublie ?</button>
             </div>
           )}
+
           <button onClick={handleSubmit} disabled={loading} style={{ width: '100%', padding: '13px', backgroundColor: loading ? 'rgba(29,158,117,0.5)' : theme.accent, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: loading ? 'default' : 'pointer', fontFamily: 'inherit', marginTop: '4px' }}>
-            {loading ? 'Connexion...' : mode === 'login' ? 'Se connecter' : 'Creer mon compte'}
+            {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'Creer mon compte'}
           </button>
         </div>
       </div>
-
       <p style={{ color: theme.textSub, fontSize: '0.75rem', marginTop: '24px' }}>IZI360 - La suite logicielle IZISOFT v1.0</p>
     </div>
   )
