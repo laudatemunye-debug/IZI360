@@ -7,6 +7,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import JangiApp from './modules/jangi/JangiApp'
 import AdminDashboard from './pages/admin/Dashboard'
+import Profil from './pages/Profil'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
 
         {/* Routes admin */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )

@@ -101,7 +101,7 @@ export default function Accueil() {
           </div>
           <div>
             <div style={{ color: theme.text, fontWeight: '700', fontSize: '15px' }}>IZI<span style={{ color: theme.accent }}>360</span></div>
-            <div style={{ color: theme.textSub, fontSize: '11px' }}>Bonjour, {user?.nom || 'Utilisateur'}</div>
+            <div onClick={() => navigate('/profil')} style={{ color: theme.accent, fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}>Bonjour, {user?.nom || 'Utilisateur'}</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

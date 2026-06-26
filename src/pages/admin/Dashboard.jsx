@@ -80,8 +80,8 @@ export default function AdminDashboard() {
     msg(res.ok ? `✅ ${data.message}` : data.message)
     if (res.ok) setEmailForm({ user_id: '', subject: '', message: '', tous: false })
   }
-  const updateModule = async (id, prix_mensuel, prix_annuel, actif) => {
-    await fetch(`${API}/admin/modules/${id}`, { method: 'PATCH', headers, body: JSON.stringify({ prix_mensuel, prix_annuel, actif }) })
+  const updateModule = async (id, prix_mensuel, prix_annuel, actif, trial_days) => {
+    await fetch(`${API}/admin/modules/${id}`, { method: 'PATCH', headers, body: JSON.stringify({ prix_mensuel, prix_annuel, actif, trial_days }) })
     fetchAll()
   }
 
@@ -342,9 +342,10 @@ export default function AdminDashboard() {
 function ModuleCard({ module: m, onUpdate }) {
   const [pm, setPm] = useState(m.prix_mensuel)
   const [pa, setPa] = useState(m.prix_annuel)
+  const [trial, setTrial] = useState(m.trial_days || 14)
   const [saved, setSaved] = useState(false)
 
-  const save = () => { onUpdate(m.id, pm, pa, m.actif); setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  const save = () => { onUpdate(m.id, pm, pa, m.actif, trial); setSaved(true); setTimeout(() => setSaved(false), 2000) }
 
   return (
     <Card>
@@ -360,6 +361,11 @@ function ModuleCard({ module: m, onUpdate }) {
           <div>
             <label style={{ fontSize: '11px', color: T.textSub, display: 'block', marginBottom: '4px' }}>Prix/mois ($)</label>
             <input type="number" value={pm} onChange={e => setPm(e.target.value)}
+              style={{ width: '80px', padding: '6px 8px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', color: T.text, fontSize: '13px', fontFamily: 'inherit' }} />
+          </div>
+          <div>
+            <label style={{ fontSize: '11px', color: T.textSub, display: 'block', marginBottom: '4px' }}>Jours d'essai</label>
+            <input type="number" value={trial} onChange={e => setTrial(e.target.value)}
               style={{ width: '80px', padding: '6px 8px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', color: T.text, fontSize: '13px', fontFamily: 'inherit' }} />
           </div>
           <div>
