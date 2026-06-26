@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { ProtectedRoute, AdminRoute, PublicRoute } from './components/ProtectedRoute'
 import Accueil from './pages/Accueil'
 import Login from './pages/Login'
 import VerifyEmail from './pages/VerifyEmail'
@@ -11,13 +12,18 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        {/* Routes publiques */}
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/" element={<Accueil />} />
-        <Route path="/jangi/*" element={<JangiApp />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+        <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+
+        {/* Routes protégées */}
+        <Route path="/" element={<ProtectedRoute><Accueil /></ProtectedRoute>} />
+        <Route path="/jangi/*" element={<ProtectedRoute><JangiApp /></ProtectedRoute>} />
+
+        {/* Routes admin */}
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       </Routes>
     </BrowserRouter>
   )
