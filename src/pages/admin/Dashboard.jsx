@@ -3,63 +3,83 @@ import { useNavigate } from 'react-router-dom'
 
 const API = 'http://localhost:5000/api'
 
-const theme = {
+const T = {
   bg: '#0F1117', card: '#1A1D27', text: '#F0F0F0',
   textSub: '#9CA3AF', textMuted: '#4B5563',
   border: 'rgba(255,255,255,0.06)', accent: '#1D9E75',
-  accentDim: 'rgba(29,158,117,0.15)',
+  accentDim: 'rgba(29,158,117,0.15)', bg2: '#13151F',
 }
+
+const Card = ({ children, style = {}, onClick }) => (
+  <div onClick={onClick} style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', padding: '20px', ...style }}>
+    {children}
+  </div>
+)
+
+const Btn = ({ children, onClick, color = T.accent, textColor = '#fff', style = {} }) => (
+  <button onClick={onClick} style={{ padding: '6px 14px', backgroundColor: color, color: textColor, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', fontFamily: 'inherit', ...style }}>
+    {children}
+  </button>
+)
 
 export default function AdminDashboard() {
   const [page, setPage] = useState('stats')
   const [stats, setStats] = useState(null)
+  const [advStats, setAdvStats] = useState(null)
   const [users, setUsers] = useState([])
   const [modules, setModules] = useState([])
   const [loading, setLoading] = useState(true)
-  const [licenceForm, setLicenceForm] = useState({ user_id: '', module_code: '', type: 'gratuit', date_fin: '' })
   const [message, setMessage] = useState('')
+  const [licenceForm, setLicenceForm] = useState({ user_id: '', module_code: '', type: 'gratuit', date_fin: '' })
+  const [emailForm, setEmailForm] = useState({ user_id: '', subject: '', message: '', tous: false })
   const navigate = useNavigate()
 
   const token = localStorage.getItem('izi360_token')
-
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
 
-  useEffect(() => {
-    if (!token) { navigate('/login'); return }
-    fetchAll()
-  }, [])
+  useEffect(() => { if (!token) { navigate('/login'); return }; fetchAll() }, [])
 
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [s, u, m] = await Promise.all([
+      const [s, as, u, m] = await Promise.all([
         fetch(`${API}/admin/stats`, { headers }).then(r => r.json()),
+        fetch(`${API}/admin/stats/advanced`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/users`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/modules`, { headers }).then(r => r.json()),
       ])
-      setStats(s); setUsers(u); setModules(m)
+      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : [])
     } catch (e) { console.error(e) }
     setLoading(false)
   }
 
-  const toggleUser = async (id) => {
-    await fetch(`${API}/admin/users/${id}/toggle`, { method: 'PATCH', headers })
-    fetchAll()
-  }
+  const msg = (text) => { setMessage(text); setTimeout(() => setMessage(''), 4000) }
 
-  const setRole = async (id, role) => {
-    await fetch(`${API}/admin/users/${id}/role`, { method: 'PATCH', headers, body: JSON.stringify({ role }) })
-    fetchAll()
+  const toggleUser = async (id) => { await fetch(`${API}/admin/users/${id}/toggle`, { method: 'PATCH', headers }); fetchAll() }
+  const setRole = async (id, role) => { await fetch(`${API}/admin/users/${id}/role`, { method: 'PATCH', headers, body: JSON.stringify({ role }) }); fetchAll() }
+  const deleteUser = async (id, nom) => {
+    if (!window.confirm(`Supprimer ${nom} ? Cette action est irréversible.`)) return
+    const res = await fetch(`${API}/admin/users/${id}`, { method: 'DELETE', headers })
+    const data = await res.json()
+    msg(data.message); fetchAll()
   }
-
   const grantLicence = async () => {
-    if (!licenceForm.user_id || !licenceForm.module_code) { setMessage('Utilisateur et module requis'); return }
+    if (!licenceForm.user_id || !licenceForm.module_code) { msg('Utilisateur et module requis'); return }
     const res = await fetch(`${API}/admin/licences`, { method: 'POST', headers, body: JSON.stringify(licenceForm) })
     const data = await res.json()
-    setMessage(res.ok ? 'Licence attribuée !' : data.message)
+    msg(res.ok ? '✅ Licence attribuée !' : data.message)
     if (res.ok) { setLicenceForm({ user_id: '', module_code: '', type: 'gratuit', date_fin: '' }); fetchAll() }
   }
-
+  const sendEmail = async () => {
+    if (!emailForm.subject || !emailForm.message) { msg('Sujet et message requis'); return }
+    const endpoint = emailForm.tous ? '/admin/email/all' : '/admin/email/user'
+    const body = emailForm.tous ? { subject: emailForm.subject, message: emailForm.message } : { user_id: emailForm.user_id, subject: emailForm.subject, message: emailForm.message }
+    if (!emailForm.tous && !emailForm.user_id) { msg('Sélectionnez un utilisateur'); return }
+    const res = await fetch(`${API}${endpoint}`, { method: 'POST', headers, body: JSON.stringify(body) })
+    const data = await res.json()
+    msg(res.ok ? `✅ ${data.message}` : data.message)
+    if (res.ok) setEmailForm({ user_id: '', subject: '', message: '', tous: false })
+  }
   const updateModule = async (id, prix_mensuel, prix_annuel, actif) => {
     await fetch(`${API}/admin/modules/${id}`, { method: 'PATCH', headers, body: JSON.stringify({ prix_mensuel, prix_annuel, actif }) })
     fetchAll()
@@ -70,30 +90,27 @@ export default function AdminDashboard() {
     { key: 'users', label: 'Utilisateurs', icon: '👥' },
     { key: 'licences', label: 'Licences', icon: '🔑' },
     { key: 'modules', label: 'Modules', icon: '📦' },
+    { key: 'notifications', label: 'Notifications', icon: '📧' },
   ]
 
-  const card = (children, style = {}) => (
-    <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '20px', ...style }}>
-      {children}
-    </div>
-  )
+  const inp = { width: '100%', padding: '10px 12px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: theme.bg, display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: T.bg, display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
 
       {/* Sidebar */}
-      <div style={{ width: '220px', backgroundColor: theme.card, borderRight: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh' }}>
-        <div style={{ padding: '20px 16px', borderBottom: `1px solid ${theme.border}` }}>
-          <div style={{ color: theme.text, fontSize: '18px', fontWeight: '800' }}>IZI<span style={{ color: theme.accent }}>360</span></div>
-          <div style={{ color: theme.accent, fontSize: '11px', fontWeight: '600', marginTop: '2px' }}>ESPACE ADMIN</div>
+      <div style={{ width: '220px', backgroundColor: T.card, borderRight: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 10 }}>
+        <div style={{ padding: '20px 16px', borderBottom: `1px solid ${T.border}` }}>
+          <div style={{ color: T.text, fontSize: '18px', fontWeight: '800' }}>IZI<span style={{ color: T.accent }}>360</span></div>
+          <div style={{ color: T.accent, fontSize: '11px', fontWeight: '600', marginTop: '2px' }}>ESPACE ADMIN</div>
         </div>
         <nav style={{ padding: '12px 8px', flex: 1 }}>
           {navItems.map(item => (
             <button key={item.key} onClick={() => setPage(item.key)} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
               padding: '10px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-              backgroundColor: page === item.key ? theme.accentDim : 'transparent',
-              color: page === item.key ? theme.accent : theme.textSub,
+              backgroundColor: page === item.key ? T.accentDim : 'transparent',
+              color: page === item.key ? T.accent : T.textSub,
               fontSize: '14px', fontWeight: page === item.key ? '600' : '400',
               marginBottom: '4px', fontFamily: 'inherit', textAlign: 'left'
             }}>
@@ -101,77 +118,102 @@ export default function AdminDashboard() {
             </button>
           ))}
         </nav>
-        <div style={{ padding: '16px' }}>
-          <button onClick={() => { localStorage.removeItem('izi360_token'); localStorage.removeItem('izi360_user'); navigate('/login') }}
-            style={{ width: '100%', padding: '8px', backgroundColor: 'rgba(226,75,74,0.1)', color: '#E24B4A', border: '1px solid rgba(226,75,74,0.2)', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
+        <div style={{ padding: '16px', borderTop: `1px solid ${T.border}` }}>
+          <Btn onClick={() => { localStorage.removeItem('izi360_token'); localStorage.removeItem('izi360_user'); navigate('/login') }}
+            color="rgba(226,75,74,0.15)" textColor="#E24B4A" style={{ width: '100%', marginBottom: '6px' }}>
             Déconnexion
-          </button>
-          <button onClick={() => navigate('/')} style={{ width: '100%', padding: '8px', backgroundColor: 'transparent', color: theme.textSub, border: 'none', cursor: 'pointer', fontSize: '13px', marginTop: '6px', fontFamily: 'inherit' }}>
+          </Btn>
+          <Btn onClick={() => navigate('/')} color="transparent" textColor={T.textSub} style={{ width: '100%' }}>
             ← Accueil
-          </button>
+          </Btn>
         </div>
       </div>
 
       {/* Contenu */}
-      <div style={{ marginLeft: '220px', flex: 1, padding: '32px' }}>
-        {loading && <p style={{ color: theme.textSub }}>Chargement...</p>}
+      <div style={{ marginLeft: '220px', flex: 1, padding: '32px', maxWidth: 'calc(100vw - 220px)' }}>
+        {message && <div style={{ backgroundColor: T.accentDim, border: `1px solid rgba(29,158,117,0.3)`, borderRadius: '8px', padding: '10px 16px', marginBottom: '20px', color: T.accent, fontSize: '14px' }}>{message}</div>}
+        {loading && <p style={{ color: T.textSub }}>Chargement...</p>}
 
-        {/* STATS */}
+        {/* DASHBOARD */}
         {!loading && page === 'stats' && (
           <div>
-            <h1 style={{ color: theme.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Tableau de bord</h1>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Tableau de bord</h1>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
               {[
-                { label: 'Utilisateurs', value: stats?.total_users, icon: '👥', color: theme.accent },
-                { label: 'Vérifiés', value: stats?.verified_users, icon: '✅', color: '#60A5FA' },
-                { label: 'Admins', value: stats?.admins, icon: '🛡️', color: '#F59E0B' },
-                { label: 'Licences actives', value: stats?.licences_actives, icon: '🔑', color: '#A78BFA' },
-                { label: 'Modules actifs', value: stats?.modules_actifs, icon: '📦', color: '#2ED4A0' },
-              ].map(s => card(
-                <div>
+                { label: 'Utilisateurs', value: stats?.total_users, icon: '👥', color: T.accent, page: 'users' },
+                { label: 'Vérifiés', value: stats?.verified_users, icon: '✅', color: '#60A5FA', page: 'users' },
+                { label: 'Nouveaux ce mois', value: advStats?.new_users_this_month, icon: '🆕', color: '#A78BFA', page: 'users' },
+                { label: 'Licences actives', value: stats?.licences_actives, icon: '🔑', color: '#F59E0B', page: 'licences' },
+                { label: 'Modules actifs', value: stats?.modules_actifs, icon: '📦', color: '#2ED4A0', page: 'modules' },
+                { label: 'Revenu mensuel ($)', value: advStats?.monthly_revenue, icon: '💰', color: '#34D399', page: 'licences' },
+              ].map(s => (
+                <Card key={s.label} style={{ cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setPage(s.page)}>
                   <div style={{ fontSize: '24px', marginBottom: '8px' }}>{s.icon}</div>
-                  <div style={{ fontSize: '28px', fontWeight: '800', color: s.color }}>{s.value}</div>
-                  <div style={{ fontSize: '12px', color: theme.textSub, marginTop: '4px' }}>{s.label}</div>
-                </div>
+                  <div style={{ fontSize: '26px', fontWeight: '800', color: s.color }}>{s.value ?? '—'}</div>
+                  <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>{s.label}</div>
+                </Card>
               ))}
             </div>
+
+            {advStats?.licences_by_module?.length > 0 && (
+              <div>
+                <h2 style={{ color: T.text, fontSize: '1rem', fontWeight: '700', marginBottom: '12px' }}>Licences par module</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {advStats.licences_by_module.map((l, i) => (
+                    <Card key={i} style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: T.text, fontSize: '14px', fontWeight: '600' }}>{l.module_code}</span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '12px', color: T.textSub }}>{l.type}</span>
+                          <span style={{ fontSize: '14px', fontWeight: '700', color: T.accent }}>{l.total}</span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* USERS */}
+        {/* UTILISATEURS */}
         {!loading && page === 'users' && (
           <div>
-            <h1 style={{ color: theme.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Utilisateurs ({users.length})</h1>
+            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Utilisateurs ({users.length})</h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {users.map(u => card(
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-                  <div>
-                    <div style={{ color: theme.text, fontWeight: '600', fontSize: '15px' }}>{u.nom}</div>
-                    <div style={{ color: theme.textSub, fontSize: '12px', marginTop: '2px' }}>{u.email}</div>
-                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: u.verified ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: u.verified ? theme.accent : '#E24B4A', fontWeight: '600' }}>
-                        {u.verified ? '✓ Vérifié' : '✗ Non vérifié'}
-                      </span>
-                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: u.role === 'admin' ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.06)', color: u.role === 'admin' ? '#F59E0B' : theme.textSub, fontWeight: '600' }}>
-                        {u.role}
-                      </span>
-                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: u.active ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: u.active ? theme.accent : '#E24B4A', fontWeight: '600' }}>
-                        {u.active ? 'Actif' : 'Désactivé'}
-                      </span>
+              {users.map(u => (
+                <Card key={u.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <div style={{ color: T.text, fontWeight: '600', fontSize: '15px' }}>{u.nom}</div>
+                      <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{u.email}</div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: u.verified ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: u.verified ? T.accent : '#E24B4A', fontWeight: '600' }}>
+                          {u.verified ? '✓ Vérifié' : '✗ Non vérifié'}
+                        </span>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: u.role === 'admin' ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.06)', color: u.role === 'admin' ? '#F59E0B' : T.textSub, fontWeight: '600' }}>
+                          {u.role}
+                        </span>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: u.active ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: u.active ? T.accent : '#E24B4A', fontWeight: '600' }}>
+                          {u.active ? 'Actif' : 'Désactivé'}
+                        </span>
+                      </div>
+                      {u.licences && <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Modules : {u.licences.map(l => l.module).join(', ') || 'Aucun'}</div>}
                     </div>
-                    {u.licences && <div style={{ fontSize: '11px', color: theme.textSub, marginTop: '4px' }}>Modules : {u.licences.map(l => l.module).join(', ')}</div>}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <Btn onClick={() => setRole(u.id, u.role === 'admin' ? 'user' : 'admin')} color="rgba(245,158,11,0.15)" textColor="#F59E0B">
+                        {u.role === 'admin' ? '→ User' : '→ Admin'}
+                      </Btn>
+                      <Btn onClick={() => toggleUser(u.id)} color={u.active ? 'rgba(226,75,74,0.15)' : 'rgba(29,158,117,0.15)'} textColor={u.active ? '#E24B4A' : T.accent}>
+                        {u.active ? 'Désactiver' : 'Activer'}
+                      </Btn>
+                      <Btn onClick={() => deleteUser(u.id, u.nom)} color="rgba(226,75,74,0.15)" textColor="#E24B4A">
+                        Supprimer
+                      </Btn>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={() => setRole(u.id, u.role === 'admin' ? 'user' : 'admin')}
-                      style={{ padding: '6px 12px', backgroundColor: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontFamily: 'inherit' }}>
-                      {u.role === 'admin' ? '→ User' : '→ Admin'}
-                    </button>
-                    <button onClick={() => toggleUser(u.id)}
-                      style={{ padding: '6px 12px', backgroundColor: u.active ? 'rgba(226,75,74,0.15)' : 'rgba(29,158,117,0.15)', color: u.active ? '#E24B4A' : theme.accent, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontFamily: 'inherit' }}>
-                      {u.active ? 'Désactiver' : 'Activer'}
-                    </button>
-                  </div>
-                </div>
+                </Card>
               ))}
             </div>
           </div>
@@ -180,31 +222,28 @@ export default function AdminDashboard() {
         {/* LICENCES */}
         {!loading && page === 'licences' && (
           <div>
-            <h1 style={{ color: theme.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Attribuer une licence</h1>
-            {message && <p style={{ color: theme.accent, fontSize: '13px', marginBottom: '16px' }}>{message}</p>}
-            {card(
+            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Attribuer une licence</h1>
+            <Card>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ fontSize: '12px', color: theme.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Utilisateur</label>
-                    <select style={{ width: '100%', padding: '10px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '8px', color: theme.text, fontSize: '14px', fontFamily: 'inherit' }}
-                      value={licenceForm.user_id} onChange={e => setLicenceForm(p => ({ ...p, user_id: e.target.value }))}>
+                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Utilisateur</label>
+                    <select style={inp} value={licenceForm.user_id} onChange={e => setLicenceForm(p => ({ ...p, user_id: e.target.value }))}>
                       <option value="">— Sélectionner —</option>
                       {users.map(u => <option key={u.id} value={u.id}>{u.nom} ({u.email})</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: '12px', color: theme.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Module</label>
-                    <select style={{ width: '100%', padding: '10px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '8px', color: theme.text, fontSize: '14px', fontFamily: 'inherit' }}
-                      value={licenceForm.module_code} onChange={e => setLicenceForm(p => ({ ...p, module_code: e.target.value }))}>
+                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Module</label>
+                    <select style={inp} value={licenceForm.module_code} onChange={e => setLicenceForm(p => ({ ...p, module_code: e.target.value }))}>
                       <option value="">— Sélectionner —</option>
                       {modules.map(m => <option key={m.code} value={m.code}>{m.nom}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: '12px', color: theme.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Type</label>
-                    <select style={{ width: '100%', padding: '10px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '8px', color: theme.text, fontSize: '14px', fontFamily: 'inherit' }}
-                      value={licenceForm.type} onChange={e => setLicenceForm(p => ({ ...p, type: e.target.value }))}>
+                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Type</label>
+                    <select style={inp} value={licenceForm.type} onChange={e => setLicenceForm(p => ({ ...p, type: e.target.value }))}>
                       <option value="gratuit">Gratuit</option>
                       <option value="mensuel">Mensuel</option>
                       <option value="annuel">Annuel</option>
@@ -212,28 +251,87 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: '12px', color: theme.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Date d'expiration (optionnel)</label>
-                    <input type="date" style={{ width: '100%', padding: '10px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '8px', color: theme.text, fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box' }}
-                      value={licenceForm.date_fin} onChange={e => setLicenceForm(p => ({ ...p, date_fin: e.target.value }))} />
+                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Date d'expiration (optionnel)</label>
+                    <input type="date" style={inp} value={licenceForm.date_fin} onChange={e => setLicenceForm(p => ({ ...p, date_fin: e.target.value }))} />
                   </div>
                 </div>
-                <button onClick={grantLicence} style={{ padding: '12px', backgroundColor: theme.accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Attribuer la licence
-                </button>
+                <Btn onClick={grantLicence} style={{ padding: '12px', fontSize: '14px' }}>Attribuer la licence</Btn>
               </div>
-            )}
+            </Card>
+
+            <h2 style={{ color: T.text, fontSize: '1rem', fontWeight: '700', margin: '24px 0 12px' }}>Licences actives par utilisateur</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {users.filter(u => u.licences?.length > 0).map(u => (
+                <Card key={u.id} style={{ padding: '14px 16px' }}>
+                  <div style={{ color: T.text, fontWeight: '600', fontSize: '14px', marginBottom: '8px' }}>{u.nom}</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {u.licences.map((l, i) => (
+                      <span key={i} style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', backgroundColor: T.accentDim, color: T.accent, fontWeight: '600' }}>
+                        {l.module} — {l.type}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+              {users.filter(u => u.licences?.length > 0).length === 0 && (
+                <p style={{ color: T.textSub, fontSize: '14px' }}>Aucune licence attribuée pour l'instant.</p>
+              )}
+            </div>
           </div>
         )}
 
         {/* MODULES */}
         {!loading && page === 'modules' && (
           <div>
-            <h1 style={{ color: theme.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Modules & Tarifs</h1>
+            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Modules & Tarifs</h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {modules.map(m => (
-                <ModuleCard key={m.id} module={m} onUpdate={updateModule} theme={theme} />
-              ))}
+              {modules.map(m => <ModuleCard key={m.id} module={m} onUpdate={updateModule} />)}
             </div>
+          </div>
+        )}
+
+        {/* NOTIFICATIONS */}
+        {!loading && page === 'notifications' && (
+          <div>
+            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Envoyer une notification</h1>
+            <Card>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Btn onClick={() => setEmailForm(p => ({ ...p, tous: false }))} color={!emailForm.tous ? T.accent : 'rgba(255,255,255,0.06)'} textColor={!emailForm.tous ? '#fff' : T.textSub}>
+                    Un utilisateur
+                  </Btn>
+                  <Btn onClick={() => setEmailForm(p => ({ ...p, tous: true, user_id: '' }))} color={emailForm.tous ? T.accent : 'rgba(255,255,255,0.06)'} textColor={emailForm.tous ? '#fff' : T.textSub}>
+                    Tous les utilisateurs
+                  </Btn>
+                </div>
+
+                {!emailForm.tous && (
+                  <div>
+                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Destinataire</label>
+                    <select style={inp} value={emailForm.user_id} onChange={e => setEmailForm(p => ({ ...p, user_id: e.target.value }))}>
+                      <option value="">— Sélectionner un utilisateur —</option>
+                      {users.filter(u => u.verified).map(u => <option key={u.id} value={u.id}>{u.nom} ({u.email})</option>)}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Sujet</label>
+                  <input style={inp} type="text" placeholder="Objet de l'email..." value={emailForm.subject} onChange={e => setEmailForm(p => ({ ...p, subject: e.target.value }))} />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Message</label>
+                  <textarea style={{ ...inp, minHeight: '120px', resize: 'vertical' }} placeholder="Contenu du message..." value={emailForm.message} onChange={e => setEmailForm(p => ({ ...p, message: e.target.value }))} />
+                </div>
+
+                <Btn onClick={sendEmail} style={{ padding: '12px', fontSize: '14px' }}>
+                  {emailForm.tous ? `📧 Envoyer à tous (${users.filter(u => u.verified && u.active).length} utilisateurs)` : '📧 Envoyer'}
+                </Btn>
+              </div>
+            </Card>
           </div>
         )}
       </div>
@@ -241,48 +339,42 @@ export default function AdminDashboard() {
   )
 }
 
-function ModuleCard({ module: m, onUpdate, theme }) {
-  const [prix_mensuel, setPrixM] = useState(m.prix_mensuel)
-  const [prix_annuel, setPrixA] = useState(m.prix_annuel)
+function ModuleCard({ module: m, onUpdate }) {
+  const [pm, setPm] = useState(m.prix_mensuel)
+  const [pa, setPa] = useState(m.prix_annuel)
   const [saved, setSaved] = useState(false)
 
-  const save = () => {
-    onUpdate(m.id, prix_mensuel, prix_annuel, m.actif)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
+  const save = () => { onUpdate(m.id, pm, pa, m.actif); setSaved(true); setTimeout(() => setSaved(false), 2000) }
 
   return (
-    <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '20px' }}>
+    <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <div style={{ color: theme.text, fontWeight: '700', fontSize: '15px' }}>{m.nom}</div>
-          <div style={{ color: theme.textSub, fontSize: '12px', marginTop: '2px' }}>{m.description}</div>
+          <div style={{ color: T.text, fontWeight: '700', fontSize: '15px' }}>{m.nom}</div>
+          <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{m.description}</div>
+          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: m.actif ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: m.actif ? T.accent : '#E24B4A', fontWeight: '600', marginTop: '6px', display: 'inline-block' }}>
+            {m.actif ? 'Actif' : 'Désactivé'}
+          </span>
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div>
-            <label style={{ fontSize: '11px', color: theme.textSub, display: 'block', marginBottom: '4px' }}>Prix/mois ($)</label>
-            <input type="number" value={prix_mensuel} onChange={e => setPrixM(e.target.value)}
-              style={{ width: '80px', padding: '6px 8px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '6px', color: theme.text, fontSize: '13px', fontFamily: 'inherit' }} />
+            <label style={{ fontSize: '11px', color: T.textSub, display: 'block', marginBottom: '4px' }}>Prix/mois ($)</label>
+            <input type="number" value={pm} onChange={e => setPm(e.target.value)}
+              style={{ width: '80px', padding: '6px 8px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', color: T.text, fontSize: '13px', fontFamily: 'inherit' }} />
           </div>
           <div>
-            <label style={{ fontSize: '11px', color: theme.textSub, display: 'block', marginBottom: '4px' }}>Prix/an ($)</label>
-            <input type="number" value={prix_annuel} onChange={e => setPrixA(e.target.value)}
-              style={{ width: '80px', padding: '6px 8px', backgroundColor: theme.bg, border: `1px solid ${theme.border}`, borderRadius: '6px', color: theme.text, fontSize: '13px', fontFamily: 'inherit' }} />
+            <label style={{ fontSize: '11px', color: T.textSub, display: 'block', marginBottom: '4px' }}>Prix/an ($)</label>
+            <input type="number" value={pa} onChange={e => setPa(e.target.value)}
+              style={{ width: '80px', padding: '6px 8px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', color: T.text, fontSize: '13px', fontFamily: 'inherit' }} />
           </div>
-          <div style={{ paddingTop: '18px' }}>
-            <button onClick={save} style={{ padding: '6px 14px', backgroundColor: saved ? 'rgba(29,158,117,0.15)' : theme.accent, color: saved ? theme.accent : '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', fontFamily: 'inherit' }}>
-              {saved ? 'Sauvegardé ✓' : 'Sauvegarder'}
-            </button>
-          </div>
-          <div style={{ paddingTop: '18px' }}>
-            <button onClick={() => onUpdate(m.id, prix_mensuel, prix_annuel, !m.actif)}
-              style={{ padding: '6px 14px', backgroundColor: m.actif ? 'rgba(226,75,74,0.15)' : 'rgba(29,158,117,0.15)', color: m.actif ? '#E24B4A' : theme.accent, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontFamily: 'inherit' }}>
-              {m.actif ? 'Désactiver' : 'Activer'}
-            </button>
-          </div>
+          <Btn onClick={save} color={saved ? 'rgba(29,158,117,0.15)' : T.accent} textColor={saved ? T.accent : '#fff'}>
+            {saved ? 'Sauvegardé ✓' : 'Sauvegarder'}
+          </Btn>
+          <Btn onClick={() => onUpdate(m.id, pm, pa, !m.actif)} color={m.actif ? 'rgba(226,75,74,0.15)' : 'rgba(29,158,117,0.15)'} textColor={m.actif ? '#E24B4A' : T.accent}>
+            {m.actif ? 'Désactiver' : 'Activer'}
+          </Btn>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
