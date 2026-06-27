@@ -9,7 +9,8 @@ const MODULES = [
   { id: 'hospi', nom: 'Izi Hospi', description: 'Gestion hospitalière', detail: 'Patients, consultations & facturation', emoji: '🏥', route: '/hospi' },
   { id: 'school', nom: 'Izi School', description: 'Gestion scolaire', detail: 'Élèves, notes & communication', emoji: '🎓', route: '/school' },
   { id: 'shop', nom: 'Izi Shop', description: 'Gestion de boutique', detail: 'Ventes, stock & caisse', emoji: '🛒', route: '/shop' },
-  { id: 'transit', nom: 'Izi Transit', description: 'Gestion de transport', detail: 'Lignes, billets & flotte', emoji: '🚌', route: '/transit' }
+  { id: 'transit', nom: 'Izi Transit', description: 'Gestion de transport', detail: 'Lignes, billets & flotte', emoji: '🚌', route: '/transit' },
+  { id: 'beautycrm', nom: 'Beauty CRM', description: 'CRM & Gestion commerciale', detail: 'Clients, ventes, stock, prospects & séminaires', emoji: '💄', route: null, url: 'https://beautycrm-web.vercel.app' }
 ]
 
 export default function Accueil() {
@@ -191,8 +192,8 @@ export default function Accueil() {
                   </button>
                 ) : (
                   <>
-                    <button onClick={() => navigate(mod.route)} style={{ flex: 1, padding: '10px', backgroundColor: theme.accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit' }}>
-                      Ouvrir →
+                    <button onClick={() => mod.url ? window.open(mod.url, '_blank') : navigate(mod.route)} style={{ flex: 1, padding: '10px', backgroundColor: theme.accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {mod.url ? 'Ouvrir ↗' : 'Ouvrir →'}
                     </button>
                     <button onClick={installPWA} style={{ padding: '10px 12px', backgroundColor: theme.accentDim, color: theme.accent, border: `1px solid rgba(29,158,117,0.3)`, borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
                       📲

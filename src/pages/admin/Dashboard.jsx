@@ -29,6 +29,8 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([])
   const [modules, setModules] = useState([])
   const [loading, setLoading] = useState(true)
+  const [beautyCrmUsers, setBeautyCrmUsers] = useState([])
+  const [beautyCrmStats, setBeautyCrmStats] = useState(null)
   const [message, setMessage] = useState('')
   const [licenceForm, setLicenceForm] = useState({ user_id: '', module_code: '', type: 'gratuit', date_fin: '' })
   const [emailForm, setEmailForm] = useState({ user_id: '', subject: '', message: '', tous: false })
@@ -42,13 +44,15 @@ export default function AdminDashboard() {
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [s, as, u, m] = await Promise.all([
+      const [s, as, u, m, bu, bs] = await Promise.all([
         fetch(`${API}/admin/stats`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/stats/advanced`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/users`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/modules`, { headers }).then(r => r.json()),
+        fetch(`${API}/beautycrm/users`, { headers }).then(r => r.json()),
+        fetch(`${API}/beautycrm/stats`, { headers }).then(r => r.json()),
       ])
-      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : [])
+      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs)
     } catch (e) { console.error(e) }
     setLoading(false)
   }
@@ -72,8 +76,8 @@ export default function AdminDashboard() {
   }
   const sendEmail = async () => {
     if (!emailForm.subject || !emailForm.message) { msg('Sujet et message requis'); return }
-    const endpoint = emailForm.tous ? '/admin/email/all' : '/admin/email/user'
-    const body = emailForm.tous ? { subject: emailForm.subject, message: emailForm.message } : { user_id: emailForm.user_id, subject: emailForm.subject, message: emailForm.message }
+    const endpoint = emailForm.tous || emailForm.module_filter ? '/admin/email/all' : '/admin/email/user'
+    const body = emailForm.tous || emailForm.module_filter ? { subject: emailForm.subject, message: emailForm.message, module_filter: emailForm.module_filter || null } : { user_id: emailForm.user_id, subject: emailForm.subject, message: emailForm.message }
     if (!emailForm.tous && !emailForm.user_id) { msg('Sélectionnez un utilisateur'); return }
     const res = await fetch(`${API}${endpoint}`, { method: 'POST', headers, body: JSON.stringify(body) })
     const data = await res.json()
@@ -91,6 +95,7 @@ export default function AdminDashboard() {
     { key: 'licences', label: 'Licences', icon: '🔑' },
     { key: 'modules', label: 'Modules', icon: '📦' },
     { key: 'notifications', label: 'Notifications', icon: '📧' },
+    { key: 'beautycrm', label: 'Beauty CRM', icon: '💄' },
   ]
 
   const inp = { width: '100%', padding: '10px 12px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }
@@ -180,9 +185,30 @@ export default function AdminDashboard() {
         {!loading && page === 'users' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Utilisateurs ({users.length})</h1>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px' }}>Utilisateurs ({users.length})</h1>
+
+            {/* Filtre par module - liste déroulante */}
+            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <label style={{ fontSize: '13px', color: T.textSub, fontWeight: '600', whiteSpace: 'nowrap' }}>Filtrer par app :</label>
+              <select
+                value={emailForm.module_filter}
+                onChange={e => setEmailForm(p => ({ ...p, module_filter: e.target.value }))}
+                style={{ padding: '8px 14px', backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="">— Tous les utilisateurs —</option>
+                {modules.map(m => (
+                  <option key={m.code} value={m.code}>{m.nom}</option>
+                ))}
+              </select>
+              {emailForm.module_filter && (
+                <span style={{ fontSize: '12px', color: T.accent, backgroundColor: T.accentDim, padding: '4px 10px', borderRadius: '20px', fontWeight: '600' }}>
+                  {users.filter(u => u.licences && u.licences.some(l => l.module === emailForm.module_filter)).length} utilisateur(s)
+                </span>
+              )}
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {users.map(u => (
+              {users.filter(u => !emailForm.module_filter || (u.licences && u.licences.some(l => l.module === emailForm.module_filter))).map(u => (
                 <Card key={u.id}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                     <div>
@@ -291,6 +317,91 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* BEAUTY CRM */}
+        {!loading && page === 'beautycrm' && (
+          <div>
+            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>💄 Beauty CRM — Utilisateurs</h1>
+
+            {/* Stats */}
+            {beautyCrmStats && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                {[
+                  { label: 'Total inscrits', value: beautyCrmStats.total, icon: '👥', color: T.accent },
+                  { label: 'Ce mois', value: beautyCrmStats.ce_mois, icon: '🆕', color: '#A78BFA' },
+                ].map(s => (
+                  <Card key={s.label}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>{s.icon}</div>
+                    <div style={{ fontSize: '26px', fontWeight: '800', color: s.color }}>{s.value ?? '—'}</div>
+                    <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>{s.label}</div>
+                  </Card>
+                ))}
+                {beautyCrmStats.par_pays?.length > 0 && (
+                  <Card>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: T.text, marginBottom: '8px' }}>Top pays</div>
+                    {beautyCrmStats.par_pays.map(p => (
+                      <div key={p.pays} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: T.textSub, marginBottom: '4px' }}>
+                        <span>{p.pays || 'Inconnu'}</span>
+                        <span style={{ color: T.accent, fontWeight: '700' }}>{p.total}</span>
+                      </div>
+                    ))}
+                  </Card>
+                )}
+                {beautyCrmStats.par_version?.length > 0 && (
+                  <Card>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: T.text, marginBottom: '8px' }}>Versions</div>
+                    {beautyCrmStats.par_version.map(v => (
+                      <div key={v.version} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: T.textSub, marginBottom: '4px' }}>
+                        <span>{v.version || '—'}</span>
+                        <span style={{ color: T.accent, fontWeight: '700' }}>{v.total}</span>
+                      </div>
+                    ))}
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* Table utilisateurs */}
+            <div style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
+                      {['Date', 'Nom', 'Email', 'Téléphone', 'Pays', 'Ville', 'Entreprise', 'Rôle', 'Devise', 'Version'].map(h => (
+                        <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {beautyCrmUsers.length === 0 ? (
+                      <tr><td colSpan="10" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun utilisateur BeautyCRM enregistré</td></tr>
+                    ) : (
+                      beautyCrmUsers.map(u => (
+                        <tr key={u.id} style={{ borderBottom: `1px solid ${T.border}` }}>
+                          <td style={{ padding: '10px 14px', color: T.textSub, whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
+                          <td style={{ padding: '10px 14px', color: T.text, fontWeight: '600' }}>{u.nom || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.email}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.telephone || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.pays || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.ville || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.entreprise || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.role || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.devise || '—'}</td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', backgroundColor: T.accentDim, color: T.accent, fontWeight: '600' }}>
+                              {u.version || '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* NOTIFICATIONS */}
         {!loading && page === 'notifications' && (
           <div>
@@ -298,22 +409,45 @@ export default function AdminDashboard() {
             <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Envoyer une notification</h1>
             <Card>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <Btn onClick={() => setEmailForm(p => ({ ...p, tous: false }))} color={!emailForm.tous ? T.accent : 'rgba(255,255,255,0.06)'} textColor={!emailForm.tous ? '#fff' : T.textSub}>
-                    Un utilisateur
-                  </Btn>
-                  <Btn onClick={() => setEmailForm(p => ({ ...p, tous: true, user_id: '' }))} color={emailForm.tous ? T.accent : 'rgba(255,255,255,0.06)'} textColor={emailForm.tous ? '#fff' : T.textSub}>
-                    Tous les utilisateurs
-                  </Btn>
+
+                {/* Cible */}
+                <div>
+                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '8px' }}>Envoyer à</label>
+                  <select
+                    value={emailForm.module_filter ? `module_${emailForm.module_filter}` : emailForm.tous ? 'tous' : 'un'}
+                    onChange={e => {
+                      const v = e.target.value
+                      if (v === 'un') setEmailForm(p => ({ ...p, tous: false, module_filter: '', user_id: '' }))
+                      else if (v === 'tous') setEmailForm(p => ({ ...p, tous: true, module_filter: '', user_id: '' }))
+                      else setEmailForm(p => ({ ...p, tous: true, module_filter: v.replace('module_', ''), user_id: '' }))
+                    }}
+                    style={{ width: '100%', padding: '10px 14px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+                  >
+                    <option value="un">— Un utilisateur spécifique —</option>
+                    <option value="tous">Tous les utilisateurs</option>
+                    <optgroup label="Par application">
+                      {modules.map(m => (
+                        <option key={m.code} value={`module_${m.code}`}>{m.nom}</option>
+                      ))}
+                    </optgroup>
+                  </select>
                 </div>
 
-                {!emailForm.tous && (
+                {/* Utilisateur spécifique */}
+                {!emailForm.tous && !emailForm.module_filter && (
                   <div>
                     <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Destinataire</label>
                     <select style={inp} value={emailForm.user_id} onChange={e => setEmailForm(p => ({ ...p, user_id: e.target.value }))}>
                       <option value="">— Sélectionner un utilisateur —</option>
                       {users.filter(u => u.verified).map(u => <option key={u.id} value={u.id}>{u.nom} ({u.email})</option>)}
                     </select>
+                  </div>
+                )}
+
+                {/* Info filtre module */}
+                {emailForm.module_filter && (
+                  <div style={{ backgroundColor: T.accentDim, borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: T.accent }}>
+                    📦 Envoi aux utilisateurs ayant une licence <strong>{modules.find(m => m.code === emailForm.module_filter)?.nom}</strong>
                   </div>
                 )}
 
@@ -328,7 +462,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <Btn onClick={sendEmail} style={{ padding: '12px', fontSize: '14px' }}>
-                  {emailForm.tous ? `📧 Envoyer à tous (${users.filter(u => u.verified && u.active).length} utilisateurs)` : '📧 Envoyer'}
+                  📧 {emailForm.module_filter ? `Envoyer aux utilisateurs ${modules.find(m=>m.code===emailForm.module_filter)?.nom}` : emailForm.tous ? `Envoyer à tous (${users.filter(u => u.verified && u.active).length})` : 'Envoyer'}
                 </Btn>
               </div>
             </Card>
