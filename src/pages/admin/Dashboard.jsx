@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://izi360-backend.vercel.app/api'
 
 const T = {
   bg: '#0F1117', card: '#1A1D27', text: '#F0F0F0',

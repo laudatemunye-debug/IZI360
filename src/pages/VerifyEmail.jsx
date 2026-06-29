@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import logoLight from '../assets/logo-light.png'
 
-const API = import.meta.env.VITE_API_URL
+const API = 'https://izi360-backend.vercel.app/api'
 
 export default function VerifyEmail() {
   const [status, setStatus] = useState('loading')
