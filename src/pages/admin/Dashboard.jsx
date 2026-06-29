@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const API = 'http://localhost:5000/api'
+const API = 'import.meta.env.VITE_API_URL'
 
 const T = {
   bg: '#0F1117', card: '#1A1D27', text: '#F0F0F0',

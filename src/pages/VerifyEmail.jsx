@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import logoLight from '../assets/logo-light.png'
 
-const API = 'http://localhost:5000/api'
+const API = 'import.meta.env.VITE_API_URL'
 
 export default function VerifyEmail() {
   const [status, setStatus] = useState('loading')
