@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import logoLight from '../assets/logo-light.png'
 
-const API = 'import.meta.env.VITE_API_URL'
+const API = import.meta.env.VITE_API_URL
 
 const MODULES = [
   { id: 'jangi', nom: 'Izi Jangi', description: 'Gestion de tontine', detail: 'Épargne communautaire & rotative', emoji: '💰', route: '/jangi' },
