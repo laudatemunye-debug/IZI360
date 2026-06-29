@@ -322,7 +322,12 @@ export default function AdminDashboard() {
         {!loading && page === 'beautycrm' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>💄 Beauty CRM — Utilisateurs</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Beauty CRM — Utilisateurs</h1>
+              <Btn onClick={() => setShowNotifModal(true)} style={{ padding: '10px 20px', backgroundColor: '#A78BFA' }}>
+                Notifier les utilisateurs
+              </Btn>
+            </div>
 
             {/* Stats */}
             {beautyCrmStats && (
@@ -402,9 +407,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* Bouton Notification */}
-            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
               <Btn onClick={() => setShowNotifModal(true)} style={{ padding: '10px 20px', backgroundColor: '#A78BFA' }}>
-                📧 Notifier les utilisateurs
+                Notifier les utilisateurs
               </Btn>
             </div>
 
