@@ -399,6 +399,46 @@ export default function AdminDashboard() {
                 </table>
               </div>
             </div>
+
+            {/* Email BeautyCRM */}
+            <div style={{ marginTop: '32px' }}>
+              <h2 style={{ color: T.text, fontSize: '1.1rem', fontWeight: '700', marginBottom: '16px' }}>📧 Notifier les utilisateurs BeautyCRM</h2>
+              <Card>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Sujet</label>
+                    <input style={{ width: '100%', padding: '10px 14px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                      type="text" placeholder="Sujet de l'email..."
+                      value={emailForm.beautySubject || ''}
+                      onChange={e => setEmailForm(p => ({ ...p, beautySubject: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Message</label>
+                    <textarea style={{ width: '100%', padding: '10px 14px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', outline: 'none', minHeight: '120px', resize: 'vertical', boxSizing: 'border-box' }}
+                      placeholder="Votre message..."
+                      value={emailForm.beautyMessage || ''}
+                      onChange={e => setEmailForm(p => ({ ...p, beautyMessage: e.target.value }))} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Btn onClick={async () => {
+                      if (!emailForm.beautySubject || !emailForm.beautyMessage) { setMessage('Sujet et message requis'); return }
+                      try {
+                        const r = await fetch(`${API}/beautycrm/notify`, {
+                          method: 'POST', headers,
+                          body: JSON.stringify({ subject: emailForm.beautySubject, message: emailForm.beautyMessage })
+                        })
+                        const d = await r.json()
+                        setMessage(d.message || 'Envoyé !')
+                        setEmailForm(p => ({ ...p, beautySubject: '', beautyMessage: '' }))
+                      } catch { setMessage('Erreur envoi') }
+                    }} style={{ padding: '10px 20px' }}>
+                      📧 Envoyer à tous ({beautyCrmUsers.length})
+                    </Btn>
+                    {message && <span style={{ color: T.accent, fontSize: '13px' }}>{message}</span>}
+                  </div>
+                </div>
+              </Card>
+            </div>
           </div>
         )}
 
