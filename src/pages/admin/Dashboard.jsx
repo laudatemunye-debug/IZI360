@@ -34,6 +34,7 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState('')
   const [licenceForm, setLicenceForm] = useState({ user_id: '', module_code: '', type: 'gratuit', date_fin: '' })
   const [emailForm, setEmailForm] = useState({ user_id: '', subject: '', message: '', tous: false })
+  const [showNotifModal, setShowNotifModal] = useState(false)
   const navigate = useNavigate()
 
   const token = localStorage.getItem('izi360_token')
@@ -400,45 +401,61 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Email BeautyCRM */}
-            <div style={{ marginTop: '32px' }}>
-              <h2 style={{ color: T.text, fontSize: '1.1rem', fontWeight: '700', marginBottom: '16px' }}>📧 Notifier les utilisateurs BeautyCRM</h2>
-              <Card>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div>
-                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Sujet</label>
-                    <input style={{ width: '100%', padding: '10px 14px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
-                      type="text" placeholder="Sujet de l'email..."
-                      value={emailForm.beautySubject || ''}
-                      onChange={e => setEmailForm(p => ({ ...p, beautySubject: e.target.value }))} />
+            {/* Bouton Notification */}
+            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+              <Btn onClick={() => setShowNotifModal(true)} style={{ padding: '10px 20px', backgroundColor: '#A78BFA' }}>
+                📧 Notifier les utilisateurs
+              </Btn>
+            </div>
+
+            {/* Modal Notification */}
+            {showNotifModal && (
+              <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '520px', border: `1px solid ${T.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>📧 Notifier les utilisateurs BeautyCRM</h2>
+                    <button onClick={() => { setShowNotifModal(false); setMessage('') }} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '20px', cursor: 'pointer' }}>×</button>
                   </div>
-                  <div>
-                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Message</label>
-                    <textarea style={{ width: '100%', padding: '10px 14px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', outline: 'none', minHeight: '120px', resize: 'vertical', boxSizing: 'border-box' }}
-                      placeholder="Votre message..."
-                      value={emailForm.beautyMessage || ''}
-                      onChange={e => setEmailForm(p => ({ ...p, beautyMessage: e.target.value }))} />
+                  <div style={{ fontSize: '13px', color: T.textSub, marginBottom: '20px', backgroundColor: T.accentDim, padding: '10px 14px', borderRadius: '8px' }}>
+                    📢 Le message sera envoyé automatiquement à tous les <strong style={{ color: T.accent }}>{beautyCrmUsers.length} utilisateurs</strong> BeautyCRM
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Btn onClick={async () => {
-                      if (!emailForm.beautySubject || !emailForm.beautyMessage) { setMessage('Sujet et message requis'); return }
-                      try {
-                        const r = await fetch(`${API}/beautycrm/notify`, {
-                          method: 'POST', headers,
-                          body: JSON.stringify({ subject: emailForm.beautySubject, message: emailForm.beautyMessage })
-                        })
-                        const d = await r.json()
-                        setMessage(d.message || 'Envoyé !')
-                        setEmailForm(p => ({ ...p, beautySubject: '', beautyMessage: '' }))
-                      } catch { setMessage('Erreur envoi') }
-                    }} style={{ padding: '10px 20px' }}>
-                      📧 Envoyer à tous ({beautyCrmUsers.length})
-                    </Btn>
-                    {message && <span style={{ color: T.accent, fontSize: '13px' }}>{message}</span>}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Sujet</label>
+                      <input style={{ width: '100%', padding: '10px 14px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                        type="text" placeholder="Sujet de l'email..."
+                        value={emailForm.beautySubject || ''}
+                        onChange={e => setEmailForm(p => ({ ...p, beautySubject: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Message</label>
+                      <textarea style={{ width: '100%', padding: '10px 14px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', outline: 'none', minHeight: '140px', resize: 'vertical', boxSizing: 'border-box' }}
+                        placeholder="Votre message..."
+                        value={emailForm.beautyMessage || ''}
+                        onChange={e => setEmailForm(p => ({ ...p, beautyMessage: e.target.value }))} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      {message && <span style={{ color: T.accent, fontSize: '13px' }}>{message}</span>}
+                      <Btn onClick={() => { setShowNotifModal(false); setMessage('') }} color={T.bg} textColor={T.textSub} style={{ border: `1px solid ${T.border}` }}>Annuler</Btn>
+                      <Btn onClick={async () => {
+                        if (!emailForm.beautySubject || !emailForm.beautyMessage) { setMessage('Sujet et message requis'); return }
+                        try {
+                          const r = await fetch(`${API}/beautycrm/notify`, {
+                            method: 'POST', headers,
+                            body: JSON.stringify({ subject: emailForm.beautySubject, message: emailForm.beautyMessage })
+                          })
+                          const d = await r.json()
+                          setMessage(d.message || 'Envoyé !')
+                          setEmailForm(p => ({ ...p, beautySubject: '', beautyMessage: '' }))
+                        } catch { setMessage('Erreur envoi') }
+                      }} style={{ padding: '10px 20px', backgroundColor: '#A78BFA' }}>
+                        📧 Envoyer à tous ({beautyCrmUsers.length})
+                      </Btn>
+                    </div>
                   </div>
                 </div>
-              </Card>
-            </div>
+              </div>
+            )}
           </div>
         )}
 
