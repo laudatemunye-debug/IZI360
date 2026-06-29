@@ -406,12 +406,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Bouton Notification */}
-            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-              <Btn onClick={() => setShowNotifModal(true)} style={{ padding: '10px 20px', backgroundColor: '#A78BFA' }}>
-                Notifier les utilisateurs
-              </Btn>
-            </div>
+
 
             {/* Modal Notification */}
             {showNotifModal && (
