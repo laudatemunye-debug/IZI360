@@ -442,7 +442,16 @@ export default function AdminDashboard() {
                     <span style={{ color: T.accent, fontFamily: 'monospace', fontSize: '14px' }}>{selectedBeautyUser.email}</span>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', marginTop: '20px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Btn onClick={() => window.open(`mailto:${selectedBeautyUser.email}?subject=BeautyCRM&body=Bonjour ${selectedBeautyUser.nom || ''},`, '_blank')} color="#3B82F6">
+                        Email
+                      </Btn>
+                      <Btn onClick={() => window.open(`https://wa.me/${(selectedBeautyUser.telephone||'').replace(/[^0-9]/g,'')}?text=Bonjour ${encodeURIComponent(selectedBeautyUser.nom||'')}`, '_blank')} color="#25D366" textColor="#fff">
+                        WhatsApp
+                      </Btn>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
                     <Btn color="#EF4444" onClick={async () => {
                       if (!confirm('Supprimer cet utilisateur ?')) return
                       await fetch(`${API}/beautycrm/users/${selectedBeautyUser.id}`, { method: 'DELETE', headers })
@@ -458,6 +467,7 @@ export default function AdminDashboard() {
                       setSelectedBeautyUser(null)
                       setMessage('Modifié !')
                     }}>Sauvegarder</Btn>
+                    </div>
                   </div>
                 </div>
               </div>
