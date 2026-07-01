@@ -383,7 +383,7 @@ export default function AdminDashboard() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${T.border}` }}>
-                      {['Date', 'Nom', 'Email', 'Téléphone', 'Pays', 'Ville', 'Entreprise', 'Rôle', 'Devise', 'Version'].map(h => (
+                      {['Date', 'Nom', 'Email', 'Téléphone', 'Pays', 'Ville', 'Entreprise', 'Rôle', 'Devise', 'Version', 'IP'].map(h => (
                         <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
@@ -408,6 +408,7 @@ export default function AdminDashboard() {
                               {u.version || '—'}
                             </span>
                           </td>
+                          <td style={{ padding: '10px 14px', color: T.textSub, fontSize: '11px', fontFamily: 'monospace' }}>{u.ip_address || '—'}</td>
                         </tr>
                       ))
                     )}
