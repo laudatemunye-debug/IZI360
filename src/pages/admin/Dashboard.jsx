@@ -31,10 +31,14 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [beautyCrmUsers, setBeautyCrmUsers] = useState([])
   const [beautyCrmStats, setBeautyCrmStats] = useState(null)
+  const [selectedBCUser, setSelectedBCUser] = useState(null)
+  const [bcEmailTarget, setBcEmailTarget] = useState(null)
   const [message, setMessage] = useState('')
   const [licenceForm, setLicenceForm] = useState({ user_id: '', module_code: '', type: 'gratuit', date_fin: '' })
   const [emailForm, setEmailForm] = useState({ user_id: '', subject: '', message: '', tous: false })
   const [showNotifModal, setShowNotifModal] = useState(false)
+  const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
+  const [editBeautyUser, setEditBeautyUser] = useState(null)
   const navigate = useNavigate()
 
   const token = localStorage.getItem('izi360_token')
@@ -59,6 +63,12 @@ export default function AdminDashboard() {
   }
 
   const msg = (text) => { setMessage(text); setTimeout(() => setMessage(''), 4000) }
+
+  const deleteBCUser = async (id) => {
+    await fetch(`${API}/beautycrm/users/${id}`, { method: 'DELETE', headers })
+    fetchAll()
+    msg('Utilisateur supprimé')
+  }
 
   const toggleUser = async (id) => { await fetch(`${API}/admin/users/${id}/toggle`, { method: 'PATCH', headers }); fetchAll() }
   const setRole = async (id, role) => { await fetch(`${API}/admin/users/${id}/role`, { method: 'PATCH', headers, body: JSON.stringify({ role }) }); fetchAll() }
@@ -383,7 +393,7 @@ export default function AdminDashboard() {
                       <tr><td colSpan="10" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun utilisateur BeautyCRM enregistré</td></tr>
                     ) : (
                       beautyCrmUsers.map(u => (
-                        <tr key={u.id} style={{ borderBottom: `1px solid ${T.border}` }}>
+                        <tr key={u.id} onClick={() => { setSelectedBeautyUser(u); setEditBeautyUser({...u}) }} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e=>e.currentTarget.style.background=T.bg2} onMouseLeave={e=>e.currentTarget.style.background=''}>
                           <td style={{ padding: '10px 14px', color: T.textSub, whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
                           <td style={{ padding: '10px 14px', color: T.text, fontWeight: '600' }}>{u.nom || '—'}</td>
                           <td style={{ padding: '10px 14px', color: T.textSub }}>{u.email}</td>
@@ -407,6 +417,51 @@ export default function AdminDashboard() {
             </div>
 
 
+
+            {/* Modal Utilisateur BeautyCRM */}
+            {selectedBeautyUser && editBeautyUser && (
+              <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '540px', border: `1px solid ${T.border}`, maxHeight: '90vh', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Fiche utilisateur</h2>
+                    <button onClick={() => setSelectedBeautyUser(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+                  </div>
+
+                  {/* Champs éditables */}
+                  {[['nom','Nom'],['email','Email'],['telephone','Téléphone'],['pays','Pays'],['ville','Ville'],['entreprise','Entreprise'],['role','Rôle'],['devise','Devise']].map(([k,l]) => (
+                    <div key={k} style={{ marginBottom: '12px' }}>
+                      <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>{l}</label>
+                      <input value={editBeautyUser[k] || ''} onChange={e => setEditBeautyUser(p => ({...p, [k]: e.target.value}))}
+                        style={{ width: '100%', padding: '8px 12px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '13px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                  ))}
+
+                  {/* Code de connexion */}
+                  <div style={{ backgroundColor: T.bg, borderRadius: '8px', padding: '12px 16px', margin: '16px 0', border: `1px solid ${T.border}` }}>
+                    <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Email de connexion</label>
+                    <span style={{ color: T.accent, fontFamily: 'monospace', fontSize: '14px' }}>{selectedBeautyUser.email}</span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                    <Btn color="#EF4444" onClick={async () => {
+                      if (!confirm('Supprimer cet utilisateur ?')) return
+                      await fetch(`${API}/beautycrm/users/${selectedBeautyUser.id}`, { method: 'DELETE', headers })
+                      setBeautyCrmUsers(p => p.filter(u => u.id !== selectedBeautyUser.id))
+                      setSelectedBeautyUser(null)
+                    }}>Supprimer</Btn>
+                    <Btn onClick={async () => {
+                      await fetch(`${API}/beautycrm/users/${selectedBeautyUser.id}`, {
+                        method: 'PATCH', headers,
+                        body: JSON.stringify(editBeautyUser)
+                      })
+                      setBeautyCrmUsers(p => p.map(u => u.id === selectedBeautyUser.id ? editBeautyUser : u))
+                      setSelectedBeautyUser(null)
+                      setMessage('Modifié !')
+                    }}>Sauvegarder</Btn>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Modal Notification */}
             {showNotifModal && (
