@@ -38,6 +38,7 @@ export default function AdminDashboard() {
   const [emailForm, setEmailForm] = useState({ user_id: '', subject: '', message: '', tous: false })
   const [showNotifModal, setShowNotifModal] = useState(false)
   const [parrainage, setParrainage] = useState([])
+  const [parrainage, setParrainage] = useState([])
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const navigate = useNavigate()
@@ -57,6 +58,7 @@ export default function AdminDashboard() {
         fetch(`${API}/admin/modules`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/users`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/stats`, { headers }).then(r => r.json()),
+        fetch(`${API}/beautycrm/parrainage`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/parrainage`, { headers }).then(r => r.json()),
       ])
       setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs)
@@ -109,6 +111,7 @@ export default function AdminDashboard() {
     { key: 'modules', label: 'Modules', icon: '📦' },
     { key: 'notifications', label: 'Notifications', icon: '📧' },
     { key: 'beautycrm', label: 'Beauty CRM', icon: '💄' },
+    { key: 'parrainage', label: 'Parrainage', icon: '🔗' },
     { key: 'parrainage', label: 'Parrainage', icon: '🔗' },
   ]
 
@@ -525,6 +528,55 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* PARRAINAGE */}
+        {!loading && page === 'parrainage' && (
+          <div>
+            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Parrainage BeautyCRM</h1>
+            
+            <Card style={{ marginBottom: '16px', display: 'flex', gap: '24px' }}>
+              <div><div style={{ fontSize: '2rem', fontWeight: '700', color: T.accent }}>{parrainage.length}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Parrains actifs</div></div>
+              <div><div style={{ fontSize: '2rem', fontWeight: '700', color: '#A78BFA' }}>{parrainage.reduce((a,p) => a + parseInt(p.nb_filleuls||0), 0)}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Total filleuls</div></div>
+            </Card>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: T.card, borderRadius: '12px', overflow: 'hidden' }}>
+                <thead>
+                  <tr style={{ backgroundColor: T.bg2 }}>
+                    {['Parrain', 'Email', 'Code', 'Filleuls', 'Détails'].map(h => (
+                      <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', fontSize: '12px' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {parrainage.map(p => (
+                    <tr key={p.id} style={{ borderBottom: `1px solid ${T.border}` }}>
+                      <td style={{ padding: '12px 14px', color: T.text, fontWeight: '600' }}>{p.nom || '—'}</td>
+                      <td style={{ padding: '12px 14px', color: T.textSub }}>{p.email}</td>
+                      <td style={{ padding: '12px 14px' }}>
+                        <span style={{ fontFamily: 'monospace', backgroundColor: T.accentDim, color: T.accent, padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>{p.referral_code}</span>
+                      </td>
+                      <td style={{ padding: '12px 14px' }}>
+                        <span style={{ backgroundColor: parseInt(p.nb_filleuls)>0 ? 'rgba(167,139,250,0.15)' : T.bg, color: parseInt(p.nb_filleuls)>0 ? '#A78BFA' : T.textSub, padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>
+                          {p.nb_filleuls} filleul{parseInt(p.nb_filleuls)>1?'s':''}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 14px', color: T.textSub, fontSize: '12px' }}>
+                        {p.filleuls ? p.filleuls.map((f,i) => (
+                          <div key={i}>{f.nom || f.email}</div>
+                        )) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                  {parrainage.length === 0 && (
+                    <tr><td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun parrainage enregistré</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
