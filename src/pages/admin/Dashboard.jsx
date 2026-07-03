@@ -44,6 +44,8 @@ export default function AdminDashboard() {
   const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
   const [brevets, setBrevets] = useState([])
   const [sidebarOuverte, setSidebarOuverte] = useState(true)
+  const [showFormationModal, setShowFormationModal] = useState(false)
+  const [nouvelleFormation, setNouvelleFormation] = useState({ slug: '', titre: '', description: '', lieu: '', duree: '', dateDebut: '', formateur: '' })
   const navigate = useNavigate()
 
   const token = localStorage.getItem('izi360_token')
@@ -103,6 +105,17 @@ export default function AdminDashboard() {
     msg(res.ok ? `✅ ${data.message}` : data.message)
     if (res.ok) setEmailForm({ user_id: '', subject: '', message: '', tous: false })
   }
+  const creerFormation = async () => {
+    if (!nouvelleFormation.slug.trim() || !nouvelleFormation.titre.trim()) { msg('Slug et titre requis'); return }
+    const res = await fetch(`${API}/formations`, { method: 'POST', headers, body: JSON.stringify(nouvelleFormation) })
+    const data = await res.json()
+    if (!res.ok) { msg(data.message || 'Erreur'); return }
+    msg('✅ Formation créée !')
+    setNouvelleFormation({ slug: '', titre: '', description: '', lieu: '', duree: '', dateDebut: '', formateur: '' })
+    setShowFormationModal(false)
+    fetchAll()
+  }
+
   const updateModule = async (id, prix_mensuel, prix_annuel, actif, trial_days) => {
     await fetch(`${API}/admin/modules/${id}`, { method: 'PATCH', headers, body: JSON.stringify({ prix_mensuel, prix_annuel, actif, trial_days }) })
     fetchAll()
@@ -599,11 +612,16 @@ export default function AdminDashboard() {
         {!loading && page === 'formations' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '10px' }}>
               <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Formations</h1>
-              <Btn onClick={() => navigate('/admin/brevet/champignon')} style={{ padding: '10px 20px' }}>
-                🍄 Générer un brevet
-              </Btn>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <Btn onClick={() => setShowFormationModal(true)} color="#A78BFA" style={{ padding: '10px 20px' }}>
+                  ➕ Ajouter une formation
+                </Btn>
+                <Btn onClick={() => navigate('/admin/brevet/champignon')} style={{ padding: '10px 20px' }}>
+                  🍄 Générer un brevet
+                </Btn>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
@@ -662,6 +680,50 @@ export default function AdminDashboard() {
                 <p style={{ color: T.textSub, fontSize: '14px' }}>Aucune formation enregistrée.</p>
               )}
             </div>
+
+            {showFormationModal && (
+              <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '520px', border: `1px solid ${T.border}`, maxHeight: '90vh', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Nouvelle formation</h2>
+                    <button onClick={() => setShowFormationModal(false)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Slug (identifiant unique, ex: champignon) *</label>
+                      <input style={inp} value={nouvelleFormation.slug} onChange={e => setNouvelleFormation(p => ({ ...p, slug: e.target.value }))} placeholder="champignon" />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Titre *</label>
+                      <input style={inp} value={nouvelleFormation.titre} onChange={e => setNouvelleFormation(p => ({ ...p, titre: e.target.value }))} placeholder="Formation Production de Champignons" />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Description</label>
+                      <textarea style={{ ...inp, minHeight: '80px', resize: 'vertical' }} value={nouvelleFormation.description} onChange={e => setNouvelleFormation(p => ({ ...p, description: e.target.value }))} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Lieu</label>
+                        <input style={inp} value={nouvelleFormation.lieu} onChange={e => setNouvelleFormation(p => ({ ...p, lieu: e.target.value }))} placeholder="Kinshasa, RDC" />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Durée</label>
+                        <input style={inp} value={nouvelleFormation.duree} onChange={e => setNouvelleFormation(p => ({ ...p, duree: e.target.value }))} placeholder="3 jours" />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Date de début</label>
+                        <input type="date" style={inp} value={nouvelleFormation.dateDebut} onChange={e => setNouvelleFormation(p => ({ ...p, dateDebut: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Formateur / Partenaire</label>
+                        <input style={inp} value={nouvelleFormation.formateur} onChange={e => setNouvelleFormation(p => ({ ...p, formateur: e.target.value }))} placeholder="Congo Leadership Initiative" />
+                      </div>
+                    </div>
+                    <Btn onClick={creerFormation} style={{ padding: '12px', fontSize: '14px', marginTop: '8px' }}>Créer la formation</Btn>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {selectedFormationInscrits && (
               <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
