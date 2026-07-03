@@ -245,7 +245,7 @@ export default function FormationChampignon() {
               textAlign: 'center',
               fontFamily: 'Arial, sans-serif',
               fontStyle: 'italic',
-              fontSize: '28px',
+              fontSize: '31px',
               fontWeight: 'bold',
               color: '#DC2626',
               overflow: 'hidden',
