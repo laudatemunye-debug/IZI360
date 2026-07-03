@@ -1106,16 +1106,28 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                     </div>
-                    {d.statut === 'en_attente' && (
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <Btn onClick={() => validerFormateur(d.id, d.nom)} color="rgba(29,158,117,0.15)" textColor={T.accent}>
-                          Valider
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {d.email && (
+                        <Btn onClick={() => window.open(`mailto:${d.email}`, '_blank')} color="rgba(59,130,246,0.15)" textColor="#3B82F6">
+                          ✉️ Email
                         </Btn>
-                        <Btn onClick={() => refuserFormateur(d.id)} color="rgba(226,75,74,0.15)" textColor="#E24B4A">
-                          Refuser
+                      )}
+                      {d.telephone && (
+                        <Btn onClick={() => window.open(`https://wa.me/${d.telephone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour ${d.nom}, concernant votre demande formateur IZI360 (${d.formation_titre || ''})...`)}`, '_blank')} color="#25D366" textColor="#fff">
+                          WhatsApp
                         </Btn>
-                      </div>
-                    )}
+                      )}
+                      {d.statut === 'en_attente' && (
+                        <>
+                          <Btn onClick={() => validerFormateur(d.id, d.nom)} color="rgba(29,158,117,0.15)" textColor={T.accent}>
+                            Valider
+                          </Btn>
+                          <Btn onClick={() => refuserFormateur(d.id)} color="rgba(226,75,74,0.15)" textColor="#E24B4A">
+                            Refuser
+                          </Btn>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </Card>
               ))}
