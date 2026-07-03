@@ -62,6 +62,8 @@ export default function EspaceFormateur() {
   const [selectedBrevet, setSelectedBrevet] = useState(null)
   const [editBrevet, setEditBrevet] = useState(null)
   const [qrDataUrlBrevet, setQrDataUrlBrevet] = useState('')
+  const [formations, setFormations] = useState([])
+  const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
   const [message, setMessage] = useState('')
   const brevetCertRef = useRef(null)
   const navigate = useNavigate()
@@ -75,6 +77,7 @@ export default function EspaceFormateur() {
   useEffect(() => {
     if (!token) { navigate('/login'); return }
     fetchBrevets()
+    fetchFormations()
   }, [])
 
   const fetchBrevets = async () => {
@@ -85,6 +88,14 @@ export default function EspaceFormateur() {
       setBrevets(Array.isArray(data) ? data : [])
     } catch (e) { console.error(e) }
     setLoading(false)
+  }
+
+  const fetchFormations = async () => {
+    try {
+      const res = await fetch(`${API}/formations/all`, { headers })
+      const data = await res.json()
+      setFormations(Array.isArray(data) ? data : [])
+    } catch (e) { console.error(e) }
   }
 
   useEffect(() => {
@@ -170,6 +181,41 @@ export default function EspaceFormateur() {
               <div style={{ fontSize: '28px', fontWeight: '800', color: T.accent, marginBottom: '10px' }}>{totalAnciens}</div>
               <div style={{ color: T.text, fontWeight: '700', fontSize: '15px' }}>Ancien participant</div>
             </Card>
+          </div>
+        )}
+
+        {page === 'accueil' && formations.length > 0 && (
+          <div style={{ marginTop: '24px' }}>
+            <h2 style={{ color: T.text, fontSize: '1rem', fontWeight: '700', marginBottom: '12px' }}>Ma formation</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {formations.map(f => (
+                <Card key={f.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <div style={{ color: T.text, fontWeight: '600', fontSize: '15px' }}>{f.titre}</div>
+                      <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{f.lieu} — {f.duree}</div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: f.actif ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: f.actif ? T.accent : '#E24B4A', fontWeight: '600' }}>
+                          {f.actif ? 'Active' : 'Désactivée'}
+                        </span>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(167,139,250,0.15)', color: '#A78BFA', fontWeight: '600' }}>
+                          {f.nb_inscrits || 0} inscrit(s)
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <Btn onClick={async () => {
+                        const res = await fetch(`${API}/formations/${f.id}/inscriptions`, { headers })
+                        const data = await res.json()
+                        setSelectedFormationInscrits({ formation: f, inscrits: Array.isArray(data) ? data : [] })
+                      }} color="rgba(96,165,250,0.15)" textColor="#60A5FA">
+                        Voir inscrits
+                      </Btn>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
 
@@ -350,6 +396,28 @@ export default function EspaceFormateur() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {selectedFormationInscrits && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '540px', border: `1px solid ${T.border}`, maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Inscrits — {selectedFormationInscrits.formation.titre}</h2>
+              <button onClick={() => setSelectedFormationInscrits(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {selectedFormationInscrits.inscrits.map(i => (
+                <div key={i.id} style={{ padding: '10px 14px', backgroundColor: T.bg, borderRadius: '8px', border: `1px solid ${T.border}` }}>
+                  <div style={{ color: T.text, fontWeight: '600', fontSize: '13px' }}>{i.nom}</div>
+                  <div style={{ color: T.textSub, fontSize: '12px' }}>{i.telephone} {i.email ? `— ${i.email}` : ''} {i.ville ? `— ${i.ville}` : ''}</div>
+                </div>
+              ))}
+              {selectedFormationInscrits.inscrits.length === 0 && (
+                <p style={{ color: T.textSub, fontSize: '13px' }}>Aucune inscription pour l'instant.</p>
+              )}
+            </div>
           </div>
         </div>
       )}
