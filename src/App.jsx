@@ -10,6 +10,7 @@ import AdminDashboard from './pages/admin/Dashboard'
 import Profil from './pages/Profil'
 import FormationChampignon from './pages/partenaires/FormationChampignon'
 import LandingFormation from './pages/partenaires/LandingFormation'
+import DevenirFormateur from './pages/partenaires/DevenirFormateur'
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
         <Route path="/admin/brevet/champignon" element={<ProtectedRoute><FormationChampignon /></ProtectedRoute>} />
         <Route path="/formation/champignon" element={<LandingFormation />} />
+        <Route path="/devenir-formateur" element={<DevenirFormateur />} />
       </Routes>
     </BrowserRouter>
   )
