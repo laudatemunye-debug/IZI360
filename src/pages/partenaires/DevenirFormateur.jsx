@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import logoLight from '../../assets/logo-light.png'
 
 const API = 'https://izi360-backend.vercel.app/api'
 
@@ -56,8 +57,11 @@ export default function DevenirFormateur() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0F1117', color: '#E5E7EB', fontFamily: 'sans-serif' }}>
       <div style={{ textAlign: 'center', padding: '48px 20px 32px', background: 'linear-gradient(180deg, #1A1D27 0%, #0F1117 100%)' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#FFFFFF', border: '2px solid #22C55E', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', margin: '0 auto 16px', boxShadow: '0 0 24px rgba(34,197,94,0.3)' }}>
+          <img src={logoLight} alt="IZI360" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
+        </div>
         <div style={{ fontSize: '13px', letterSpacing: '2px', color: '#22C55E', textTransform: 'uppercase', marginBottom: '8px' }}>
-          🎓 Espace formateur
+          Espace formateur
         </div>
         <h1 style={{ fontSize: '26px', fontWeight: 'bold', maxWidth: '600px', margin: '0 auto', lineHeight: 1.3 }}>
           Devenir formateur IZI360
@@ -78,7 +82,6 @@ export default function DevenirFormateur() {
         >
           {succes ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>✅</div>
               <p style={{ color: '#22C55E', fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>{succes}</p>
               <p style={{ color: '#9CA3AF', fontSize: '13px' }}>Vous recevrez un accès une fois votre demande approuvée.</p>
               <Link to="/login" style={{ display: 'inline-block', marginTop: '20px', color: '#22C55E', fontSize: '13px', textDecoration: 'underline' }}>
