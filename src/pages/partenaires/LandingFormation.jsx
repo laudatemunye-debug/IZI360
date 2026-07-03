@@ -1,6 +1,33 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 
+const MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+
+function parseDureeJours(duree) {
+  if (!duree) return 1
+  const match = duree.match(/(\d+)/)
+  const n = match ? parseInt(match[1], 10) : 1
+  if (/semaine/i.test(duree)) return n * 7
+  if (/mois/i.test(duree)) return n * 30
+  return n
+}
+
+function formatPeriode(dateFormation, duree) {
+  if (!dateFormation) return ''
+  const debut = new Date(dateFormation)
+  const jours = parseDureeJours(duree)
+  const fin = new Date(debut)
+  fin.setDate(fin.getDate() + Math.max(jours - 1, 0))
+  const jj1 = String(debut.getDate()).padStart(2, '0')
+  const mm1 = MOIS_FR[debut.getMonth()]
+  const jj2 = String(fin.getDate()).padStart(2, '0')
+  const mm2 = MOIS_FR[fin.getMonth()]
+  if (debut.getMonth() === fin.getMonth() && debut.getFullYear() === fin.getFullYear()) {
+    return `${jj1} au ${jj2} ${mm2} ${fin.getFullYear()}`
+  }
+  return `${jj1} ${mm1} au ${jj2} ${mm2} ${fin.getFullYear()}`
+}
+
 const API = 'https://izi360-backend.vercel.app/api'
 
 export default function LandingFormation() {
@@ -114,22 +141,77 @@ export default function LandingFormation() {
 
         <div
           style={{
-            marginTop: '20px',
-            backgroundColor: '#1A1D27',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '16px',
-            padding: '20px',
-            maxWidth: '400px',
+            position: 'relative',
+            width: '700px',
+            maxWidth: '100%',
             margin: '20px auto 0',
+            fontFamily: 'Arial, sans-serif',
           }}
         >
-          <div style={{ fontSize: '12px', color: '#9CA3AF' }}>Délivré à</div>
-          <div style={{ fontSize: '22px', fontWeight: 'bold', margin: '4px 0' }}>{brevet.participant}</div>
-          <div style={{ fontSize: '12px', color: '#6B7280' }}>
-            Le {new Date(brevet.date_formation).toLocaleDateString('fr-FR')} — {brevet.duree} — {brevet.lieu}
+          <img
+            src="/brevet-champignon-template.jpg"
+            alt="Brevet de participation"
+            style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '12px' }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              left: '41.8%',
+              top: '40.1%',
+              width: '53.3%',
+              height: '7.7%',
+              display: 'flex',
+              alignItems: 'center',
+              fontFamily: '"Arial Black", Arial, sans-serif',
+              fontSize: '23px',
+              fontWeight: 900,
+              color: '#111827',
+              overflow: 'hidden',
+            }}
+          >
+            {brevet.participant}
           </div>
-          <div style={{ fontSize: '11px', color: '#4B5563', marginTop: '6px' }}>N° {brevet.id}</div>
-          <div style={{ fontSize: '11px', color: '#4B5563', marginTop: '2px' }}>Formateur : {brevet.formateur}</div>
+          <div
+            style={{
+              position: 'absolute',
+              left: '62%',
+              top: '28.7%',
+              width: '3.9%',
+              height: '6.7%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '17px',
+              fontWeight: 'bold',
+              color: '#DC2626',
+            }}
+          >
+            {brevet.numero}
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              left: '50.1%',
+              top: '58.2%',
+              width: '40.4%',
+              height: '6.5%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              fontFamily: 'Arial, sans-serif',
+              fontStyle: 'italic',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              color: '#DC2626',
+              overflow: 'hidden',
+            }}
+          >
+            {formatPeriode(brevet.date_formation, brevet.duree)}
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '11px', color: '#4B5563' }}>
+          N° {brevet.id}
         </div>
       </div>
 
