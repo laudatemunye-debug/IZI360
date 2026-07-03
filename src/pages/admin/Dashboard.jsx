@@ -780,7 +780,7 @@ export default function AdminDashboard() {
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-              <Card>
+              <Card style={{ cursor: 'pointer' }} onClick={() => setPage('formationsListe')}>
                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎓</div>
                 <div style={{ fontSize: '26px', fontWeight: '800', color: T.accent }}>{formations.length}</div>
                 <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Formations</div>
@@ -901,6 +901,47 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* LISTE DES FORMATIONS */}
+        {!loading && page === 'formationsListe' && (
+          <div>
+            <button onClick={() => setPage('formations')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Formations</button>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Toutes les formations ({formations.length})</h1>
+
+            <div style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
+                      {['Titre', 'Lieu', 'Durée', 'Statut', 'Inscrits'].map(h => (
+                        <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formations.length === 0 ? (
+                      <tr><td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucune formation enregistrée</td></tr>
+                    ) : (
+                      formations.map(f => (
+                        <tr key={f.id} style={{ borderBottom: `1px solid ${T.border}` }}>
+                          <td style={{ padding: '10px 14px', color: T.text, fontWeight: '600' }}>{f.titre}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{f.lieu || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{f.duree || '—'}</td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', backgroundColor: f.actif ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: f.actif ? T.accent : '#E24B4A', fontWeight: '600' }}>
+                              {f.actif ? 'Active' : 'Désactivée'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 14px', color: T.textSub }}>{f.nb_inscrits || 0}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
