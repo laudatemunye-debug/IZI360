@@ -40,6 +40,8 @@ export default function AdminDashboard() {
   const [parrainage, setParrainage] = useState([])
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
+  const [formations, setFormations] = useState([])
+  const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
   const navigate = useNavigate()
 
   const token = localStorage.getItem('izi360_token')
@@ -50,7 +52,7 @@ export default function AdminDashboard() {
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [s, as, u, m, bu, bs, par] = await Promise.all([
+      const [s, as, u, m, bu, bs, par, fo] = await Promise.all([
         fetch(`${API}/admin/stats`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/stats/advanced`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/users`, { headers }).then(r => r.json()),
@@ -58,8 +60,9 @@ export default function AdminDashboard() {
         fetch(`${API}/beautycrm/users`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/stats`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/parrainage`, { headers }).then(r => r.json()),
+        fetch(`${API}/formations/all`, { headers }).then(r => r.json()),
       ])
-      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs)
+      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs); setFormations(Array.isArray(fo) ? fo : [])
     } catch (e) { console.error(e) }
     setLoading(false)
   }
@@ -110,6 +113,7 @@ export default function AdminDashboard() {
     { key: 'notifications', label: 'Notifications', icon: '📧' },
     { key: 'beautycrm', label: 'Beauty CRM', icon: '💄' },
     { key: 'parrainage', label: 'Parrainage', icon: '🔗' },
+    { key: 'formations', label: 'Formations', icon: '🎓' },
   ]
 
   const inp = { width: '100%', padding: '10px 12px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }
@@ -574,6 +578,80 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* FORMATIONS */}
+        {!loading && page === 'formations' && (
+          <div>
+            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Formations</h1>
+              <Btn onClick={() => navigate('/admin/brevet/champignon')} style={{ padding: '10px 20px' }}>
+                🍄 Générer un brevet
+              </Btn>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {formations.map(f => (
+                <Card key={f.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <div style={{ color: T.text, fontWeight: '600', fontSize: '15px' }}>{f.titre}</div>
+                      <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{f.lieu} — {f.duree}</div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: f.actif ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: f.actif ? T.accent : '#E24B4A', fontWeight: '600' }}>
+                          {f.actif ? 'Active' : 'Désactivée'}
+                        </span>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(167,139,250,0.15)', color: '#A78BFA', fontWeight: '600' }}>
+                          {f.nb_inscrits || 0} inscrit(s)
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <Btn onClick={async () => {
+                        const res = await fetch(`${API}/formations/${f.id}/inscriptions`, { headers })
+                        const data = await res.json()
+                        setSelectedFormationInscrits({ formation: f, inscrits: Array.isArray(data) ? data : [] })
+                      }} color="rgba(96,165,250,0.15)" textColor="#60A5FA">
+                        Voir inscrits
+                      </Btn>
+                      <Btn onClick={async () => {
+                        await fetch(`${API}/formations/${f.id}`, { method: 'PATCH', headers, body: JSON.stringify({ actif: !f.actif }) })
+                        fetchAll()
+                      }} color={f.actif ? 'rgba(226,75,74,0.15)' : 'rgba(29,158,117,0.15)'} textColor={f.actif ? '#E24B4A' : T.accent}>
+                        {f.actif ? 'Désactiver' : 'Activer'}
+                      </Btn>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+              {formations.length === 0 && (
+                <p style={{ color: T.textSub, fontSize: '14px' }}>Aucune formation enregistrée.</p>
+              )}
+            </div>
+
+            {selectedFormationInscrits && (
+              <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '540px', border: `1px solid ${T.border}`, maxHeight: '80vh', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Inscrits — {selectedFormationInscrits.formation.titre}</h2>
+                    <button onClick={() => setSelectedFormationInscrits(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {selectedFormationInscrits.inscrits.map(i => (
+                      <div key={i.id} style={{ padding: '10px 14px', backgroundColor: T.bg, borderRadius: '8px', border: `1px solid ${T.border}` }}>
+                        <div style={{ color: T.text, fontWeight: '600', fontSize: '13px' }}>{i.nom}</div>
+                        <div style={{ color: T.textSub, fontSize: '12px' }}>{i.telephone} {i.email ? `— ${i.email}` : ''} {i.ville ? `— ${i.ville}` : ''}</div>
+                      </div>
+                    ))}
+                    {selectedFormationInscrits.inscrits.length === 0 && (
+                      <p style={{ color: T.textSub, fontSize: '13px' }}>Aucune inscription pour l'instant.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

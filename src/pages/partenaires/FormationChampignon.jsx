@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import QRCode from 'qrcode'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
 const API = 'https://izi360-backend.vercel.app/api'
-// ⚠️ Remplace par le vrai domaine de production du FRONTEND avant mise en ligne
-const SITE_URL = 'https://izi360.com'
+const SITE_URL = 'https://izi-360.vercel.app'
 
 const MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
 
@@ -43,6 +43,7 @@ export default function FormationChampignon() {
   const [numero, setNumero] = useState('')
   const [generating, setGenerating] = useState(false)
   const [erreur, setErreur] = useState('')
+  const [existingId, setExistingId] = useState('')
   const certificateRef = useRef(null)
 
   const genererBrevet = async () => {
@@ -52,6 +53,7 @@ export default function FormationChampignon() {
     }
     setGenerating(true)
     setErreur('')
+    setExistingId('')
 
     try {
       const token = localStorage.getItem('izi360_token')
@@ -61,7 +63,10 @@ export default function FormationChampignon() {
         body: JSON.stringify({ participant, lieu, dateFormation, duree, formateur }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message || 'Erreur serveur')
+      if (!res.ok) {
+        if (data.existingId) setExistingId(data.existingId)
+        throw new Error(data.message || 'Erreur serveur')
+      }
 
       const landingUrl = `${SITE_URL}/formation/champignon?id=${data.id}`
       const url = await QRCode.toDataURL(landingUrl, {
@@ -95,8 +100,25 @@ export default function FormationChampignon() {
     pdf.save(`Brevet_Champignon_${participant.replace(/\s+/g, '_')}.pdf`)
   }
 
+  const navigate = useNavigate()
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0F1117', padding: '32px', color: '#E5E7EB' }}>
+      <button
+        onClick={() => navigate('/admin')}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: '#9CA3AF',
+          fontSize: '13px',
+          cursor: 'pointer',
+          marginBottom: '16px',
+          padding: 0,
+          fontFamily: 'inherit',
+        }}
+      >
+        ← Retour
+      </button>
       <h1 style={{ fontSize: '26px', marginBottom: '4px', fontWeight: 800 }}>
         🍄 Générateur de Brevet
       </h1>
@@ -146,8 +168,13 @@ export default function FormationChampignon() {
       </div>
 
       {erreur && (
-        <div style={{ backgroundColor: '#3B1D1D', border: '1px solid #7F1D1D', color: '#FCA5A5', padding: '12px 16px', borderRadius: '10px', marginBottom: '24px', fontSize: '13px' }}>
-          ⚠️ {erreur}
+        <div style={{ backgroundColor: '#3B1D1D', border: '1px solid #7F1D1D', color: '#FCA5A5', padding: '12px 16px', borderRadius: '10px', marginBottom: '24px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <span>⚠️ {erreur}</span>
+          {existingId && (
+            <a href={`${SITE_URL}/formation/champignon?id=${existingId}`} target="_blank" rel="noreferrer" style={{ color: '#FCA5A5', textDecoration: 'underline', fontWeight: 'bold' }}>
+              Voir le brevet existant →
+            </a>
+          )}
         </div>
       )}
 
@@ -218,7 +245,7 @@ export default function FormationChampignon() {
               textAlign: 'center',
               fontFamily: 'Arial, sans-serif',
               fontStyle: 'italic',
-              fontSize: '34px',
+              fontSize: '22px',
               fontWeight: 'bold',
               color: '#DC2626',
               overflow: 'hidden',
