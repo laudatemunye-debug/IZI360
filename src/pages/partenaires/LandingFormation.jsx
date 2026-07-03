@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import QRCode from 'qrcode'
 
 const SITE_URL = 'https://izi-360.vercel.app'
@@ -34,6 +34,7 @@ function formatPeriode(dateFormation, duree) {
 const API = 'https://izi360-backend.vercel.app/api'
 
 export default function LandingFormation() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const id = searchParams.get('id') || ''
   const [brevet, setBrevet] = useState(null)
@@ -119,7 +120,7 @@ export default function LandingFormation() {
 
   if (loading) {
     return (
-      <PageShell>
+      <PageShell onRetour={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}>
         <div style={{ textAlign: 'center', padding: '80px 20px', color: '#9CA3AF' }}>Vérification du brevet...</div>
       </PageShell>
     )
@@ -127,7 +128,7 @@ export default function LandingFormation() {
 
   if (notFound || !brevet) {
     return (
-      <PageShell>
+      <PageShell onRetour={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}>
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
           <div style={{ fontSize: '13px', letterSpacing: '2px', color: '#EF4444', textTransform: 'uppercase', marginBottom: '8px' }}>
             ❌ Brevet introuvable
@@ -141,7 +142,7 @@ export default function LandingFormation() {
   }
 
   return (
-    <PageShell>
+    <PageShell onRetour={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}>
       <div style={{ textAlign: 'center', padding: '48px 20px 32px', background: 'linear-gradient(180deg, #1A1D27 0%, #0F1117 100%)' }}>
         <div style={{ fontSize: '13px', letterSpacing: '2px', color: '#10B981', textTransform: 'uppercase', marginBottom: '8px' }}>
           ✅ Brevet vérifié
@@ -333,9 +334,17 @@ export default function LandingFormation() {
   )
 }
 
-function PageShell({ children }) {
+function PageShell({ children, onRetour }) {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0F1117', color: '#E5E7EB', fontFamily: 'sans-serif' }}>
+      <div style={{ padding: '16px 20px 0' }}>
+        <button
+          onClick={onRetour}
+          style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: '13px', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+        >
+          ← Retour
+        </button>
+      </div>
       {children}
       <div style={{ textAlign: 'center', padding: '20px', color: '#4B5563', fontSize: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         IZI360 — La suite logicielle IZISOFT © 2026
