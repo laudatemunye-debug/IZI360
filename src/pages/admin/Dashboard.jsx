@@ -780,7 +780,7 @@ export default function AdminDashboard() {
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-              <Card>
+              <Card style={{ cursor: 'pointer' }} onClick={() => document.getElementById('liste-formations')?.scrollIntoView({ behavior: 'smooth' })}>
                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎓</div>
                 <div style={{ fontSize: '26px', fontWeight: '800', color: T.accent }}>{formations.length}</div>
                 <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Formations</div>
@@ -797,7 +797,7 @@ export default function AdminDashboard() {
               </Card>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div id="liste-formations" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {formations.map(f => (
                 <Card key={f.id}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
