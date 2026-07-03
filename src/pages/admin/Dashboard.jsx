@@ -186,6 +186,16 @@ export default function AdminDashboard() {
     pdf.save(`Brevet_${(selectedBrevet.participant || '').replace(/\s+/g, '_')}.pdf`)
   }
 
+  const supprimerBrevet = async () => {
+    if (!confirm(`Supprimer le brevet de ${selectedBrevet.participant} ?`)) return
+    const res = await fetch(`${API}/brevets/${selectedBrevet.id}`, { method: 'DELETE', headers })
+    if (!res.ok) { msg('Erreur lors de la suppression'); return }
+    setBrevets(p => p.filter(x => x.id !== selectedBrevet.id))
+    setSelectedBrevet(null)
+    setEditBrevet(null)
+    msg('🗑️ Brevet supprimé')
+  }
+
   const updateModule = async (id, prix_mensuel, prix_annuel, actif, trial_days) => {
     await fetch(`${API}/admin/modules/${id}`, { method: 'PATCH', headers, body: JSON.stringify({ prix_mensuel, prix_annuel, actif, trial_days }) })
     fetchAll()
@@ -908,6 +918,7 @@ export default function AdminDashboard() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    <Btn onClick={supprimerBrevet} color="rgba(226,75,74,0.15)" textColor="#E24B4A">Effacer</Btn>
                     <Btn onClick={telechargerBrevetPDF} color="rgba(96,165,250,0.15)" textColor="#60A5FA">Télécharger PDF</Btn>
                     <Btn onClick={sauvegarderBrevet}>Modifier</Btn>
                   </div>
