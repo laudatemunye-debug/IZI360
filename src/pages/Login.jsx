@@ -57,7 +57,9 @@ export default function Login() {
       }
       localStorage.setItem('izi360_token', data.token)
       localStorage.setItem('izi360_user', JSON.stringify(data.user))
-      navigate('/')
+      if (data.user?.role === 'admin') navigate('/admin')
+      else if (data.user?.role === 'formateur') navigate('/espace-formateur')
+      else navigate('/')
     } catch {
       setError('Impossible de contacter le serveur.')
       setLoading(false)
