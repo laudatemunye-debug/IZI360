@@ -74,6 +74,7 @@ export default function AdminDashboard() {
   const [formations, setFormations] = useState([])
   const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
   const [brevets, setBrevets] = useState([])
+  const [showAncienModal, setShowAncienModal] = useState(false)
   const [sidebarOuverte, setSidebarOuverte] = useState(true)
   const [showFormationModal, setShowFormationModal] = useState(false)
   const [nouvelleFormation, setNouvelleFormation] = useState({ slug: '', titre: '', description: '', lieu: '', duree: '', dateDebut: '', formateur: '' })
@@ -698,11 +699,44 @@ export default function AdminDashboard() {
                 <Btn onClick={() => setShowFormationModal(true)} color="#A78BFA" style={{ padding: '10px 20px' }}>
                   ➕ Ajouter une formation
                 </Btn>
+                <Btn onClick={() => setShowAncienModal(true)} color="#F59E0B" style={{ padding: '10px 20px' }}>
+                  👤 Ancien participant
+                </Btn>
                 <Btn onClick={() => navigate('/admin/brevet/champignon')} style={{ padding: '10px 20px' }}>
                   🍄 Générer un brevet
                 </Btn>
               </div>
             </div>
+
+            {showAncienModal && (
+              <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '480px', border: `1px solid ${T.border}`, maxHeight: '80vh', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>👤 Anciens participants</h2>
+                    <button onClick={() => setShowAncienModal(false)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+                  </div>
+                  {brevets.length === 0 ? (
+                    <p style={{ color: T.textSub, fontSize: '13px' }}>Aucun ancien participant pour l'instant.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {Array.from(new Map(brevets.map(b => [`${b.participant}|${b.telephone}`, b])).values()).map(b => (
+                        <div
+                          key={b.id}
+                          onClick={() => {
+                            setShowAncienModal(false)
+                            ouvrirBrevet(b)
+                          }}
+                          style={{ backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '10px', padding: '12px 14px', cursor: 'pointer' }}
+                        >
+                          <div style={{ color: T.text, fontWeight: '600', fontSize: '14px' }}>{b.participant}</div>
+                          <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{b.telephone || '—'}{b.email ? ` · ${b.email}` : ''}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
               <Card>
@@ -918,6 +952,16 @@ export default function AdminDashboard() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    {editBrevet.telephone && (
+                      <Btn onClick={() => window.open(`https://wa.me/${(editBrevet.telephone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour ${editBrevet.participant}, félicitations pour votre brevet IZI360 !`)}`, '_blank')} color="#25D366" textColor="#fff">
+                        WhatsApp
+                      </Btn>
+                    )}
+                    {editBrevet.email && (
+                      <Btn onClick={() => window.open(`mailto:${editBrevet.email}?subject=Votre brevet IZI360&body=Bonjour ${editBrevet.participant},`, '_blank')} color="#3B82F6">
+                        Email
+                      </Btn>
+                    )}
                     <Btn onClick={supprimerBrevet} color="rgba(226,75,74,0.15)" textColor="#E24B4A">Effacer</Btn>
                     <Btn onClick={telechargerBrevetPDF} color="rgba(96,165,250,0.15)" textColor="#60A5FA">Télécharger PDF</Btn>
                     <Btn onClick={sauvegarderBrevet}>Modifier</Btn>

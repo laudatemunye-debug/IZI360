@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import QRCode from 'qrcode'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -34,6 +34,8 @@ function formatPeriode(dateFormation, duree) {
 
 export default function FormationChampignon() {
   const [participant, setParticipant] = useState('')
+  const [telephone, setTelephone] = useState('')
+  const [email, setEmail] = useState('')
   const [lieu, setLieu] = useState('Kinshasa, RDC')
   const [dateFormation, setDateFormation] = useState('')
   const [duree, setDuree] = useState('3 jours')
@@ -45,10 +47,25 @@ export default function FormationChampignon() {
   const [erreur, setErreur] = useState('')
   const [existingId, setExistingId] = useState('')
   const certificateRef = useRef(null)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.state) {
+      if (location.state.participant) setParticipant(location.state.participant)
+      if (location.state.telephone) setTelephone(location.state.telephone)
+      if (location.state.email) setEmail(location.state.email)
+      if (location.state.lieu) setLieu(location.state.lieu)
+      if (location.state.formateur) setFormateur(location.state.formateur)
+    }
+  }, [location.state])
 
   const genererBrevet = async () => {
     if (!participant.trim() || !dateFormation) {
       alert('Merci de renseigner au minimum le nom du participant et la date de formation.')
+      return
+    }
+    if (!telephone.trim()) {
+      alert('Le numéro de téléphone du participant est obligatoire.')
       return
     }
     setGenerating(true)
@@ -60,7 +77,7 @@ export default function FormationChampignon() {
       const res = await fetch(`${API}/brevets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ participant, lieu, dateFormation, duree, formateur }),
+        body: JSON.stringify({ participant, telephone, email, lieu, dateFormation, duree, formateur }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -141,6 +158,12 @@ export default function FormationChampignon() {
       >
         <Champ label="Nom du participant *">
           <input value={participant} onChange={e => setParticipant(e.target.value)} style={inputStyle} placeholder="Ex: Jean Mukendi" />
+        </Champ>
+        <Champ label="Téléphone *">
+          <input value={telephone} onChange={e => setTelephone(e.target.value)} style={inputStyle} placeholder="Ex: +243 8xx xxx xxx" />
+        </Champ>
+        <Champ label="Email">
+          <input value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} placeholder="Ex: jean@email.com" />
         </Champ>
         <Champ label="Date de la formation *">
           <input type="date" value={dateFormation} onChange={e => setDateFormation(e.target.value)} style={inputStyle} />
