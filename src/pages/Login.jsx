@@ -12,6 +12,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showResend, setShowResend] = useState(false)
+  const [demandeInfo, setDemandeInfo] = useState(null)
   const navigate = useNavigate()
 
   const theme = {
@@ -47,6 +48,10 @@ export default function Login() {
       })
       const data = await res.json()
       if (!res.ok) {
+        if (data.message === 'demande_en_attente') {
+          setDemandeInfo({ nom: data.nom, formation_titre: data.formation_titre })
+          setLoading(false); return
+        }
         setError(data.message || 'Erreur serveur')
         if (data.message === 'Veuillez confirmer votre email avant de vous connecter.') setShowResend(true)
         setLoading(false); return
@@ -97,6 +102,10 @@ export default function Login() {
       <button onClick={() => setDarkMode(d => !d)} style={{ position: 'fixed', top: 16, right: 16, background: theme.accentDim, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', color: theme.accent, fontWeight: '600' }}>
         {darkMode ? 'Clair' : 'Sombre'}
       </button>
+
+      {demandeInfo && (
+        <ModalDemandeEnAttente demandeInfo={demandeInfo} theme={theme} onClose={() => setDemandeInfo(null)} />
+      )}
 
       <div style={{ marginBottom: '32px', textAlign: 'center' }}>
         <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#FFFFFF', border: `2px solid ${theme.accent}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', margin: '0 auto 16px', boxShadow: '0 0 24px rgba(29,158,117,0.3)' }}>
@@ -166,6 +175,40 @@ export default function Login() {
         </div>
       </div>
       <p style={{ color: theme.textSub, fontSize: '0.75rem', marginTop: '24px' }}>IZI360 - La suite logicielle IZISOFT v1.0</p>
+    </div>
+  )
+}
+
+
+function ModalDemandeEnAttente({ demandeInfo, theme, onClose }) {
+  const message = `Bonjour je suis ${demandeInfo.nom} formateur je veux rejoindre le formateur de izisoft sur la formation ${demandeInfo.formation_titre}`
+  const mailtoLink = `mailto:supportizi26@gmail.com?subject=${encodeURIComponent('Demande formateur en attente')}&body=${encodeURIComponent(message)}`
+  const whatsappLink = `https://wa.me/243997245624?text=${encodeURIComponent(message)}`
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+      <div style={{ backgroundColor: theme.card, borderRadius: '16px', padding: '28px', maxWidth: '380px', width: '100%', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
+        <div style={{ fontSize: '13px', letterSpacing: '1px', color: '#F59E0B', textTransform: 'uppercase', fontWeight: 700, marginBottom: '10px' }}>
+          Demande en attente
+        </div>
+        <p style={{ color: theme.text, fontSize: '14px', lineHeight: 1.5, marginBottom: '6px' }}>
+          Votre demande pour la formation <strong>{demandeInfo.formation_titre}</strong> n'a pas encore ete validee par un administrateur.
+        </p>
+        <p style={{ color: theme.textSub, fontSize: '13px', lineHeight: 1.5, marginBottom: '20px' }}>
+          Vous pouvez contacter l'administrateur pour accelerer votre validation.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <a href={mailtoLink} style={{ display: 'block', padding: '12px', borderRadius: '10px', backgroundColor: theme.accent, color: '#0F1117', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}>
+            Contacter par email
+          </a>
+          <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ display: 'block', padding: '12px', borderRadius: '10px', backgroundColor: '#25D366', color: '#0F1117', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}>
+            Contacter par WhatsApp
+          </a>
+        </div>
+        <button onClick={onClose} style={{ marginTop: '18px', background: 'none', border: 'none', color: theme.textSub, fontSize: '13px', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>
+          Fermer
+        </button>
+      </div>
     </div>
   )
 }
