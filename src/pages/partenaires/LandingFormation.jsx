@@ -214,7 +214,7 @@ export default function LandingFormation() {
               textAlign: 'center',
               fontFamily: 'Arial, sans-serif',
               fontStyle: 'italic',
-              fontSize: '13px',
+              fontSize: '18px',
               fontWeight: 'bold',
               color: '#DC2626',
               overflow: 'hidden',
