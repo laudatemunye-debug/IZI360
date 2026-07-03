@@ -176,7 +176,7 @@ export default function EspaceFormateur() {
             </Card>
             <Card onClick={() => setPage('brevets')} style={{ cursor: 'pointer', textAlign: 'center', padding: '32px 20px' }}>
               <div style={{ fontSize: '28px', fontWeight: '800', color: T.accent, marginBottom: '10px' }}>{totalBrevets}</div>
-              <div style={{ color: T.text, fontWeight: '700', fontSize: '15px' }}>Mes brevets</div>
+              <div style={{ color: T.text, fontWeight: '700', fontSize: '15px' }}>Brevet généré</div>
             </Card>
             <Card onClick={openAncienModal} style={{ cursor: 'pointer', textAlign: 'center', padding: '32px 20px' }}>
               <div style={{ fontSize: '28px', fontWeight: '800', color: T.accent, marginBottom: '10px' }}>{totalAnciens}</div>
@@ -223,7 +223,7 @@ export default function EspaceFormateur() {
         {page === 'brevets' && (
           <div>
             <button onClick={() => setPage('accueil')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Retour</button>
-            <h1 style={{ color: T.text, fontSize: '1.4rem', fontWeight: '700', marginBottom: '16px' }}>Mes brevets ({brevets.length})</h1>
+            <h1 style={{ color: T.text, fontSize: '1.4rem', fontWeight: '700', marginBottom: '16px' }}>Brevet généré ({brevets.length})</h1>
 
             {loading && <p style={{ color: T.textSub }}>Chargement...</p>}
 
