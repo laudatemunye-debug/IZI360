@@ -25,7 +25,7 @@ export default function Accueil() {
 
   const token = localStorage.getItem('izi360_token')
   const user = JSON.parse(localStorage.getItem('izi360_user') || '{}')
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.role === 'admin' || user?.role === 'formateur'
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 
   useEffect(() => {
