@@ -9,6 +9,48 @@ export default function LandingFormation() {
   const [brevet, setBrevet] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [formation, setFormation] = useState(null)
+  const [nom, setNom] = useState('')
+  const [telephone, setTelephone] = useState('')
+  const [email, setEmail] = useState('')
+  const [ville, setVille] = useState('')
+  const [inscrit, setInscrit] = useState(false)
+  const [envoi, setEnvoi] = useState(false)
+  const [erreurInscription, setErreurInscription] = useState('')
+
+  useEffect(() => {
+    fetch(`${API}/formations/slug/champignon`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => setFormation(data))
+      .catch(() => {})
+  }, [])
+
+  const soumettreInscription = async (e) => {
+    e.preventDefault()
+    if (!nom.trim() || !telephone.trim()) {
+      setErreurInscription('Nom et telephone requis')
+      return
+    }
+    if (!formation) {
+      setErreurInscription("Formation indisponible pour le moment")
+      return
+    }
+    setEnvoi(true)
+    setErreurInscription('')
+    try {
+      const res = await fetch(`${API}/formations/${formation.id}/inscriptions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom, telephone, email, ville }),
+      })
+      if (!res.ok) throw new Error()
+      setInscrit(true)
+    } catch {
+      setErreurInscription("Erreur lors de l'inscription, reessaie.")
+    } finally {
+      setEnvoi(false)
+    }
+  }
 
   useEffect(() => {
     async function chargerBrevet() {
@@ -99,6 +141,34 @@ export default function LandingFormation() {
             borderRadius: '20px',
             padding: '32px',
             textAlign: 'center',
+            marginBottom: '20px',
+          }}
+        >
+          <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
+            📚 PROCHAINE SESSION
+          </div>
+          <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '12px' }}>Inscrivez-vous a la formation</h2>
+          {inscrit ? (
+            <p style={{ color: '#10B981', fontSize: '14px' }}>✅ Inscription enregistree, nous vous contacterons bientot.</p>
+          ) : (
+            <form onSubmit={soumettreInscription} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '340px', margin: '0 auto' }}>
+              <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom complet *" style={inputStyle} />
+              <input value={telephone} onChange={e => setTelephone(e.target.value)} placeholder="Telephone *" style={inputStyle} />
+              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inputStyle} />
+              <input value={ville} onChange={e => setVille(e.target.value)} placeholder="Ville" style={inputStyle} />
+              {erreurInscription && <div style={{ color: '#F87171', fontSize: '12px' }}>{erreurInscription}</div>}
+              <button type="submit" disabled={envoi} style={btnDownload}>{envoi ? 'Envoi...' : "S'inscrire"}</button>
+            </form>
+          )}
+        </div>
+
+        <div
+          style={{
+            backgroundColor: '#1A1D27',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '20px',
+            padding: '32px',
+            textAlign: 'center',
           }}
         >
           <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
@@ -165,6 +235,15 @@ function PageShell({ children }) {
   )
 }
 
+const inputStyle = {
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: '8px',
+  border: '1px solid rgba(255,255,255,0.1)',
+  backgroundColor: '#0F1117',
+  color: '#E5E7EB',
+  fontSize: '14px',
+}
 const btnDownload = {
   padding: '14px 28px',
   borderRadius: '12px',
