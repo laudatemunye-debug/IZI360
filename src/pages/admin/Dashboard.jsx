@@ -73,6 +73,7 @@ export default function AdminDashboard() {
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const [formations, setFormations] = useState([])
   const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
+  const [selectedInscrit, setSelectedInscrit] = useState(null)
   const [brevets, setBrevets] = useState([])
   const [showAncienModal, setShowAncienModal] = useState(false)
   const [selectedAncien, setSelectedAncien] = useState(null)
@@ -901,20 +902,62 @@ export default function AdminDashboard() {
               <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
                 <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '540px', border: `1px solid ${T.border}`, maxHeight: '80vh', overflowY: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Inscrits — {selectedFormationInscrits.formation.titre}</h2>
-                    <button onClick={() => setSelectedFormationInscrits(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>
+                      {selectedInscrit ? selectedInscrit.nom : `Inscrits — ${selectedFormationInscrits.formation.titre}`}
+                    </h2>
+                    <button onClick={() => { setSelectedFormationInscrits(null); setSelectedInscrit(null) }} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {selectedFormationInscrits.inscrits.map(i => (
-                      <div key={i.id} style={{ padding: '10px 14px', backgroundColor: T.bg, borderRadius: '8px', border: `1px solid ${T.border}` }}>
-                        <div style={{ color: T.text, fontWeight: '600', fontSize: '13px' }}>{i.nom}</div>
-                        <div style={{ color: T.textSub, fontSize: '12px' }}>{i.telephone} {i.email ? `— ${i.email}` : ''} {i.ville ? `— ${i.ville}` : ''}</div>
+
+                  {selectedInscrit ? (
+                    <div>
+                      <button onClick={() => setSelectedInscrit(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Retour à la liste</button>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                        {[
+                          ['Téléphone', selectedInscrit.telephone || '—'],
+                          ['Email', selectedInscrit.email || '—'],
+                          ['Ville', selectedInscrit.ville || '—'],
+                          ['Date d\'inscription', selectedInscrit.created_at ? new Date(selectedInscrit.created_at).toLocaleDateString('fr-FR') : '—'],
+                        ].map(([label, value]) => (
+                          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '10px 14px' }}>
+                            <span style={{ color: T.textSub, fontSize: '12px', fontWeight: '600' }}>{label}</span>
+                            <span style={{ color: T.text, fontSize: '13px', fontWeight: '600' }}>{value}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    {selectedFormationInscrits.inscrits.length === 0 && (
-                      <p style={{ color: T.textSub, fontSize: '13px' }}>Aucune inscription pour l'instant.</p>
-                    )}
-                  </div>
+
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <Btn
+                          onClick={() => selectedInscrit.telephone
+                            ? window.open(`https://wa.me/${(selectedInscrit.telephone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour ${selectedInscrit.nom},`)}`, '_blank')
+                            : msg('Aucun téléphone enregistré')}
+                          color="#25D366" textColor="#fff" style={{ flex: 1, opacity: selectedInscrit.telephone ? 1 : 0.5 }}
+                        >
+                          WhatsApp
+                        </Btn>
+                        <Btn
+                          onClick={() => selectedInscrit.email
+                            ? window.open(`mailto:${selectedInscrit.email}?subject=IZI360&body=Bonjour ${selectedInscrit.nom},`, '_blank')
+                            : msg('Aucun email enregistré')}
+                          color="#3B82F6" style={{ flex: 1, opacity: selectedInscrit.email ? 1 : 0.5 }}
+                        >
+                          Email
+                        </Btn>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {selectedFormationInscrits.inscrits.map(i => (
+                        <div key={i.id} onClick={() => setSelectedInscrit(i)} style={{ padding: '10px 14px', backgroundColor: T.bg, borderRadius: '8px', border: `1px solid ${T.border}`, cursor: 'pointer' }}>
+                          <div style={{ color: T.text, fontWeight: '600', fontSize: '13px' }}>{i.nom}</div>
+                          <div style={{ color: T.textSub, fontSize: '12px' }}>{i.telephone} {i.email ? `— ${i.email}` : ''} {i.ville ? `— ${i.ville}` : ''}</div>
+                        </div>
+                      ))}
+                      {selectedFormationInscrits.inscrits.length === 0 && (
+                        <p style={{ color: T.textSub, fontSize: '13px' }}>Aucune inscription pour l'instant.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
