@@ -731,7 +731,7 @@ export default function AdminDashboard() {
                           ['Lieu', selectedAncien.lieu || '—'],
                           ['Date de formation', selectedAncien.date_formation ? new Date(selectedAncien.date_formation).toLocaleDateString('fr-FR') : '—'],
                           ['N° de brevet', selectedAncien.numero || '—'],
-                          ['Généré depuis', `${Math.max(0, Math.floor((Date.now() - new Date(selectedAncien.created_at).getTime()) / 86400000))} jour(s)`],
+                          ['Date de délivrance', selectedAncien.created_at ? new Date(selectedAncien.created_at).toLocaleDateString('fr-FR') : '—'],
                         ].map(([label, value]) => (
                           <div key={label} style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '10px 14px' }}>
                             <span style={{ color: T.textSub, fontSize: '12px', fontWeight: '600' }}>{label}</span>
@@ -741,16 +741,22 @@ export default function AdminDashboard() {
                       </div>
 
                       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        {selectedAncien.telephone && (
-                          <Btn onClick={() => window.open(`https://wa.me/${(selectedAncien.telephone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour ${selectedAncien.participant},`)}`, '_blank')} color="#25D366" textColor="#fff" style={{ flex: 1 }}>
-                            WhatsApp
-                          </Btn>
-                        )}
-                        {selectedAncien.email && (
-                          <Btn onClick={() => window.open(`mailto:${selectedAncien.email}?subject=IZI360&body=Bonjour ${selectedAncien.participant},`, '_blank')} color="#3B82F6" style={{ flex: 1 }}>
-                            Email
-                          </Btn>
-                        )}
+                        <Btn
+                          onClick={() => selectedAncien.telephone
+                            ? window.open(`https://wa.me/${(selectedAncien.telephone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour ${selectedAncien.participant},`)}`, '_blank')
+                            : msg('Aucun téléphone enregistré pour ce participant')}
+                          color="#25D366" textColor="#fff" style={{ flex: 1, opacity: selectedAncien.telephone ? 1 : 0.5 }}
+                        >
+                          WhatsApp
+                        </Btn>
+                        <Btn
+                          onClick={() => selectedAncien.email
+                            ? window.open(`mailto:${selectedAncien.email}?subject=IZI360&body=Bonjour ${selectedAncien.participant},`, '_blank')
+                            : msg('Aucun email enregistré pour ce participant')}
+                          color="#3B82F6" style={{ flex: 1, opacity: selectedAncien.email ? 1 : 0.5 }}
+                        >
+                          Email
+                        </Btn>
                       </div>
                     </div>
                   ) : brevets.length === 0 ? (
