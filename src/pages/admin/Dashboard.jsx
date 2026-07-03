@@ -78,6 +78,7 @@ export default function AdminDashboard() {
   const [selectedAncien, setSelectedAncien] = useState(null)
   const [sidebarOuverte, setSidebarOuverte] = useState(true)
   const [showFormationModal, setShowFormationModal] = useState(false)
+  const [formateurDemandes, setFormateurDemandes] = useState([])
   const [nouvelleFormation, setNouvelleFormation] = useState({ slug: '', titre: '', description: '', lieu: '', duree: '', dateDebut: '', formateur: '' })
   const [selectedBrevet, setSelectedBrevet] = useState(null)
   const [editBrevet, setEditBrevet] = useState(null)
@@ -93,7 +94,7 @@ export default function AdminDashboard() {
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [s, as, u, m, bu, bs, par, fo, br] = await Promise.all([
+      const [s, as, u, m, bu, bs, par, fo, br, fd] = await Promise.all([
         fetch(`${API}/admin/stats`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/stats/advanced`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/users`, { headers }).then(r => r.json()),
@@ -103,8 +104,9 @@ export default function AdminDashboard() {
         fetch(`${API}/beautycrm/parrainage`, { headers }).then(r => r.json()),
         fetch(`${API}/formations/all`, { headers }).then(r => r.json()),
         fetch(`${API}/brevets/all`, { headers }).then(r => r.json()),
+        fetch(`${API}/formateurs/demandes`, { headers }).then(r => r.json()),
       ])
-      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs); setFormations(Array.isArray(fo) ? fo : []); setBrevets(Array.isArray(br) ? br : [])
+      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs); setFormations(Array.isArray(fo) ? fo : []); setBrevets(Array.isArray(br) ? br : []); setFormateurDemandes(Array.isArray(fd) ? fd : [])
     } catch (e) { console.error(e) }
     setLoading(false)
   }
@@ -203,6 +205,20 @@ export default function AdminDashboard() {
     fetchAll()
   }
 
+  const validerFormateur = async (id, nom) => {
+    const res = await fetch(`${API}/formateurs/demandes/${id}/valider`, { method: 'PATCH', headers })
+    const data = await res.json()
+    msg(res.ok ? `✅ ${data.message}` : data.message)
+    if (res.ok) fetchAll()
+  }
+  const refuserFormateur = async (id) => {
+    if (!window.confirm('Refuser cette demande formateur ?')) return
+    const res = await fetch(`${API}/formateurs/demandes/${id}/refuser`, { method: 'PATCH', headers })
+    const data = await res.json()
+    msg(res.ok ? `✅ ${data.message}` : data.message)
+    if (res.ok) fetchAll()
+  }
+
   const navItems = [
     { key: 'stats', label: 'Dashboard', icon: '📊' },
     { key: 'users', label: 'Utilisateurs', icon: '👥' },
@@ -212,6 +228,7 @@ export default function AdminDashboard() {
     { key: 'beautycrm', label: 'Beauty CRM', icon: '💄' },
     { key: 'parrainage', label: 'Parrainage', icon: '🔗' },
     { key: 'formations', label: 'Formations', icon: '🎓' },
+    { key: 'autorisations', label: 'Autorisations & Accès', icon: '🔐' },
   ]
 
   const inp = { width: '100%', padding: '10px 12px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }
@@ -1059,6 +1076,50 @@ export default function AdminDashboard() {
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
             <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Envoyer une notification</h1>
+          </div>
+        )}
+
+        {/* AUTORISATIONS & ACCES */}
+        {!loading && page === 'autorisations' && (
+          <div>
+            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
+            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px' }}>Autorisations & Accès ({formateurDemandes.length})</h1>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {formateurDemandes.length === 0 && (
+                <p style={{ color: T.textSub, fontSize: '14px' }}>Aucune demande formateur pour le moment.</p>
+              )}
+              {formateurDemandes.map(d => (
+                <Card key={d.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <div style={{ color: T.text, fontWeight: '600', fontSize: '15px' }}>{d.nom}</div>
+                      <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{d.email}{d.telephone ? ` · ${d.telephone}` : ''}</div>
+                      <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>Formation demandée : {d.formation_titre || '—'}</div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: '10px', padding: '2px 8px', borderRadius: '4px', fontWeight: '600',
+                          backgroundColor: d.statut === 'validee' ? 'rgba(29,158,117,0.15)' : d.statut === 'refusee' ? 'rgba(226,75,74,0.15)' : 'rgba(245,158,11,0.15)',
+                          color: d.statut === 'validee' ? T.accent : d.statut === 'refusee' ? '#E24B4A' : '#F59E0B',
+                        }}>
+                          {d.statut === 'validee' ? '✓ Validée' : d.statut === 'refusee' ? '✗ Refusée' : '⏳ En attente'}
+                        </span>
+                      </div>
+                    </div>
+                    {d.statut === 'en_attente' && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <Btn onClick={() => validerFormateur(d.id, d.nom)} color="rgba(29,158,117,0.15)" textColor={T.accent}>
+                          Valider
+                        </Btn>
+                        <Btn onClick={() => refuserFormateur(d.id)} color="rgba(226,75,74,0.15)" textColor="#E24B4A">
+                          Refuser
+                        </Btn>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
       </div>
