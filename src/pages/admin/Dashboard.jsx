@@ -75,6 +75,7 @@ export default function AdminDashboard() {
   const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
   const [brevets, setBrevets] = useState([])
   const [showAncienModal, setShowAncienModal] = useState(false)
+  const [selectedAncien, setSelectedAncien] = useState(null)
   const [sidebarOuverte, setSidebarOuverte] = useState(true)
   const [showFormationModal, setShowFormationModal] = useState(false)
   const [nouvelleFormation, setNouvelleFormation] = useState({ slug: '', titre: '', description: '', lieu: '', duree: '', dateDebut: '', formateur: '' })
@@ -712,20 +713,54 @@ export default function AdminDashboard() {
               <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
                 <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '480px', border: `1px solid ${T.border}`, maxHeight: '80vh', overflowY: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>👤 Anciens participants</h2>
-                    <button onClick={() => setShowAncienModal(false)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>
+                      👤 {selectedAncien ? selectedAncien.participant : 'Anciens participants'}
+                    </h2>
+                    <button onClick={() => { setShowAncienModal(false); setSelectedAncien(null) }} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
                   </div>
-                  {brevets.length === 0 ? (
+
+                  {selectedAncien ? (
+                    <div>
+                      <button onClick={() => setSelectedAncien(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Retour à la liste</button>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                        {[
+                          ['Téléphone', selectedAncien.telephone || '—'],
+                          ['Email', selectedAncien.email || '—'],
+                          ['Formation suivie', selectedAncien.formation || '—'],
+                          ['Lieu', selectedAncien.lieu || '—'],
+                          ['Date de formation', selectedAncien.date_formation ? new Date(selectedAncien.date_formation).toLocaleDateString('fr-FR') : '—'],
+                          ['N° de brevet', selectedAncien.numero || '—'],
+                          ['Généré depuis', `${Math.max(0, Math.floor((Date.now() - new Date(selectedAncien.created_at).getTime()) / 86400000))} jour(s)`],
+                        ].map(([label, value]) => (
+                          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '10px 14px' }}>
+                            <span style={{ color: T.textSub, fontSize: '12px', fontWeight: '600' }}>{label}</span>
+                            <span style={{ color: T.text, fontSize: '13px', fontWeight: '600' }}>{value}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        {selectedAncien.telephone && (
+                          <Btn onClick={() => window.open(`https://wa.me/${(selectedAncien.telephone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour ${selectedAncien.participant},`)}`, '_blank')} color="#25D366" textColor="#fff" style={{ flex: 1 }}>
+                            WhatsApp
+                          </Btn>
+                        )}
+                        {selectedAncien.email && (
+                          <Btn onClick={() => window.open(`mailto:${selectedAncien.email}?subject=IZI360&body=Bonjour ${selectedAncien.participant},`, '_blank')} color="#3B82F6" style={{ flex: 1 }}>
+                            Email
+                          </Btn>
+                        )}
+                      </div>
+                    </div>
+                  ) : brevets.length === 0 ? (
                     <p style={{ color: T.textSub, fontSize: '13px' }}>Aucun ancien participant pour l'instant.</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {Array.from(new Map(brevets.map(b => [`${b.participant}|${b.telephone}`, b])).values()).map(b => (
                         <div
                           key={b.id}
-                          onClick={() => {
-                            setShowAncienModal(false)
-                            ouvrirBrevet(b)
-                          }}
+                          onClick={() => setSelectedAncien(b)}
                           style={{ backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '10px', padding: '12px 14px', cursor: 'pointer' }}
                         >
                           <div style={{ color: T.text, fontWeight: '600', fontSize: '14px' }}>{b.participant}</div>
