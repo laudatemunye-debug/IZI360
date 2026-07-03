@@ -43,6 +43,7 @@ export default function AdminDashboard() {
   const [formations, setFormations] = useState([])
   const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
   const [brevets, setBrevets] = useState([])
+  const [sidebarOuverte, setSidebarOuverte] = useState(true)
   const navigate = useNavigate()
 
   const token = localStorage.getItem('izi360_token')
@@ -124,6 +125,7 @@ export default function AdminDashboard() {
     <div style={{ minHeight: '100vh', backgroundColor: T.bg, display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
 
       {/* Sidebar */}
+      {sidebarOuverte && (
       <div style={{ width: '220px', backgroundColor: T.card, borderRight: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 10 }}>
         <div style={{ padding: '20px 16px', borderBottom: `1px solid ${T.border}` }}>
           <div style={{ color: T.text, fontSize: '18px', fontWeight: '800' }}>IZI<span style={{ color: T.accent }}>360</span></div>
@@ -131,7 +133,7 @@ export default function AdminDashboard() {
         </div>
         <nav style={{ padding: '12px 8px', flex: 1 }}>
           {navItems.map(item => (
-            <button key={item.key} onClick={() => setPage(item.key)} style={{
+            <button key={item.key} onClick={() => { setPage(item.key); if (item.key === 'formations') setSidebarOuverte(false) }} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
               padding: '10px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
               backgroundColor: page === item.key ? T.accentDim : 'transparent',
@@ -153,9 +155,19 @@ export default function AdminDashboard() {
           </Btn>
         </div>
       </div>
+      )}
 
       {/* Contenu */}
-      <div style={{ marginLeft: '220px', flex: 1, padding: '32px', maxWidth: 'calc(100vw - 220px)' }}>
+      <div style={{ marginLeft: sidebarOuverte ? '220px' : '0', flex: 1, padding: '32px', maxWidth: sidebarOuverte ? 'calc(100vw - 220px)' : '100vw' }}>
+        {!sidebarOuverte && (
+          <button onClick={() => setSidebarOuverte(true)} style={{
+            position: 'fixed', top: '20px', left: '20px', zIndex: 20,
+            width: '40px', height: '40px', borderRadius: '10px', border: `1px solid ${T.border}`,
+            backgroundColor: T.card, color: T.text, fontSize: '18px', cursor: 'pointer',
+          }}>
+            ☰
+          </button>
+        )}
         {message && <div style={{ backgroundColor: T.accentDim, border: `1px solid rgba(29,158,117,0.3)`, borderRadius: '8px', padding: '10px 16px', marginBottom: '20px', color: T.accent, fontSize: '14px' }}>{message}</div>}
         {loading && <p style={{ color: T.textSub }}>Chargement...</p>}
 
