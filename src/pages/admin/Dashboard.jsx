@@ -38,7 +38,6 @@ export default function AdminDashboard() {
   const [emailForm, setEmailForm] = useState({ user_id: '', subject: '', message: '', tous: false })
   const [showNotifModal, setShowNotifModal] = useState(false)
   const [parrainage, setParrainage] = useState([])
-  const [parrainage, setParrainage] = useState([])
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const navigate = useNavigate()
@@ -58,7 +57,6 @@ export default function AdminDashboard() {
         fetch(`${API}/admin/modules`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/users`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/stats`, { headers }).then(r => r.json()),
-        fetch(`${API}/beautycrm/parrainage`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/parrainage`, { headers }).then(r => r.json()),
       ])
       setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs)
@@ -111,7 +109,6 @@ export default function AdminDashboard() {
     { key: 'modules', label: 'Modules', icon: '📦' },
     { key: 'notifications', label: 'Notifications', icon: '📧' },
     { key: 'beautycrm', label: 'Beauty CRM', icon: '💄' },
-    { key: 'parrainage', label: 'Parrainage', icon: '🔗' },
     { key: 'parrainage', label: 'Parrainage', icon: '🔗' },
   ]
 
@@ -580,168 +577,14 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* PARRAINAGE */}
-        {!loading && page === 'parrainage' && (
-          <div>
-            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Parrainage BeautyCRM</h1>
-            
-            <Card style={{ marginBottom: '16px', display: 'flex', gap: '24px' }}>
-              <div><div style={{ fontSize: '2rem', fontWeight: '700', color: T.accent }}>{parrainage.length}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Parrains actifs</div></div>
-              <div><div style={{ fontSize: '2rem', fontWeight: '700', color: '#A78BFA' }}>{parrainage.reduce((a,p) => a + parseInt(p.nb_filleuls||0), 0)}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Total filleuls</div></div>
-            </Card>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: T.card, borderRadius: '12px', overflow: 'hidden' }}>
-                <thead>
-                  <tr style={{ backgroundColor: T.bg2 }}>
-                    {['Parrain', 'Email', 'Code', 'Filleuls', 'Détails'].map(h => (
-                      <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', fontSize: '12px' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {parrainage.map(p => (
-                    <tr key={p.id} style={{ borderBottom: `1px solid ${T.border}` }}>
-                      <td style={{ padding: '12px 14px', color: T.text, fontWeight: '600' }}>{p.nom || '—'}</td>
-                      <td style={{ padding: '12px 14px', color: T.textSub }}>{p.email}</td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <span style={{ fontFamily: 'monospace', backgroundColor: T.accentDim, color: T.accent, padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>{p.referral_code}</span>
-                      </td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <span style={{ backgroundColor: parseInt(p.nb_filleuls)>0 ? 'rgba(167,139,250,0.15)' : T.bg, color: parseInt(p.nb_filleuls)>0 ? '#A78BFA' : T.textSub, padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>
-                          {p.nb_filleuls} filleul{parseInt(p.nb_filleuls)>1?'s':''}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 14px', color: T.textSub, fontSize: '12px' }}>
-                        {p.filleuls ? p.filleuls.map((f,i) => (
-                          <div key={i}>{f.nom || f.email}</div>
-                        )) : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                  {parrainage.length === 0 && (
-                    <tr><td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun parrainage enregistré</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {/* NOTIFICATIONS */}
         {!loading && page === 'notifications' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
             <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Envoyer une notification</h1>
-            <Card>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-                {/* Cible */}
-                <div>
-                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '8px' }}>Envoyer à</label>
-                  <select
-                    value={emailForm.module_filter ? `module_${emailForm.module_filter}` : emailForm.tous ? 'tous' : 'un'}
-                    onChange={e => {
-                      const v = e.target.value
-                      if (v === 'un') setEmailForm(p => ({ ...p, tous: false, module_filter: '', user_id: '' }))
-                      else if (v === 'tous') setEmailForm(p => ({ ...p, tous: true, module_filter: '', user_id: '' }))
-                      else setEmailForm(p => ({ ...p, tous: true, module_filter: v.replace('module_', ''), user_id: '' }))
-                    }}
-                    style={{ width: '100%', padding: '10px 14px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
-                  >
-                    <option value="un">— Un utilisateur spécifique —</option>
-                    <option value="tous">Tous les utilisateurs</option>
-                    <optgroup label="Par application">
-                      {modules.map(m => (
-                        <option key={m.code} value={`module_${m.code}`}>{m.nom}</option>
-                      ))}
-                    </optgroup>
-                  </select>
-                </div>
-
-                {/* Utilisateur spécifique */}
-                {!emailForm.tous && !emailForm.module_filter && (
-                  <div>
-                    <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Destinataire</label>
-                    <select style={inp} value={emailForm.user_id} onChange={e => setEmailForm(p => ({ ...p, user_id: e.target.value }))}>
-                      <option value="">— Sélectionner un utilisateur —</option>
-                      {users.filter(u => u.verified).map(u => <option key={u.id} value={u.id}>{u.nom} ({u.email})</option>)}
-                    </select>
-                  </div>
-                )}
-
-                {/* Info filtre module */}
-                {emailForm.module_filter && (
-                  <div style={{ backgroundColor: T.accentDim, borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: T.accent }}>
-                    📦 Envoi aux utilisateurs ayant une licence <strong>{modules.find(m => m.code === emailForm.module_filter)?.nom}</strong>
-                  </div>
-                )}
-
-                <div>
-                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Sujet</label>
-                  <input style={inp} type="text" placeholder="Objet de l'email..." value={emailForm.subject} onChange={e => setEmailForm(p => ({ ...p, subject: e.target.value }))} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Message</label>
-                  <textarea style={{ ...inp, minHeight: '120px', resize: 'vertical' }} placeholder="Contenu du message..." value={emailForm.message} onChange={e => setEmailForm(p => ({ ...p, message: e.target.value }))} />
-                </div>
-
-                <Btn onClick={sendEmail} style={{ padding: '12px', fontSize: '14px' }}>
-                  📧 {emailForm.module_filter ? `Envoyer aux utilisateurs ${modules.find(m=>m.code===emailForm.module_filter)?.nom}` : emailForm.tous ? `Envoyer à tous (${users.filter(u => u.verified && u.active).length})` : 'Envoyer'}
-                </Btn>
-              </div>
-            </Card>
           </div>
         )}
       </div>
     </div>
-  )
-}
-
-function ModuleCard({ module: m, onUpdate }) {
-  const [pm, setPm] = useState(m.prix_mensuel)
-  const [pa, setPa] = useState(m.prix_annuel)
-  const [trial, setTrial] = useState(m.trial_days || 14)
-  const [saved, setSaved] = useState(false)
-
-  const save = () => { onUpdate(m.id, pm, pa, m.actif, trial); setSaved(true); setTimeout(() => setSaved(false), 2000) }
-
-  return (
-    <Card>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <div style={{ color: T.text, fontWeight: '700', fontSize: '15px' }}>{m.nom}</div>
-          <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{m.description}</div>
-          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: m.actif ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: m.actif ? T.accent : '#E24B4A', fontWeight: '600', marginTop: '6px', display: 'inline-block' }}>
-            {m.actif ? 'Actif' : 'Désactivé'}
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div>
-            <label style={{ fontSize: '11px', color: T.textSub, display: 'block', marginBottom: '4px' }}>Prix/mois ($)</label>
-            <input type="number" value={pm} onChange={e => setPm(e.target.value)}
-              style={{ width: '80px', padding: '6px 8px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', color: T.text, fontSize: '13px', fontFamily: 'inherit' }} />
-          </div>
-          <div>
-            <label style={{ fontSize: '11px', color: T.textSub, display: 'block', marginBottom: '4px' }}>Jours d'essai</label>
-            <input type="number" value={trial} onChange={e => setTrial(e.target.value)}
-              style={{ width: '80px', padding: '6px 8px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', color: T.text, fontSize: '13px', fontFamily: 'inherit' }} />
-          </div>
-          <div>
-            <label style={{ fontSize: '11px', color: T.textSub, display: 'block', marginBottom: '4px' }}>Prix/an ($)</label>
-            <input type="number" value={pa} onChange={e => setPa(e.target.value)}
-              style={{ width: '80px', padding: '6px 8px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', color: T.text, fontSize: '13px', fontFamily: 'inherit' }} />
-          </div>
-          <Btn onClick={save} color={saved ? 'rgba(29,158,117,0.15)' : T.accent} textColor={saved ? T.accent : '#fff'}>
-            {saved ? 'Sauvegardé ✓' : 'Sauvegarder'}
-          </Btn>
-          <Btn onClick={() => onUpdate(m.id, pm, pa, !m.actif)} color={m.actif ? 'rgba(226,75,74,0.15)' : 'rgba(29,158,117,0.15)'} textColor={m.actif ? '#E24B4A' : T.accent}>
-            {m.actif ? 'Désactiver' : 'Activer'}
-          </Btn>
-        </div>
-      </div>
-    </Card>
   )
 }
