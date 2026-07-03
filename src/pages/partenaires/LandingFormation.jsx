@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
+import QRCode from 'qrcode'
+
+const SITE_URL = 'https://izi-360.vercel.app'
 
 const MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
 
@@ -36,6 +39,7 @@ export default function LandingFormation() {
   const [brevet, setBrevet] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState('')
   const [formation, setFormation] = useState(null)
   const [nom, setNom] = useState('')
   const [telephone, setTelephone] = useState('')
@@ -102,6 +106,15 @@ export default function LandingFormation() {
       }
     }
     chargerBrevet()
+  }, [id])
+
+  useEffect(() => {
+    if (!id) return
+    QRCode.toDataURL(`${SITE_URL}/formation/champignon?id=${id}`, {
+      width: 300,
+      margin: 1,
+      color: { dark: '#1A1D27', light: '#FFFFFF' },
+    }).then(setQrDataUrl).catch(() => {})
   }, [id])
 
   if (loading) {
@@ -209,6 +222,20 @@ export default function LandingFormation() {
           >
             {formatPeriode(brevet.date_formation, brevet.duree)}
           </div>
+          {qrDataUrl && (
+            <div
+              style={{
+                position: 'absolute',
+                left: '81.3%',
+                top: '78.2%',
+                width: '13.7%',
+                height: '17.0%',
+                backgroundColor: '#FFFFFF',
+              }}
+            >
+              <img src={qrDataUrl} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
+          )}
         </div>
         <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '11px', color: '#4B5563' }}>
           N° {brevet.id}
