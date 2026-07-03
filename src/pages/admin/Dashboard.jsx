@@ -42,6 +42,7 @@ export default function AdminDashboard() {
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const [formations, setFormations] = useState([])
   const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
+  const [brevets, setBrevets] = useState([])
   const navigate = useNavigate()
 
   const token = localStorage.getItem('izi360_token')
@@ -52,7 +53,7 @@ export default function AdminDashboard() {
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [s, as, u, m, bu, bs, par, fo] = await Promise.all([
+      const [s, as, u, m, bu, bs, par, fo, br] = await Promise.all([
         fetch(`${API}/admin/stats`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/stats/advanced`, { headers }).then(r => r.json()),
         fetch(`${API}/admin/users`, { headers }).then(r => r.json()),
@@ -61,8 +62,9 @@ export default function AdminDashboard() {
         fetch(`${API}/beautycrm/stats`, { headers }).then(r => r.json()),
         fetch(`${API}/beautycrm/parrainage`, { headers }).then(r => r.json()),
         fetch(`${API}/formations/all`, { headers }).then(r => r.json()),
+        fetch(`${API}/brevets/all`, { headers }).then(r => r.json()),
       ])
-      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs); setFormations(Array.isArray(fo) ? fo : [])
+      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs); setFormations(Array.isArray(fo) ? fo : []); setBrevets(Array.isArray(br) ? br : [])
     } catch (e) { console.error(e) }
     setLoading(false)
   }
@@ -590,6 +592,24 @@ export default function AdminDashboard() {
               <Btn onClick={() => navigate('/admin/brevet/champignon')} style={{ padding: '10px 20px' }}>
                 🍄 Générer un brevet
               </Btn>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+              <Card>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎓</div>
+                <div style={{ fontSize: '26px', fontWeight: '800', color: T.accent }}>{formations.length}</div>
+                <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Formations</div>
+              </Card>
+              <Card>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🍄</div>
+                <div style={{ fontSize: '26px', fontWeight: '800', color: '#F59E0B' }}>{brevets.length}</div>
+                <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Brevets générés</div>
+              </Card>
+              <Card>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>👥</div>
+                <div style={{ fontSize: '26px', fontWeight: '800', color: '#A78BFA' }}>{formations.reduce((a, f) => a + parseInt(f.nb_inscrits || 0), 0)}</div>
+                <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Inscrits au total</div>
+              </Card>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
