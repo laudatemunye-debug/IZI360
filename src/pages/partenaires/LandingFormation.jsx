@@ -129,13 +129,67 @@ export default function LandingFormation() {
   if (notFound || !brevet) {
     return (
       <PageShell onRetour={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}>
-        <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <div style={{ textAlign: 'center', padding: '80px 20px 32px' }}>
           <div style={{ fontSize: '13px', letterSpacing: '2px', color: '#EF4444', textTransform: 'uppercase', marginBottom: '8px' }}>
             ❌ Brevet introuvable
           </div>
           <p style={{ color: '#9CA3AF', fontSize: '14px', maxWidth: '400px', margin: '0 auto' }}>
             Ce code QR ne correspond à aucun brevet enregistré. Vérifie que tu as bien scanné un brevet officiel IZI360.
           </p>
+        </div>
+
+        <div style={{ maxWidth: '600px', margin: '0 auto 40px', padding: '0 20px' }}>
+          <div
+            style={{
+              backgroundColor: '#1A1D27',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '20px',
+              padding: '32px',
+              textAlign: 'center',
+              marginBottom: '20px',
+            }}
+          >
+            <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
+              📚 PROCHAINE SESSION
+            </div>
+            <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '12px' }}>Inscrivez-vous a la formation</h2>
+            {inscrit ? (
+              <p style={{ color: '#10B981', fontSize: '14px' }}>✅ Inscription enregistree, nous vous contacterons bientot.</p>
+            ) : (
+              <form onSubmit={soumettreInscription} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '340px', margin: '0 auto' }}>
+                <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom complet *" style={inputStyle} />
+                <input value={telephone} onChange={e => setTelephone(e.target.value)} placeholder="Telephone *" style={inputStyle} />
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inputStyle} />
+                <input value={ville} onChange={e => setVille(e.target.value)} placeholder="Ville" style={inputStyle} />
+                {erreurInscription && <div style={{ color: '#F87171', fontSize: '12px' }}>{erreurInscription}</div>}
+                <button type="submit" disabled={envoi} style={btnDownload}>{envoi ? 'Envoi...' : "S'inscrire"}</button>
+              </form>
+            )}
+          </div>
+
+          <div
+            style={{
+              backgroundColor: '#1A1D27',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '20px',
+              padding: '32px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
+              💼 GÉREZ VOTRE ACTIVITÉ
+            </div>
+            <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '12px' }}>
+              Organisez votre activité avec Beauty CRM
+            </h2>
+            <p style={{ color: '#9CA3AF', fontSize: '14px', lineHeight: 1.6, marginBottom: '20px' }}>
+              Gérez votre facturation, suivez votre stock et centralisez vos clients, le tout dans une seule
+              application pensée pour organiser votre entreprise.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/app/beauty-crm" style={btnDownload}>🎁 Essai gratuit 14 jours</Link>
+            </div>
+          </div>
         </div>
       </PageShell>
     )
