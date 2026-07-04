@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import logoLight from '../assets/logo-light.png'
+import beautyCrmLogo from '../assets/beautycrm-logo.jpg'
 
 const API = 'https://izi360-backend.vercel.app/api'
 
@@ -153,8 +154,8 @@ export default function Accueil() {
                 </div>
               )}
 
-              <div style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: theme.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', marginBottom: '16px' }}>
-                {mod.emoji}
+              <div style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: mod.id === 'beautycrm' ? 'transparent' : theme.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', marginBottom: '16px', overflow: 'hidden' }}>
+                {mod.id === 'beautycrm' ? <img src={beautyCrmLogo} alt="Beauty CRM" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} /> : mod.emoji}
               </div>
 
               <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: theme.text, marginBottom: '6px' }}>{mod.nom}</h2>

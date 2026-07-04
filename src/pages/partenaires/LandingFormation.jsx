@@ -187,7 +187,7 @@ export default function LandingFormation() {
               application pensée pour organiser votre entreprise.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link to="/app/beauty-crm" style={btnDownload}>🎁 Essai gratuit 14 jours</Link>
+              <a href="https://beautycrm-web.vercel.app?ref=LAUD-K99N" target="_blank" rel="noopener noreferrer" style={btnDownload}>Télécharger gratuitement</a>
             </div>
           </div>
         </div>
@@ -356,7 +356,7 @@ export default function LandingFormation() {
           </ul>
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/app/beauty-crm" style={btnDownload}>🎁 Essai gratuit 14 jours</Link>
+            <a href="https://beautycrm-web.vercel.app?ref=LAUD-K99N" target="_blank" rel="noopener noreferrer" style={btnDownload}>Télécharger gratuitement</a>
           </div>
         </div>
 
