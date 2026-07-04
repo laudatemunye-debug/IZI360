@@ -121,6 +121,10 @@ export default function FormationChampignon() {
 
   const navigate = useNavigate()
 
+  // Largeur dispo pour le nom (px) = 75.55% de 1200px (largeur du certificat)
+  const NOM_ZONE_WIDTH = 906
+  const nomFontSize = Math.max(18, Math.min(40, NOM_ZONE_WIDTH / (Math.max(participant.length, 1) * 0.62)))
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0F1117', padding: '32px', color: '#E5E7EB' }}>
       <button
@@ -227,12 +231,13 @@ export default function FormationChampignon() {
               height: '8.4%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'flex-start',
               fontFamily: '"Kalam", cursive',
               fontWeight: 700,
-              fontSize: '40px',
+              fontSize: `${nomFontSize}px`,
               color: '#111827',
               overflow: 'hidden',
+              whiteSpace: 'nowrap',
               zIndex: 2,
             }}
           >
@@ -294,7 +299,7 @@ export default function FormationChampignon() {
               textAlign: 'center',
               fontFamily: 'Arial, sans-serif',
               fontStyle: 'italic',
-              fontSize: '15px',
+              fontSize: '19px',
               fontWeight: 'bold',
               color: '#111827',
               overflow: 'hidden',
