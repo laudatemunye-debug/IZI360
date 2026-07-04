@@ -434,9 +434,15 @@ export default function AdminDashboard() {
                       {u.licences && <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Modules : {u.licences.map(l => l.module).join(', ') || 'Aucun'}</div>}
                     </div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <Btn onClick={() => setRole(u.id, u.role === 'admin' ? 'user' : 'admin')} color="rgba(245,158,11,0.15)" textColor="#F59E0B">
-                        {u.role === 'admin' ? '→ User' : '→ Admin'}
-                      </Btn>
+                      <select
+                        value={u.role}
+                        onChange={(e) => setRole(u.id, e.target.value)}
+                        style={{ padding: '6px 10px', backgroundColor: 'rgba(245,158,11,0.15)', border: 'none', borderRadius: '8px', color: '#F59E0B', fontSize: '12px', fontWeight: '600', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+                      >
+                        <option value="user">Utilisateur</option>
+                        <option value="formateur">Formateur</option>
+                        <option value="admin">Admin</option>
+                      </select>
                       <Btn onClick={() => toggleUser(u.id)} color={u.active ? 'rgba(226,75,74,0.15)' : 'rgba(29,158,117,0.15)'} textColor={u.active ? '#E24B4A' : T.accent}>
                         {u.active ? 'Désactiver' : 'Activer'}
                       </Btn>
