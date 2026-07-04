@@ -110,7 +110,9 @@ export default function FormationChampignon() {
     if (!certificateRef.current || pdfProgress) return
     try {
       setPdfProgress('canvas')
-      const canvas = await html2canvas(certificateRef.current, { scale: 3, backgroundColor: '#ffffff' })
+      const isSmallScreen = window.innerWidth < 600
+      const scale = isSmallScreen ? 1.5 : 3
+      const canvas = await html2canvas(certificateRef.current, { scale, backgroundColor: '#ffffff', useCORS: true })
       setPdfProgress('pdf')
       const imgData = canvas.toDataURL('image/png')
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
@@ -122,6 +124,9 @@ export default function FormationChampignon() {
       pdf.addImage(imgData, 'PNG', 0, y, imgWidth, imgHeight)
       setPdfProgress('download')
       pdf.save(`Brevet_Champignon_${participant.replace(/\s+/g, '_')}.pdf`)
+    } catch (e) {
+      console.error('Erreur génération PDF', e)
+      alert("Le PDF n'a pas pu être généré sur cet appareil. Réessayez, ou utilisez un autre navigateur.")
     } finally {
       setTimeout(() => setPdfProgress(null), 600)
     }
