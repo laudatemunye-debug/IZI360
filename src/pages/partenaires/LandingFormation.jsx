@@ -232,9 +232,9 @@ export default function LandingFormation() {
               height: '7.7%',
               display: 'flex',
               alignItems: 'center',
-              fontFamily: '"Arial Black", Arial, sans-serif',
+              fontFamily: '"Kalam", cursive',
               fontSize: 'clamp(11px, 3.3vw, 23px)',
-              fontWeight: 900,
+              fontWeight: 700,
               color: '#111827',
               overflow: 'hidden',
             }}
@@ -278,6 +278,27 @@ export default function LandingFormation() {
             }}
           >
             {formatPeriode(brevet.date_formation, brevet.duree)}
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              left: '21.5%',
+              top: '74.5%',
+              width: '39%',
+              height: '3.5%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              fontFamily: 'Arial, sans-serif',
+              fontStyle: 'italic',
+              fontSize: 'clamp(5px, 0.9vw, 11px)',
+              fontWeight: 'bold',
+              color: '#111827',
+              overflow: 'hidden',
+            }}
+          >
+            Délivré à {brevet.lieu}, le {brevet.created_at ? new Date(brevet.created_at).toLocaleDateString('fr-FR') : ''}
           </div>
           {qrDataUrl && (
             <div
