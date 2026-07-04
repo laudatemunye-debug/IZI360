@@ -124,7 +124,7 @@ export default function FormationChampignon() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0F1117', padding: '32px', color: '#E5E7EB' }}>
       <button
-        onClick={() => navigate('/admin')}
+        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/admin'))}
         style={{
           background: 'none',
           border: 'none',
