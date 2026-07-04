@@ -95,7 +95,7 @@ export default function Accueil() {
     <div style={{ minHeight: '100vh', backgroundColor: theme.bg, transition: 'all 0.3s ease', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
 
       {/* Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.card, position: 'sticky', top: 0, zIndex: 100 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', rowGap: '8px', padding: 'clamp(10px,3vw,16px) clamp(14px,4vw,32px)', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.card, position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: '#FFFFFF', border: `2px solid ${theme.accent}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <img src={logoLight} alt="IZI360" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
@@ -126,7 +126,7 @@ export default function Accueil() {
       )}
 
       <div style={{ textAlign: 'center', padding: '40px 20px 28px' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: '800', color: theme.text, marginBottom: '8px', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: 'clamp(1.4rem, 5vw, 2rem)', fontWeight: '800', color: theme.text, marginBottom: '8px', letterSpacing: '-0.02em' }}>
           Vos modules <span style={{ color: theme.accent }}>IZI360</span>
         </h1>
         <p style={{ color: theme.textSub, fontSize: '0.95rem' }}>

@@ -151,7 +151,7 @@ export default function EspaceFormateur() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: T.bg, fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
-      <div style={{ padding: '20px 16px', borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: 'clamp(12px,3vw,20px) 16px', borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ color: T.text, fontSize: '18px', fontWeight: '800' }}>IZI<span style={{ color: T.accent }}>360</span></div>
           <div style={{ color: T.accent, fontSize: '11px', fontWeight: '600', marginTop: '2px' }}>ESPACE FORMATEUR{user.formation_titre ? ` · ${user.formation_titre}` : ''}</div>
@@ -167,7 +167,7 @@ export default function EspaceFormateur() {
         </div>
       )}
 
-      <div style={{ padding: '32px', maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ padding: 'clamp(14px,4vw,32px)', maxWidth: '1100px', margin: '0 auto' }}>
         {page === 'accueil' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <Card onClick={() => navigate('/admin/brevet/champignon')} style={{ cursor: 'pointer', textAlign: 'center', padding: '32px 20px' }}>
@@ -223,7 +223,7 @@ export default function EspaceFormateur() {
         {page === 'brevets' && (
           <div>
             <button onClick={() => setPage('accueil')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Retour</button>
-            <h1 style={{ color: T.text, fontSize: '1.4rem', fontWeight: '700', marginBottom: '16px' }}>Brevet généré ({brevets.length})</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.1rem, 4vw, 1.4rem)', fontWeight: '700', marginBottom: '16px' }}>Brevet généré ({brevets.length})</h1>
 
             {loading && <p style={{ color: T.textSub }}>Chargement...</p>}
 

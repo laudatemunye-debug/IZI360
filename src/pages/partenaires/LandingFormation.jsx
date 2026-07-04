@@ -152,7 +152,7 @@ export default function LandingFormation() {
             <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
               📚 PROCHAINE SESSION
             </div>
-            <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '12px' }}>Inscrivez-vous a la formation</h2>
+            <h2 style={{ fontSize: 'clamp(1.2rem, 4.5vw, 1.375rem)', fontWeight: 'bold', marginBottom: '12px' }}>Inscrivez-vous a la formation</h2>
             {inscrit ? (
               <p style={{ color: '#10B981', fontSize: '14px' }}>✅ Inscription enregistree, nous vous contacterons bientot.</p>
             ) : (
@@ -179,7 +179,7 @@ export default function LandingFormation() {
             <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
               💼 GÉREZ VOTRE ACTIVITÉ
             </div>
-            <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '12px' }}>
+            <h2 style={{ fontSize: 'clamp(1.2rem, 4.5vw, 1.375rem)', fontWeight: 'bold', marginBottom: '12px' }}>
               Organisez votre activité avec Beauty CRM
             </h2>
             <p style={{ color: '#9CA3AF', fontSize: '14px', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -201,7 +201,7 @@ export default function LandingFormation() {
         <div style={{ fontSize: '13px', letterSpacing: '2px', color: '#10B981', textTransform: 'uppercase', marginBottom: '8px' }}>
           ✅ Brevet vérifié
         </div>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', maxWidth: '700px', margin: '0 auto', lineHeight: 1.3 }}>
+        <h1 style={{ fontSize: 'clamp(1.4rem, 5.5vw, 1.75rem)', fontWeight: 'bold', maxWidth: '700px', margin: '0 auto', lineHeight: 1.3 }}>
           Espace Brevet de Participation
           <br />
           Formation sur la Production de Champignons
@@ -311,7 +311,7 @@ export default function LandingFormation() {
           <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
             📚 PROCHAINE SESSION
           </div>
-          <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '12px' }}>Inscrivez-vous a la formation</h2>
+          <h2 style={{ fontSize: 'clamp(1.2rem, 4.5vw, 1.375rem)', fontWeight: 'bold', marginBottom: '12px' }}>Inscrivez-vous a la formation</h2>
           {inscrit ? (
             <p style={{ color: '#10B981', fontSize: '14px' }}>✅ Inscription enregistree, nous vous contacterons bientot.</p>
           ) : (
@@ -338,7 +338,7 @@ export default function LandingFormation() {
           <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
             💼 ET APRÈS LA FORMATION ?
           </div>
-          <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: 'clamp(1.2rem, 4.5vw, 1.375rem)', fontWeight: 'bold', marginBottom: '12px' }}>
             Organisez votre activité avec Beauty CRM
           </h2>
           <p style={{ color: '#9CA3AF', fontSize: '14px', lineHeight: 1.6, marginBottom: '20px' }}>

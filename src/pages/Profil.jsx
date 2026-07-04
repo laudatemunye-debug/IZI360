@@ -86,7 +86,7 @@ export default function Profil() {
     <div style={{ minHeight: '100vh', backgroundColor: theme.bg, fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
 
       {/* Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.card, position: 'sticky', top: 0, zIndex: 100 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', rowGap: '8px', padding: 'clamp(10px,3vw,16px) clamp(14px,4vw,32px)', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.card, position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#FFFFFF', border: `2px solid ${theme.accent}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <img src={logoLight} alt="IZI360" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
@@ -101,7 +101,7 @@ export default function Profil() {
         </div>
       </header>
 
-      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: '700px', margin: '0 auto', padding: 'clamp(16px,4vw,32px) clamp(12px,3vw,24px)' }}>
 
         {/* Avatar + nom */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>

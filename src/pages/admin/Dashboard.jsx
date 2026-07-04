@@ -271,7 +271,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Contenu */}
-      <div style={{ marginLeft: sidebarOuverte ? '220px' : '0', flex: 1, padding: '32px', maxWidth: sidebarOuverte ? 'calc(100vw - 220px)' : '100vw' }}>
+      <div style={{ marginLeft: sidebarOuverte ? '220px' : '0', flex: 1, padding: 'clamp(14px,4vw,32px)', maxWidth: sidebarOuverte ? 'calc(100vw - 220px)' : '100vw' }}>
         {!sidebarOuverte && (
           <button onClick={() => setSidebarOuverte(true)} style={{
             position: 'fixed', top: '20px', left: '20px', zIndex: 20,
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
         {/* DASHBOARD */}
         {!loading && page === 'stats' && (
           <div>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Tableau de bord</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Tableau de bord</h1>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
               {[
                 { label: 'Utilisateurs', value: stats?.total_users, icon: '👥', color: T.accent, page: 'users' },
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
         {!loading && page === 'users' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px' }}>Utilisateurs ({users.length})</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '16px' }}>Utilisateurs ({users.length})</h1>
 
             {/* Filtre par module - liste déroulante */}
             <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -394,7 +394,7 @@ export default function AdminDashboard() {
         {!loading && page === 'licences' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Attribuer une licence</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Attribuer une licence</h1>
             <Card>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -455,7 +455,7 @@ export default function AdminDashboard() {
         {!loading && page === 'modules' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Modules & Tarifs</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Modules & Tarifs</h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {modules.map(m => <ModuleCard key={m.id} module={m} onUpdate={updateModule} />)}
             </div>
@@ -467,7 +467,7 @@ export default function AdminDashboard() {
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Beauty CRM — Utilisateurs</h1>
+              <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', margin: 0 }}>Beauty CRM — Utilisateurs</h1>
               <Btn onClick={() => setShowNotifModal(true)} style={{ padding: '10px 20px', backgroundColor: '#A78BFA' }}>
                 Notifier les utilisateurs
               </Btn>
@@ -663,7 +663,7 @@ export default function AdminDashboard() {
         {!loading && page === 'parrainage' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Parrainage BeautyCRM</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Parrainage BeautyCRM</h1>
             
             <Card style={{ marginBottom: '16px', display: 'flex', gap: '24px' }}>
               <div><div style={{ fontSize: '2rem', fontWeight: '700', color: T.accent }}>{parrainage.length}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Parrains actifs</div></div>
@@ -713,7 +713,7 @@ export default function AdminDashboard() {
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '10px' }}>
-              <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Formations</h1>
+              <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', margin: 0 }}>Formations</h1>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <Btn onClick={() => setShowFormationModal(true)} color="#A78BFA" style={{ padding: '10px 20px' }}>
                   ➕ Ajouter une formation
@@ -989,7 +989,7 @@ export default function AdminDashboard() {
         {!loading && page === 'formationsListe' && (
           <div>
             <button onClick={() => setPage('formations')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Formations</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Toutes les formations ({formations.length})</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Toutes les formations ({formations.length})</h1>
 
             <div style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
@@ -1030,7 +1030,7 @@ export default function AdminDashboard() {
         {!loading && page === 'brevetsListe' && (
           <div>
             <button onClick={() => setPage('formations')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Formations</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Brevets générés ({brevets.length})</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Brevets générés ({brevets.length})</h1>
 
             <div style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
@@ -1142,7 +1142,7 @@ export default function AdminDashboard() {
         {!loading && page === 'notifications' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px' }}>Envoyer une notification</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Envoyer une notification</h1>
           </div>
         )}
 
@@ -1150,7 +1150,7 @@ export default function AdminDashboard() {
         {!loading && page === 'autorisations' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px' }}>Autorisations & Accès ({formateurDemandes.length})</h1>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '16px' }}>Autorisations & Accès ({formateurDemandes.length})</h1>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {formateurDemandes.length === 0 && (

@@ -63,7 +63,7 @@ export default function DevenirFormateur() {
         <div style={{ fontSize: '13px', letterSpacing: '2px', color: '#22C55E', textTransform: 'uppercase', marginBottom: '8px' }}>
           Espace formateur
         </div>
-        <h1 style={{ fontSize: '26px', fontWeight: 'bold', maxWidth: '600px', margin: '0 auto', lineHeight: 1.3 }}>
+        <h1 style={{ fontSize: 'clamp(1.3rem, 5vw, 1.6rem)', fontWeight: 'bold', maxWidth: '600px', margin: '0 auto', lineHeight: 1.3 }}>
           Devenir formateur IZI360
         </h1>
         <p style={{ color: '#9CA3AF', fontSize: '14px', maxWidth: '440px', margin: '12px auto 0' }}>
