@@ -279,7 +279,7 @@ export default function EspaceFormateur() {
                     <div style={{ position: 'absolute', left: '50.1%', top: '58.2%', width: '40.4%', height: '6.5%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', fontSize: 'clamp(9px, 3vw, 21px)', fontWeight: 'bold', color: '#DC2626', overflow: 'hidden' }}>
                       {formatPeriode(editBrevet.dateFormation, editBrevet.duree)}
                     </div>
-                    <div style={{ position: 'absolute', left: '21.5%', top: '72%', width: '39%', height: '4.5%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', fontSize: 'clamp(7px, 1.6vw, 18px)', fontWeight: 'bold', color: '#111827', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', left: '21.5%', top: '74.5%', width: '39%', height: '3.5%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', fontSize: 'clamp(5px, 0.9vw, 11px)', fontWeight: 'bold', color: '#111827', overflow: 'hidden' }}>
                       Délivré à {editBrevet.lieu}, le {editBrevet.created_at ? new Date(editBrevet.created_at).toLocaleDateString('fr-FR') : ''}
                     </div>
                     {qrDataUrlBrevet && (
