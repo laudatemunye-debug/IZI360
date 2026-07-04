@@ -121,6 +121,7 @@ export default function AdminDashboard() {
   const [emailForm, setEmailForm] = useState({ user_id: '', subject: '', message: '', tous: false })
   const [showNotifModal, setShowNotifModal] = useState(false)
   const [parrainage, setParrainage] = useState([])
+  const [triFilleuls, setTriFilleuls] = useState('desc')
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const [formations, setFormations] = useState([])
@@ -737,6 +738,15 @@ export default function AdminDashboard() {
               <div><div style={{ fontSize: '2rem', fontWeight: '700', color: '#A78BFA' }}>{parrainage.reduce((a,p) => a + parseInt(p.nb_filleuls||0), 0)}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Total filleuls</div></div>
             </Card>
 
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+              <button
+                onClick={() => setTriFilleuls(triFilleuls === 'desc' ? 'asc' : 'desc')}
+                style={{ background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                Trier par filleuls {triFilleuls === 'desc' ? '↓' : '↑'}
+              </button>
+            </div>
+
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: T.card, borderRadius: '12px', overflow: 'hidden' }}>
                 <thead>
@@ -747,7 +757,10 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {parrainage.map(p => (
+                  {[...parrainage].sort((a, b) => {
+                    const diff = parseInt(a.nb_filleuls||0) - parseInt(b.nb_filleuls||0)
+                    return triFilleuls === 'desc' ? -diff : diff
+                  }).map(p => (
                     <tr key={p.id} style={{ borderBottom: `1px solid ${T.border}` }}>
                       <td style={{ padding: '12px 14px', color: T.text, fontWeight: '600' }}>{p.nom || '—'}</td>
                       <td style={{ padding: '12px 14px', color: T.textSub }}>{p.email}</td>
