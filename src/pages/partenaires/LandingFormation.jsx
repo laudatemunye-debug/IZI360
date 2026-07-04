@@ -364,8 +364,7 @@ export default function LandingFormation() {
         </div>
 
         <div style={{ marginTop: '20px', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/login" style={btnOutline}>Connexion</Link>
-          <Link to="/inscription" style={btnPrimaryLink}>Créer un compte sur IZI360</Link>
+          <Link to="/login" style={btnPrimaryLink}>Créer un compte sur IZI360</Link>
         </div>
 
         <div
