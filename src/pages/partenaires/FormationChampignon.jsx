@@ -36,7 +36,7 @@ export default function FormationChampignon() {
   const [participant, setParticipant] = useState('')
   const [telephone, setTelephone] = useState('')
   const [email, setEmail] = useState('')
-  const [lieu, setLieu] = useState('Kinshasa, RDC')
+  const [lieu, setLieu] = useState('Butembo')
   const [dateFormation, setDateFormation] = useState('')
   const [duree, setDuree] = useState('3 jours')
   const [formateur, setFormateur] = useState('Congo Leadership Initiative')
