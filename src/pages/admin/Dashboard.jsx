@@ -77,7 +77,7 @@ export default function AdminDashboard() {
   const [brevets, setBrevets] = useState([])
   const [showAncienModal, setShowAncienModal] = useState(false)
   const [selectedAncien, setSelectedAncien] = useState(null)
-  const [sidebarOuverte, setSidebarOuverte] = useState(true)
+  const [sidebarOuverte, setSidebarOuverte] = useState(() => typeof window !== 'undefined' ? window.innerWidth > 900 : true)
   const [showFormationModal, setShowFormationModal] = useState(false)
   const [formateurDemandes, setFormateurDemandes] = useState([])
   const [nouvelleFormation, setNouvelleFormation] = useState({ slug: '', titre: '', description: '', lieu: '', duree: '', dateDebut: '', formateur: '' })

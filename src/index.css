@@ -22,3 +22,35 @@ body {
   overflow-x: hidden;
   width: 100%;
 }
+
+
+/* ===== Responsive global (mobile) ===== */
+@media (max-width: 640px) {
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  [style*="padding: 16px 32px"] {
+    padding: 12px 16px !important;
+    flex-wrap: wrap !important;
+    row-gap: 8px !important;
+  }
+  [style*="padding: 32px"] {
+    padding: 16px !important;
+  }
+  [style*="border-radius: 16px"][style*="padding: 20px"] {
+    padding: 16px !important;
+  }
+  h1[style*="font-size: 2rem"] {
+    font-size: 1.4rem !important;
+  }
+  h1[style*="font-size: 1.5rem"] {
+    font-size: 1.15rem !important;
+  }
+}
+
+@media (max-width: 900px) {
+  div[style*="width: 220px"][style*="position: fixed"][style*="height: 100vh"] {
+    width: 78vw !important;
+    max-width: 260px !important;
+  }
+}
