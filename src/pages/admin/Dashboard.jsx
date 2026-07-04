@@ -773,10 +773,10 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {[...parrainage]
-                    .filter(p => filtreFilleuls === '' || parseInt(p.nb_filleuls||0) === parseInt(filtreFilleuls))
+                    .filter(p => filtreFilleuls === '' || parseInt(p.nb_filleuls||0) >= parseInt(filtreFilleuls))
                     .sort((a, b) => {
                     const diff = parseInt(a.nb_filleuls||0) - parseInt(b.nb_filleuls||0)
-                    return triFilleuls === 'desc' ? -diff : diff
+                    return (filtreFilleuls !== '' || triFilleuls === 'desc') ? -diff : diff
                   }).map(p => (
                     <tr key={p.id} onClick={() => setParrainSelectionne(p)} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer' }}>
                       <td style={{ padding: '12px 14px', color: T.text, fontWeight: '600' }}>{p.nom || '—'}</td>
