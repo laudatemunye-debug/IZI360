@@ -177,13 +177,13 @@ export default function LandingFormation() {
               textAlign: 'center',
             }}
           >
-            <img src={beautyLogo} alt="Beauty CRM" style={{ width: '56px', height: '56px', borderRadius: '14px', display: 'block', margin: '0 auto 12px', objectFit: 'cover' }} />
             <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
               💼 GÉREZ VOTRE ACTIVITÉ
             </div>
             <h2 style={{ fontSize: 'clamp(1.2rem, 4.5vw, 1.375rem)', fontWeight: 'bold', marginBottom: '12px' }}>
               Organisez votre activité avec Beauty CRM
             </h2>
+            <img src={beautyLogo} alt="Beauty CRM" style={{ width: '56px', height: '56px', borderRadius: '14px', display: 'block', margin: '12px auto', objectFit: 'cover' }} />
             <p style={{ color: '#9CA3AF', fontSize: '14px', lineHeight: 1.6, marginBottom: '20px' }}>
               Gérez votre facturation, suivez votre stock et centralisez vos clients, le tout dans une seule
               application pensée pour organiser votre entreprise.
@@ -337,13 +337,13 @@ export default function LandingFormation() {
             textAlign: 'center',
           }}
         >
-          <img src={beautyLogo} alt="Beauty CRM" style={{ width: '56px', height: '56px', borderRadius: '14px', display: 'block', margin: '0 auto 12px', objectFit: 'cover' }} />
-            <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
             💼 ET APRÈS LA FORMATION ?
           </div>
           <h2 style={{ fontSize: 'clamp(1.2rem, 4.5vw, 1.375rem)', fontWeight: 'bold', marginBottom: '12px' }}>
             Organisez votre activité avec Beauty CRM
           </h2>
+            <img src={beautyLogo} alt="Beauty CRM" style={{ width: '56px', height: '56px', borderRadius: '14px', display: 'block', margin: '12px auto', objectFit: 'cover' }} />
           <p style={{ color: '#9CA3AF', fontSize: '14px', lineHeight: 1.6, marginBottom: '20px' }}>
             Passez à l'échelle avec votre nouvelle activité de production de champignons : gérez votre facturation,
             suivez votre stock et centralisez vos clients, le tout dans une seule application pensée pour organiser
