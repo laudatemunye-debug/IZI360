@@ -26,6 +26,10 @@ body {
 
 /* ===== Responsive global (mobile) ===== */
 @media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
   [style*="grid-template-columns: 1fr 1fr"] {
     grid-template-columns: 1fr !important;
   }
