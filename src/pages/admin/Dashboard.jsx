@@ -220,6 +220,12 @@ export default function AdminDashboard() {
     if (res.ok) fetchAll()
   }
 
+  const isMobile = () => typeof window !== 'undefined' && window.innerWidth <= 900
+  const gotoPage = (key) => {
+    setPage(key)
+    if (isMobile()) setSidebarOuverte(false)
+  }
+
   const navItems = [
     { key: 'stats', label: 'Dashboard', icon: '📊' },
     { key: 'users', label: 'Utilisateurs', icon: '👥' },
@@ -239,6 +245,9 @@ export default function AdminDashboard() {
 
       {/* Sidebar */}
       {sidebarOuverte && (
+      <div onClick={() => isMobile() && setSidebarOuverte(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9, display: window.innerWidth <= 900 ? 'block' : 'none' }} />
+      )}
+      {sidebarOuverte && (
       <div style={{ width: '220px', backgroundColor: T.card, borderRight: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 10 }}>
         <div style={{ padding: '20px 16px', borderBottom: `1px solid ${T.border}` }}>
           <div style={{ color: T.text, fontSize: '18px', fontWeight: '800' }}>IZI<span style={{ color: T.accent }}>360</span></div>
@@ -246,7 +255,7 @@ export default function AdminDashboard() {
         </div>
         <nav style={{ padding: '12px 8px', flex: 1 }}>
           {navItems.map(item => (
-            <button key={item.key} onClick={() => { setPage(item.key); if (item.key === 'formations') setSidebarOuverte(false) }} style={{
+            <button key={item.key} onClick={() => gotoPage(item.key)} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
               padding: '10px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
               backgroundColor: page === item.key ? T.accentDim : 'transparent',
