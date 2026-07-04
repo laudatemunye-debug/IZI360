@@ -43,6 +43,7 @@ export default function FormationChampignon() {
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [certificatId, setCertificatId] = useState('')
   const [numero, setNumero] = useState('')
+  const [dateCreation, setDateCreation] = useState('')
   const [generating, setGenerating] = useState(false)
   const [erreur, setErreur] = useState('')
   const [existingId, setExistingId] = useState('')
@@ -94,6 +95,7 @@ export default function FormationChampignon() {
 
       setCertificatId(data.id)
       setNumero(data.numero || '')
+      setDateCreation(data.created_at || new Date().toISOString())
       setQrDataUrl(url)
     } catch (err) {
       console.error('Erreur génération/sauvegarde du brevet', err)
@@ -277,6 +279,29 @@ export default function FormationChampignon() {
             }}
           >
             {formatPeriode(dateFormation, duree)}
+          </div>
+
+          <div
+            style={{
+              position: 'absolute',
+              left: '21.5%',
+              top: '72%',
+              width: '39%',
+              height: '4.5%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              fontFamily: 'Arial, sans-serif',
+              fontStyle: 'italic',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#111827',
+              overflow: 'hidden',
+              zIndex: 2,
+            }}
+          >
+            Délivré à {lieu}, le {dateCreation ? new Date(dateCreation).toLocaleDateString('fr-FR') : ''}
           </div>
 
           <div
