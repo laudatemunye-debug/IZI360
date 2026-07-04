@@ -134,9 +134,23 @@ export default function FormationChampignon() {
 
   const navigate = useNavigate()
 
-  // Largeur dispo pour le nom (px) = 75.55% de 1200px (largeur du certificat)
+  const [certWidth, setCertWidth] = useState(1200)
+  useEffect(() => {
+    const el = certificateRef.current
+    if (!el) return
+    const update = () => setCertWidth(el.getBoundingClientRect().width || 1200)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [qrDataUrl])
+
+  const scale = certWidth / 1200
+
+  // Largeur dispo pour le nom (px) = 75.55% de 1200px (largeur du certificat), à l'échelle 1200 de référence
   const NOM_ZONE_WIDTH = 906
-  const nomFontSize = Math.max(18, Math.min(40, NOM_ZONE_WIDTH / (Math.max(participant.length, 1) * 0.62)))
+  const nomFontSizeBase = Math.max(18, Math.min(40, NOM_ZONE_WIDTH / (Math.max(participant.length, 1) * 0.62)))
+  const nomFontSize = nomFontSizeBase * scale
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0F1117', padding: '32px', color: '#E5E7EB' }}>
@@ -296,7 +310,7 @@ export default function FormationChampignon() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '30px',
+              fontSize: `${30 * scale}px`,
               fontWeight: 'bold',
               color: '#DC2626',
               zIndex: 2,
@@ -318,7 +332,7 @@ export default function FormationChampignon() {
               textAlign: 'center',
               fontFamily: 'Arial, sans-serif',
               fontStyle: 'italic',
-              fontSize: '24px',
+              fontSize: `${24 * scale}px`,
               fontWeight: 'bold',
               color: '#DC2626',
               overflow: 'hidden',
@@ -341,7 +355,7 @@ export default function FormationChampignon() {
               textAlign: 'center',
               fontFamily: 'Arial, sans-serif',
               fontStyle: 'italic',
-              fontSize: '19px',
+              fontSize: `${19 * scale}px`,
               fontWeight: 'bold',
               color: '#111827',
               overflow: 'hidden',
