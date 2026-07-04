@@ -221,9 +221,9 @@ export default function FormationChampignon() {
           <div
             style={{
               position: 'absolute',
-              left: '6.25%',
+              left: '16%',
               top: '39.7%',
-              width: '85.3%',
+              width: '75.55%',
               height: '8.4%',
               display: 'flex',
               alignItems: 'center',
@@ -294,14 +294,15 @@ export default function FormationChampignon() {
               textAlign: 'center',
               fontFamily: 'Arial, sans-serif',
               fontStyle: 'italic',
-              fontSize: '11px',
+              fontSize: '15px',
               fontWeight: 'bold',
               color: '#111827',
               overflow: 'hidden',
               zIndex: 2,
+              whiteSpace: 'pre',
             }}
           >
-            Délivré à {lieu}, le {dateCreation ? new Date(dateCreation).toLocaleDateString('fr-FR') : ''}
+            {`Délivré à ${lieu}, le ${dateCreation ? new Date(dateCreation).toLocaleDateString('fr-FR') : ''}`}
           </div>
 
           <div
