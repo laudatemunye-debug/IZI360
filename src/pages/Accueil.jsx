@@ -107,7 +107,7 @@ export default function Accueil() {
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {isAdmin && (
-            <button onClick={() => navigate('/admin')} style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '8px', padding: '6px 14px', cursor: 'pointer', fontSize: '13px', color: '#F59E0B', fontWeight: '600', fontFamily: 'inherit' }}>⚙️ Admin</button>
+            <button onClick={() => navigate(user?.role === 'formateur' ? '/espace-formateur' : '/admin')} style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '8px', padding: '6px 14px', cursor: 'pointer', fontSize: '13px', color: '#F59E0B', fontWeight: '600', fontFamily: 'inherit' }}>{user?.role === 'formateur' ? '🎓 Espace Formateur' : '⚙️ Admin'}</button>
           )}
           <button onClick={() => setDarkMode(d => !d)} style={{ background: theme.accentDim, border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '6px 14px', cursor: 'pointer', fontSize: '13px', color: theme.accent, fontWeight: '500', fontFamily: 'inherit' }}>
             {darkMode ? '☀️' : '🌙'}
