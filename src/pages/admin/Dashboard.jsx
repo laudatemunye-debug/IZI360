@@ -123,6 +123,7 @@ export default function AdminDashboard() {
   const [parrainage, setParrainage] = useState([])
   const [triFilleuls, setTriFilleuls] = useState('desc')
   const [parrainSelectionne, setParrainSelectionne] = useState(null)
+  const [filtreFilleuls, setFiltreFilleuls] = useState('')
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const [formations, setFormations] = useState([])
@@ -739,7 +740,20 @@ export default function AdminDashboard() {
               <div><div style={{ fontSize: '2rem', fontWeight: '700', color: '#A78BFA' }}>{parrainage.reduce((a,p) => a + parseInt(p.nb_filleuls||0), 0)}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Total filleuls</div></div>
             </Card>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
+              <input
+                type='number'
+                min='0'
+                value={filtreFilleuls}
+                onChange={e => setFiltreFilleuls(e.target.value)}
+                placeholder='Nb filleuls'
+                style={{ width: '110px', background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit' }}
+              />
+              {filtreFilleuls !== '' && (
+                <button onClick={() => setFiltreFilleuls('')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>
+                  Réinitialiser
+                </button>
+              )}
               <button
                 onClick={() => setTriFilleuls(triFilleuls === 'desc' ? 'asc' : 'desc')}
                 style={{ background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -758,7 +772,9 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...parrainage].sort((a, b) => {
+                  {[...parrainage]
+                    .filter(p => filtreFilleuls === '' || parseInt(p.nb_filleuls||0) === parseInt(filtreFilleuls))
+                    .sort((a, b) => {
                     const diff = parseInt(a.nb_filleuls||0) - parseInt(b.nb_filleuls||0)
                     return triFilleuls === 'desc' ? -diff : diff
                   }).map(p => (
