@@ -450,6 +450,20 @@ export default function EspaceFormateur() {
                     Email
                   </Btn>
                 </div>
+
+                <Btn
+                  onClick={async () => {
+                    if (!confirm(`Supprimer l'inscription de ${selectedInscrit.nom} ?`)) return
+                    const res = await fetch(`${API}/formations/${selectedFormationInscrits.formation.id}/inscriptions/${selectedInscrit.id}`, { method: 'DELETE', headers })
+                    if (!res.ok) { msg('Erreur lors de la suppression'); return }
+                    setSelectedFormationInscrits(p => ({ ...p, inscrits: p.inscrits.filter(x => x.id !== selectedInscrit.id) }))
+                    setSelectedInscrit(null)
+                    msg('🗑️ Inscrit supprimé')
+                  }}
+                  color="rgba(226,75,74,0.15)" textColor="#E24B4A" style={{ width: '100%', marginTop: '10px' }}
+                >
+                  Supprimer
+                </Btn>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

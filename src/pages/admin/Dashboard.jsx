@@ -957,9 +957,9 @@ export default function AdminDashboard() {
                           const res = await fetch(`${API}/formations/${selectedFormationInscrits.formation.id}/inscriptions/${selectedInscrit.id}`, { method: 'DELETE', headers })
                           if (!res.ok) { msg('Erreur lors de la suppression'); return }
                           setSelectedFormationInscrits(p => ({ ...p, inscrits: p.inscrits.filter(x => x.id !== selectedInscrit.id) }))
+                          setFormations(p => p.map(f => f.id === selectedFormationInscrits.formation.id ? { ...f, nb_inscrits: Math.max(0, parseInt(f.nb_inscrits || 0) - 1) } : f))
                           setSelectedInscrit(null)
                           msg('🗑️ Inscrit supprimé')
-                          fetchAll()
                         }}
                         color="rgba(226,75,74,0.15)" textColor="#E24B4A" style={{ width: '100%', marginTop: '10px' }}
                       >
