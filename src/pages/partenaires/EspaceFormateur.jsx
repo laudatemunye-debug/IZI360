@@ -270,7 +270,7 @@ export default function EspaceFormateur() {
 
                   <div ref={brevetCertRef} style={{ position: 'relative', width: '700px', maxWidth: '100%', margin: '0 auto 20px', fontFamily: 'Arial, sans-serif' }}>
                     <img src="/brevet-champignon-template.jpg" alt="Brevet" style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '12px' }} />
-                    <div style={{ position: 'absolute', left: '41.8%', top: '40.1%', width: '53.3%', height: '7.7%', display: 'flex', alignItems: 'center', fontFamily: '"Arial Black", Arial, sans-serif', fontSize: 'clamp(11px, 3.3vw, 23px)', fontWeight: 900, color: '#111827', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', left: '41.8%', top: '40.1%', width: '53.3%', height: '7.7%', display: 'flex', alignItems: 'center', fontFamily: '"Kalam", cursive', fontWeight: 700, fontSize: 'clamp(11px, 3.3vw, 23px)', color: '#111827', overflow: 'hidden' }}>
                       {editBrevet.participant}
                     </div>
                     <div style={{ position: 'absolute', left: '62%', top: '28.7%', width: '3.9%', height: '6.7%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(8px, 2.4vw, 17px)', fontWeight: 'bold', color: '#DC2626' }}>
@@ -278,6 +278,9 @@ export default function EspaceFormateur() {
                     </div>
                     <div style={{ position: 'absolute', left: '50.1%', top: '58.2%', width: '40.4%', height: '6.5%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', fontSize: 'clamp(9px, 3vw, 21px)', fontWeight: 'bold', color: '#DC2626', overflow: 'hidden' }}>
                       {formatPeriode(editBrevet.dateFormation, editBrevet.duree)}
+                    </div>
+                    <div style={{ position: 'absolute', left: '21.5%', top: '72%', width: '39%', height: '4.5%', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', fontSize: 'clamp(7px, 1.6vw, 18px)', fontWeight: 'bold', color: '#111827', overflow: 'hidden' }}>
+                      Délivré à {editBrevet.lieu}, le {editBrevet.created_at ? new Date(editBrevet.created_at).toLocaleDateString('fr-FR') : ''}
                     </div>
                     {qrDataUrlBrevet && (
                       <div style={{ position: 'absolute', left: '81.3%', top: '78.2%', width: '13.7%', height: '17.0%', backgroundColor: '#FFFFFF' }}>
