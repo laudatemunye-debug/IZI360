@@ -808,7 +808,13 @@ export default function AdminDashboard() {
                 <div style={{ fontSize: '26px', fontWeight: '800', color: '#F59E0B' }}>{brevets.length}</div>
                 <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Brevets générés</div>
               </Card>
-              <Card>
+              <Card style={{ cursor: formations.length > 0 ? 'pointer' : 'default' }} onClick={async () => {
+                if (formations.length === 0) return
+                const f = formations[0]
+                const res = await fetch(`${API}/formations/${f.id}/inscriptions`, { headers })
+                const data = await res.json()
+                setSelectedFormationInscrits({ formation: f, inscrits: Array.isArray(data) ? data : [] })
+              }}>
                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>👥</div>
                 <div style={{ fontSize: '26px', fontWeight: '800', color: '#A78BFA' }}>{formations.reduce((a, f) => a + parseInt(f.nb_inscrits || 0), 0)}</div>
                 <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>Inscrits au total</div>
@@ -944,6 +950,21 @@ export default function AdminDashboard() {
                           Email
                         </Btn>
                       </div>
+
+                      <Btn
+                        onClick={async () => {
+                          if (!confirm(`Supprimer l'inscription de ${selectedInscrit.nom} ?`)) return
+                          const res = await fetch(`${API}/formations/${selectedFormationInscrits.formation.id}/inscriptions/${selectedInscrit.id}`, { method: 'DELETE', headers })
+                          if (!res.ok) { msg('Erreur lors de la suppression'); return }
+                          setSelectedFormationInscrits(p => ({ ...p, inscrits: p.inscrits.filter(x => x.id !== selectedInscrit.id) }))
+                          setSelectedInscrit(null)
+                          msg('🗑️ Inscrit supprimé')
+                          fetchAll()
+                        }}
+                        color="rgba(226,75,74,0.15)" textColor="#E24B4A" style={{ width: '100%', marginTop: '10px' }}
+                      >
+                        Supprimer
+                      </Btn>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
