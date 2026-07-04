@@ -169,7 +169,7 @@ export default function EspaceFormateur() {
 
       <div style={{ padding: 'clamp(14px,4vw,32px)', maxWidth: '1100px', margin: '0 auto' }}>
         {page === 'accueil' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+          <div className="espace-formateur-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <Card onClick={() => navigate('/admin/brevet/champignon')} style={{ cursor: 'pointer', textAlign: 'center', padding: '32px 20px' }}>
               <div style={{ fontSize: '28px', fontWeight: '800', color: T.accent, marginBottom: '10px' }}>N° {prochainNumero}</div>
               <div style={{ color: T.text, fontWeight: '700', fontSize: '15px' }}>Générer un brevet</div>

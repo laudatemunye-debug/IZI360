@@ -70,6 +70,17 @@ body {
   }
 }
 
+@media (max-width: 640px) {
+  .espace-formateur-cards {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .espace-formateur-cards > div:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 900px) {
   div[style*="width: 220px"][style*="position: fixed"][style*="height: 100vh"] {
     width: 78vw !important;
