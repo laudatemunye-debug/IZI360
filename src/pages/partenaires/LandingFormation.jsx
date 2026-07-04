@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import QRCode from 'qrcode'
+import beautyLogo from '../../assets/beautycrm-logo.jpg'
 
 const SITE_URL = 'https://izi-360.vercel.app'
 
@@ -176,6 +177,7 @@ export default function LandingFormation() {
               textAlign: 'center',
             }}
           >
+            <img src={beautyLogo} alt="Beauty CRM" style={{ width: '56px', height: '56px', borderRadius: '14px', display: 'block', margin: '0 auto 12px', objectFit: 'cover' }} />
             <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
               💼 GÉREZ VOTRE ACTIVITÉ
             </div>
@@ -335,7 +337,8 @@ export default function LandingFormation() {
             textAlign: 'center',
           }}
         >
-          <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
+          <img src={beautyLogo} alt="Beauty CRM" style={{ width: '56px', height: '56px', borderRadius: '14px', display: 'block', margin: '0 auto 12px', objectFit: 'cover' }} />
+            <div style={{ fontSize: '13px', color: '#10B981', letterSpacing: '1px', marginBottom: '8px' }}>
             💼 ET APRÈS LA FORMATION ?
           </div>
           <h2 style={{ fontSize: 'clamp(1.2rem, 4.5vw, 1.375rem)', fontWeight: 'bold', marginBottom: '12px' }}>
