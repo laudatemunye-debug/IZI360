@@ -122,6 +122,7 @@ export default function AdminDashboard() {
   const [showNotifModal, setShowNotifModal] = useState(false)
   const [parrainage, setParrainage] = useState([])
   const [triFilleuls, setTriFilleuls] = useState('desc')
+  const [parrainSelectionne, setParrainSelectionne] = useState(null)
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const [formations, setFormations] = useState([])
@@ -761,7 +762,7 @@ export default function AdminDashboard() {
                     const diff = parseInt(a.nb_filleuls||0) - parseInt(b.nb_filleuls||0)
                     return triFilleuls === 'desc' ? -diff : diff
                   }).map(p => (
-                    <tr key={p.id} style={{ borderBottom: `1px solid ${T.border}` }}>
+                    <tr key={p.id} onClick={() => setParrainSelectionne(p)} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer' }}>
                       <td style={{ padding: '12px 14px', color: T.text, fontWeight: '600' }}>{p.nom || '—'}</td>
                       <td style={{ padding: '12px 14px', color: T.textSub }}>{p.email}</td>
                       <td style={{ padding: '12px 14px' }}>
@@ -785,6 +786,51 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+
+            {parrainSelectionne && (
+              <div onClick={() => setParrainSelectionne(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+                <div onClick={e => e.stopPropagation()} style={{ backgroundColor: T.card, borderRadius: '14px', padding: '24px', maxWidth: '420px', width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                    <div>
+                      <div style={{ color: T.text, fontWeight: '700', fontSize: '18px' }}>{parrainSelectionne.nom || '—'}</div>
+                      <div style={{ color: T.textSub, fontSize: '13px', marginTop: '4px' }}>{parrainSelectionne.email}</div>
+                      {parrainSelectionne.telephone && (
+                        <div style={{ color: T.textSub, fontSize: '13px', marginTop: '2px' }}>{parrainSelectionne.telephone}</div>
+                      )}
+                    </div>
+                    <button onClick={() => setParrainSelectionne(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>×</button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                    {parrainSelectionne.telephone && (
+                      <a href={`https://wa.me/${parrainSelectionne.telephone.replace(/[^0-9]/g,'')}`} target='_blank' rel='noreferrer' style={{ flex: '1 1 auto', textDecoration: 'none', textAlign: 'center', backgroundColor: '#25D366', color: '#fff', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '700' }}>
+                        📱 WhatsApp
+                      </a>
+                    )}
+                    {parrainSelectionne.email && (
+                      <a href={`mailto:${parrainSelectionne.email}`} style={{ flex: '1 1 auto', textDecoration: 'none', textAlign: 'center', backgroundColor: T.accent, color: '#fff', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '700' }}>
+                        ✉️ Email
+                      </a>
+                    )}
+                  </div>
+
+                  <div style={{ color: T.text, fontWeight: '700', fontSize: '14px', marginBottom: '10px' }}>
+                    Filleuls ({parrainSelectionne.nb_filleuls || 0})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {parrainSelectionne.filleuls ? parrainSelectionne.filleuls.map((f, i) => (
+                      <div key={i} style={{ backgroundColor: T.bg2, borderRadius: '8px', padding: '10px 12px' }}>
+                        <div style={{ color: T.text, fontWeight: '600', fontSize: '13px' }}>{f.nom || '—'}</div>
+                        <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{f.email}</div>
+                        {f.telephone && <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{f.telephone}</div>}
+                      </div>
+                    )) : (
+                      <div style={{ color: T.textSub, fontSize: '13px' }}>Aucun filleul</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
