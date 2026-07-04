@@ -1204,6 +1204,66 @@ export default function AdminDashboard() {
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
             <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Envoyer une notification</h1>
+
+            <Card>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Destinataires</label>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <Btn
+                      onClick={() => setEmailForm(p => ({ ...p, tous: true, module_filter: '', user_id: '' }))}
+                      color={emailForm.tous ? T.accent : T.bg}
+                      textColor={emailForm.tous ? '#fff' : T.textSub}
+                      style={{ border: `1px solid ${T.border}` }}
+                    >
+                      Tous les utilisateurs
+                    </Btn>
+                    <Btn
+                      onClick={() => setEmailForm(p => ({ ...p, tous: false, user_id: '' }))}
+                      color={!emailForm.tous ? T.accent : T.bg}
+                      textColor={!emailForm.tous ? '#fff' : T.textSub}
+                      style={{ border: `1px solid ${T.border}` }}
+                    >
+                      Filtrer / utilisateur précis
+                    </Btn>
+                  </div>
+                </div>
+
+                {!emailForm.tous && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Filtrer par module (optionnel)</label>
+                      <select style={inp} value={emailForm.module_filter || ''} onChange={e => setEmailForm(p => ({ ...p, module_filter: e.target.value, user_id: '' }))}>
+                        <option value="">— Aucun filtre —</option>
+                        {modules.map(m => <option key={m.code} value={m.code}>{m.nom}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Ou un utilisateur précis</label>
+                      <select style={inp} value={emailForm.user_id || ''} onChange={e => setEmailForm(p => ({ ...p, user_id: e.target.value, module_filter: '' }))}>
+                        <option value="">— Sélectionner —</option>
+                        {users.map(u => <option key={u.id} value={u.id}>{u.nom} ({u.email})</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Sujet</label>
+                  <input style={inp} type="text" placeholder="Sujet de l'email..." value={emailForm.subject || ''} onChange={e => setEmailForm(p => ({ ...p, subject: e.target.value }))} />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '6px' }}>Message</label>
+                  <textarea style={{ ...inp, minHeight: '140px', resize: 'vertical' }} placeholder="Votre message..." value={emailForm.message || ''} onChange={e => setEmailForm(p => ({ ...p, message: e.target.value }))} />
+                </div>
+
+                <Btn onClick={sendEmail} style={{ padding: '12px', fontSize: '14px' }}>
+                  📧 Envoyer{emailForm.tous ? ` à tous (${users.length})` : emailForm.module_filter ? ` (filtré : ${emailForm.module_filter})` : ''}
+                </Btn>
+              </div>
+            </Card>
           </div>
         )}
 
