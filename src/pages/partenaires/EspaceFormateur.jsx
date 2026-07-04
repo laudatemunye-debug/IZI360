@@ -66,6 +66,7 @@ export default function EspaceFormateur() {
   const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
   const [selectedInscrit, setSelectedInscrit] = useState(null)
   const [message, setMessage] = useState('')
+  const [pdfProgress, setPdfProgress] = useState(null)
   const brevetCertRef = useRef(null)
   const navigate = useNavigate()
 
@@ -130,17 +131,24 @@ export default function EspaceFormateur() {
   }
 
   const telechargerBrevetPDF = async () => {
-    if (!brevetCertRef.current) return
-    const canvas = await html2canvas(brevetCertRef.current, { scale: 3, backgroundColor: '#ffffff' })
-    const imgData = canvas.toDataURL('image/png')
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-    const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
-    const imgWidth = pageWidth
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-    const y = Math.max((pageHeight - imgHeight) / 2, 0)
-    pdf.addImage(imgData, 'PNG', 0, y, imgWidth, imgHeight)
-    pdf.save(`Brevet_${(selectedBrevet.participant || '').replace(/\s+/g, '_')}.pdf`)
+    if (!brevetCertRef.current || pdfProgress) return
+    try {
+      setPdfProgress('canvas')
+      const canvas = await html2canvas(brevetCertRef.current, { scale: 3, backgroundColor: '#ffffff' })
+      setPdfProgress('pdf')
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = pageWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const y = Math.max((pageHeight - imgHeight) / 2, 0)
+      pdf.addImage(imgData, 'PNG', 0, y, imgWidth, imgHeight)
+      setPdfProgress('download')
+      pdf.save(`Brevet_${(selectedBrevet.participant || '').replace(/\s+/g, '_')}.pdf`)
+    } finally {
+      setTimeout(() => setPdfProgress(null), 600)
+    }
   }
 
   const totalBrevets = brevets.length
@@ -326,7 +334,7 @@ export default function EspaceFormateur() {
                         Email
                       </Btn>
                     )}
-                    <Btn onClick={telechargerBrevetPDF} color="rgba(96,165,250,0.15)" textColor="#60A5FA">Télécharger PDF</Btn>
+                    <Btn onClick={telechargerBrevetPDF} color="rgba(96,165,250,0.15)" textColor="#60A5FA" style={{ opacity: pdfProgress ? 0.6 : 1 }}>{pdfProgress ? 'Génération...' : 'Télécharger PDF'}</Btn>
                     <Btn onClick={sauvegarderBrevet}>Modifier</Btn>
                   </div>
                 </div>
@@ -335,6 +343,35 @@ export default function EspaceFormateur() {
           </div>
         )}
       </div>
+
+      {pdfProgress && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '340px', border: `1px solid ${T.border}`, textAlign: 'center' }}>
+            <div style={{ fontSize: '14px', color: T.text, fontWeight: '700', marginBottom: '20px' }}>Génération du PDF...</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
+              {[
+                { key: 'canvas', label: 'Préparation du certificat' },
+                { key: 'pdf', label: 'Création du PDF' },
+                { key: 'download', label: 'Téléchargement' },
+              ].map((step) => {
+                const order = ['canvas', 'pdf', 'download']
+                const currentIdx = order.indexOf(pdfProgress)
+                const stepIdx = order.indexOf(step.key)
+                const done = stepIdx < currentIdx
+                const active = stepIdx === currentIdx
+                return (
+                  <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: done || active ? T.text : T.textMuted }}>
+                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: done ? T.accent : 'transparent', border: active ? `2px solid ${T.accent}` : `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#fff', flexShrink: 0 }}>
+                      {done ? '✓' : ''}
+                    </span>
+                    {step.label}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAncienModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>

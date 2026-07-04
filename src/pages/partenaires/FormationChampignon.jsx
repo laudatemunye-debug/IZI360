@@ -47,6 +47,7 @@ export default function FormationChampignon() {
   const [generating, setGenerating] = useState(false)
   const [erreur, setErreur] = useState('')
   const [existingId, setExistingId] = useState('')
+  const [pdfProgress, setPdfProgress] = useState(null)
   const certificateRef = useRef(null)
   const location = useLocation()
 
@@ -106,17 +107,24 @@ export default function FormationChampignon() {
   }
 
   const telechargerPDF = async () => {
-    if (!certificateRef.current) return
-    const canvas = await html2canvas(certificateRef.current, { scale: 3, backgroundColor: '#ffffff' })
-    const imgData = canvas.toDataURL('image/png')
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-    const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
-    const imgWidth = pageWidth
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-    const y = Math.max((pageHeight - imgHeight) / 2, 0)
-    pdf.addImage(imgData, 'PNG', 0, y, imgWidth, imgHeight)
-    pdf.save(`Brevet_Champignon_${participant.replace(/\s+/g, '_')}.pdf`)
+    if (!certificateRef.current || pdfProgress) return
+    try {
+      setPdfProgress('canvas')
+      const canvas = await html2canvas(certificateRef.current, { scale: 3, backgroundColor: '#ffffff' })
+      setPdfProgress('pdf')
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = pageWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const y = Math.max((pageHeight - imgHeight) / 2, 0)
+      pdf.addImage(imgData, 'PNG', 0, y, imgWidth, imgHeight)
+      setPdfProgress('download')
+      pdf.save(`Brevet_Champignon_${participant.replace(/\s+/g, '_')}.pdf`)
+    } finally {
+      setTimeout(() => setPdfProgress(null), 600)
+    }
   }
 
   const navigate = useNavigate()
@@ -190,8 +198,8 @@ export default function FormationChampignon() {
           {generating ? 'Génération...' : 'Générer le brevet'}
         </button>
         {qrDataUrl && (
-          <button onClick={telechargerPDF} style={btnSecondary}>
-            Télécharger le PDF
+          <button onClick={telechargerPDF} disabled={!!pdfProgress} style={{ ...btnSecondary, opacity: pdfProgress ? 0.6 : 1, cursor: pdfProgress ? 'default' : 'pointer' }}>
+            {pdfProgress ? 'Génération...' : 'Télécharger le PDF'}
           </button>
         )}
       </div>
@@ -204,6 +212,35 @@ export default function FormationChampignon() {
               Voir le brevet existant →
             </a>
           )}
+        </div>
+      )}
+
+      {pdfProgress && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: '#1A1D27', borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '340px', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>
+            <div style={{ fontSize: '14px', color: '#F0F0F0', fontWeight: '700', marginBottom: '20px' }}>Génération du PDF...</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
+              {[
+                { key: 'canvas', label: 'Préparation du certificat' },
+                { key: 'pdf', label: 'Création du PDF' },
+                { key: 'download', label: 'Téléchargement' },
+              ].map((step) => {
+                const order = ['canvas', 'pdf', 'download']
+                const currentIdx = order.indexOf(pdfProgress)
+                const stepIdx = order.indexOf(step.key)
+                const done = stepIdx < currentIdx
+                const active = stepIdx === currentIdx
+                return (
+                  <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: done || active ? '#F0F0F0' : '#4B5563' }}>
+                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: done ? '#22C55E' : 'transparent', border: active ? '2px solid #22C55E' : '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#fff', flexShrink: 0 }}>
+                      {done ? '✓' : ''}
+                    </span>
+                    {step.label}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
 
