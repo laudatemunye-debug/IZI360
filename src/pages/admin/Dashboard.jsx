@@ -53,6 +53,58 @@ const Btn = ({ children, onClick, color = T.accent, textColor = '#fff', style = 
   </button>
 )
 
+function ModuleCard({ module, onUpdate }) {
+  const [prixMensuel, setPrixMensuel] = useState(module.prix_mensuel ?? '')
+  const [prixAnnuel, setPrixAnnuel] = useState(module.prix_annuel ?? '')
+  const [trialDays, setTrialDays] = useState(module.trial_days ?? '')
+  const [actif, setActif] = useState(!!module.actif)
+  const [saved, setSaved] = useState(false)
+
+  const inp = { width: '100%', padding: '8px 10px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '13px', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }
+
+  const save = () => {
+    onUpdate(module.id, Number(prixMensuel) || 0, Number(prixAnnuel) || 0, actif, Number(trialDays) || 0)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px' }}>
+        <div style={{ minWidth: '140px' }}>
+          <div style={{ color: T.text, fontWeight: '700', fontSize: '15px' }}>{module.nom}</div>
+          <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{module.code}</div>
+          <span style={{ display: 'inline-block', marginTop: '8px', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: actif ? 'rgba(29,158,117,0.15)' : 'rgba(226,75,74,0.15)', color: actif ? T.accent : '#E24B4A', fontWeight: '600' }}>
+            {actif ? 'Actif' : 'Désactivé'}
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '10px', flex: 1, minWidth: '240px' }}>
+          <div>
+            <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Prix mensuel ($)</label>
+            <input style={inp} type="number" value={prixMensuel} onChange={e => setPrixMensuel(e.target.value)} />
+          </div>
+          <div>
+            <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Prix annuel ($)</label>
+            <input style={inp} type="number" value={prixAnnuel} onChange={e => setPrixAnnuel(e.target.value)} />
+          </div>
+          <div>
+            <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Essai (jours)</label>
+            <input style={inp} type="number" value={trialDays} onChange={e => setTrialDays(e.target.value)} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <Btn onClick={() => setActif(a => !a)} color={actif ? 'rgba(226,75,74,0.15)' : 'rgba(29,158,117,0.15)'} textColor={actif ? '#E24B4A' : T.accent}>
+            {actif ? 'Désactiver' : 'Activer'}
+          </Btn>
+          <Btn onClick={save}>{saved ? '✅ Sauvegardé' : 'Sauvegarder'}</Btn>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 export default function AdminDashboard() {
   const [page, setPage] = useState('stats')
   const [stats, setStats] = useState(null)
