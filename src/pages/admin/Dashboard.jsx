@@ -723,7 +723,7 @@ export default function AdminDashboard() {
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '10px' }}>
               <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', margin: 0 }}>Formations</h1>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div className="formations-btns" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <Btn onClick={() => setShowFormationModal(true)} color="#A78BFA" style={{ padding: '10px 20px' }}>
                   ➕ Ajouter une formation
                 </Btn>
