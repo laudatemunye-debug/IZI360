@@ -170,9 +170,11 @@ export default function EspaceFormateur() {
       <div style={{ padding: 'clamp(14px,4vw,32px)', maxWidth: '1100px', margin: '0 auto' }}>
         {page === 'accueil' && (
           <div className="espace-formateur-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-            <Card onClick={() => navigate('/admin/brevet/champignon')} style={{ cursor: 'pointer', textAlign: 'center', padding: '32px 20px' }}>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: T.accent, marginBottom: '10px' }}>N° {prochainNumero}</div>
-              <div style={{ color: T.text, fontWeight: '700', fontSize: '15px' }}>Générer un brevet</div>
+            <Card onClick={() => navigate('/admin/brevet/champignon')} style={{ cursor: 'pointer', textAlign: 'center', padding: '28px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', fontWeight: '700', color: '#fff', lineHeight: 1 }}>
+                +
+              </div>
+              <div style={{ color: T.textSub, fontWeight: '600', fontSize: '13px' }}>Générer un brevet</div>
             </Card>
             <Card onClick={() => setPage('brevets')} style={{ cursor: 'pointer', textAlign: 'center', padding: '32px 20px' }}>
               <div style={{ fontSize: '28px', fontWeight: '800', color: T.accent, marginBottom: '10px' }}>{totalBrevets}</div>
