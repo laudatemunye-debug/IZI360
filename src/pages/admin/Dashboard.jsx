@@ -159,7 +159,7 @@ export default function AdminDashboard() {
         fetch(`${API}/brevets/all`, { headers }).then(r => r.json()),
         fetch(`${API}/formateurs/demandes`, { headers }).then(r => r.json()),
       ])
-      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs); setFormations(Array.isArray(fo) ? fo : []); setBrevets(Array.isArray(br) ? br : []); setFormateurDemandes(Array.isArray(fd) ? fd : [])
+      setStats(s); setAdvStats(as); setUsers(Array.isArray(u) ? u : []); setModules(Array.isArray(m) ? m : []); setBeautyCrmUsers(Array.isArray(bu) ? bu : []); setBeautyCrmStats(bs); setParrainage(Array.isArray(par) ? par : []); setFormations(Array.isArray(fo) ? fo : []); setBrevets(Array.isArray(br) ? br : []); setFormateurDemandes(Array.isArray(fd) ? fd : [])
     } catch (e) { console.error(e) }
     setLoading(false)
   }
