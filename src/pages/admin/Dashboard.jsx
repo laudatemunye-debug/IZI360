@@ -114,6 +114,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [beautyCrmUsers, setBeautyCrmUsers] = useState([])
   const [beautyCrmStats, setBeautyCrmStats] = useState(null)
+  const [beautyCrmTab, setBeautyCrmTab] = useState('dashboard')
   const [selectedBCUser, setSelectedBCUser] = useState(null)
   const [bcEmailTarget, setBcEmailTarget] = useState(null)
   const [message, setMessage] = useState('')
@@ -288,7 +289,6 @@ export default function AdminDashboard() {
     { key: 'modules', label: 'Modules', icon: '📦' },
     { key: 'notifications', label: 'Notifications', icon: '📧' },
     { key: 'beautycrm', label: 'Beauty CRM', icon: '💄' },
-    { key: 'parrainage', label: 'Parrainage', icon: '🔗' },
     { key: 'formations', label: 'Formations', icon: '🎓' },
     { key: 'autorisations', label: 'Autorisations & Accès', icon: '🔐' },
   ]
@@ -536,149 +536,310 @@ export default function AdminDashboard() {
         {!loading && page === 'beautycrm' && (
           <div>
             <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', margin: 0 }}>Beauty CRM — Utilisateurs</h1>
-              <Btn onClick={() => setShowNotifModal(true)} style={{ padding: '10px 20px', backgroundColor: '#A78BFA' }}>
-                Notifier les utilisateurs
-              </Btn>
+            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '20px' }}>Beauty CRM</h1>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+              {[
+                { key: 'dashboard', label: '📊 Dashboard' },
+                { key: 'utilisateurs', label: '👥 Utilisateurs' },
+                { key: 'parrainage', label: '🔗 Parrainage' },
+                { key: 'entreprise', label: '🏢 Entreprise' },
+                { key: 'notifier', label: '📣 Notifier' },
+              ].map(t => (
+                <button key={t.key} onClick={() => setBeautyCrmTab(t.key)} style={{
+                  padding: '8px 16px', borderRadius: '8px', border: `1px solid ${T.border}`, cursor: 'pointer',
+                  backgroundColor: beautyCrmTab === t.key ? T.accent : T.card,
+                  color: beautyCrmTab === t.key ? '#fff' : T.textSub,
+                  fontSize: '13px', fontWeight: '600', fontFamily: 'inherit',
+                }}>
+                  {t.label}
+                </button>
+              ))}
             </div>
 
-            {/* Stats */}
-            {beautyCrmStats && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                {[
-                  { label: 'Total inscrits', value: beautyCrmStats.total, icon: '👥', color: T.accent },
-                  { label: 'Ce mois', value: beautyCrmStats.ce_mois, icon: '🆕', color: '#A78BFA' },
-                ].map(s => (
-                  <Card key={s.label}>
-                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>{s.icon}</div>
-                    <div style={{ fontSize: '26px', fontWeight: '800', color: s.color }}>{s.value ?? '—'}</div>
-                    <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>{s.label}</div>
-                  </Card>
-                ))}
-                {beautyCrmStats.par_pays?.length > 0 && (
-                  <Card>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: T.text, marginBottom: '8px' }}>Top pays</div>
-                    {beautyCrmStats.par_pays.map(p => (
-                      <div key={p.pays} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: T.textSub, marginBottom: '4px' }}>
-                        <span>{p.pays || 'Inconnu'}</span>
-                        <span style={{ color: T.accent, fontWeight: '700' }}>{p.total}</span>
-                      </div>
+            {beautyCrmTab === 'dashboard' && (
+              <div>
+                {beautyCrmStats && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
+                    {[
+                      { label: 'Total inscrits', value: beautyCrmStats.total, icon: '👥', color: T.accent },
+                    ].map(s => (
+                      <Card key={s.label}>
+                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>{s.icon}</div>
+                        <div style={{ fontSize: '26px', fontWeight: '800', color: s.color }}>{s.value ?? '—'}</div>
+                        <div style={{ fontSize: '11px', color: T.textSub, marginTop: '4px' }}>{s.label}</div>
+                      </Card>
                     ))}
-                  </Card>
+                    {beautyCrmStats.par_pays?.length > 0 && (
+                      <Card>
+                        <div style={{ fontSize: '13px', fontWeight: '700', color: T.text, marginBottom: '8px' }}>Top pays</div>
+                        {beautyCrmStats.par_pays.map(p => (
+                          <div key={p.pays} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: T.textSub, marginBottom: '4px' }}>
+                            <span>{p.pays || 'Inconnu'}</span>
+                            <span style={{ color: T.accent, fontWeight: '700' }}>{p.total}</span>
+                          </div>
+                        ))}
+                      </Card>
+                    )}
+                    {beautyCrmStats.par_version?.length > 0 && (
+                      <Card>
+                        <div style={{ fontSize: '13px', fontWeight: '700', color: T.text, marginBottom: '8px' }}>Versions</div>
+                        {beautyCrmStats.par_version.map(v => (
+                          <div key={v.version} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: T.textSub, marginBottom: '4px' }}>
+                            <span>{v.version || '—'}</span>
+                            <span style={{ color: T.accent, fontWeight: '700' }}>{v.total}</span>
+                          </div>
+                        ))}
+                      </Card>
+                    )}
+                  </div>
                 )}
-                {beautyCrmStats.par_version?.length > 0 && (
-                  <Card>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: T.text, marginBottom: '8px' }}>Versions</div>
-                    {beautyCrmStats.par_version.map(v => (
-                      <div key={v.version} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: T.textSub, marginBottom: '4px' }}>
-                        <span>{v.version || '—'}</span>
-                        <span style={{ color: T.accent, fontWeight: '700' }}>{v.total}</span>
-                      </div>
-                    ))}
-                  </Card>
-                )}
+                {!beautyCrmStats && <p style={{ color: T.textSub, fontSize: '14px' }}>Chargement des statistiques...</p>}
               </div>
             )}
 
-            {/* Table utilisateurs */}
-            <div style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', overflow: 'hidden' }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
-                      {['Date', 'Nom', 'Email', 'Téléphone', 'Pays', 'Ville', 'Entreprise', 'Rôle', 'Devise', 'Version', 'IP'].map(h => (
-                        <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', whiteSpace: 'nowrap' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {beautyCrmUsers.length === 0 ? (
-                      <tr><td colSpan="10" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun utilisateur BeautyCRM enregistré</td></tr>
-                    ) : (
-                      beautyCrmUsers.map(u => (
-                        <tr key={u.id} onClick={() => { setSelectedBeautyUser(u); setEditBeautyUser({...u}) }} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e=>e.currentTarget.style.background=T.bg2} onMouseLeave={e=>e.currentTarget.style.background=''}>
-                          <td style={{ padding: '10px 14px', color: T.textSub, whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
-                          <td style={{ padding: '10px 14px', color: T.text, fontWeight: '600' }}>{u.nom || '—'}</td>
-                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.email}</td>
-                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.telephone || '—'}</td>
-                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.pays || '—'}</td>
-                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.ville || '—'}</td>
-                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.entreprise || '—'}</td>
-                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.role || '—'}</td>
-                          <td style={{ padding: '10px 14px', color: T.textSub }}>{u.devise || '—'}</td>
-                          <td style={{ padding: '10px 14px' }}>
-                            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', backgroundColor: T.accentDim, color: T.accent, fontWeight: '600' }}>
-                              {u.version || '—'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '10px 14px', color: T.textSub, fontSize: '11px', fontFamily: 'monospace' }}>{u.ip_address || '—'}</td>
+            {beautyCrmTab === 'utilisateurs' && (
+              <div>
+                <div style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${T.border}` }}>
+                          {['Date', 'Nom', 'Email', 'Téléphone', 'Pays', 'Ville', 'Entreprise', 'Rôle', 'Devise', 'Version', 'IP'].map(h => (
+                            <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-
-
-            {/* Modal Utilisateur BeautyCRM */}
-            {selectedBeautyUser && editBeautyUser && (
-              <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '540px', border: `1px solid ${T.border}`, maxHeight: '90vh', overflowY: 'auto' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Fiche utilisateur</h2>
-                    <button onClick={() => setSelectedBeautyUser(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
-                  </div>
-
-                  {/* Champs éditables */}
-                  {[['nom','Nom'],['email','Email'],['telephone','Téléphone'],['pays','Pays'],['ville','Ville'],['entreprise','Entreprise'],['role','Rôle'],['devise','Devise']].map(([k,l]) => (
-                    <div key={k} style={{ marginBottom: '12px' }}>
-                      <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>{l}</label>
-                      <input value={editBeautyUser[k] || ''} onChange={e => setEditBeautyUser(p => ({...p, [k]: e.target.value}))}
-                        style={{ width: '100%', padding: '8px 12px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '13px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                  ))}
-
-                  {/* Code de connexion */}
-                  <div style={{ backgroundColor: T.bg, borderRadius: '8px', padding: '12px 16px', margin: '16px 0', border: `1px solid ${T.border}` }}>
-                    <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Email de connexion</label>
-                    <span style={{ color: T.accent, fontFamily: 'monospace', fontSize: '14px' }}>{selectedBeautyUser.email}</span>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', marginTop: '20px', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <Btn onClick={() => window.open(`mailto:${selectedBeautyUser.email}?subject=BeautyCRM&body=Bonjour ${selectedBeautyUser.nom || ''},`, '_blank')} color="#3B82F6">
-                        Email
-                      </Btn>
-                      <Btn onClick={() => window.open(`https://wa.me/${(selectedBeautyUser.telephone||'').replace(/[^0-9]/g,'')}?text=Bonjour ${encodeURIComponent(selectedBeautyUser.nom||'')}`, '_blank')} color="#25D366" textColor="#fff">
-                        WhatsApp
-                      </Btn>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                    <Btn color="#EF4444" onClick={async () => {
-                      if (!confirm('Supprimer cet utilisateur ?')) return
-                      await fetch(`${API}/beautycrm/users/${selectedBeautyUser.id}`, { method: 'DELETE', headers })
-                      setBeautyCrmUsers(p => p.filter(u => u.id !== selectedBeautyUser.id))
-                      setSelectedBeautyUser(null)
-                    }}>Supprimer</Btn>
-                    <Btn onClick={async () => {
-                      await fetch(`${API}/beautycrm/users/${selectedBeautyUser.id}`, {
-                        method: 'PATCH', headers,
-                        body: JSON.stringify(editBeautyUser)
-                      })
-                      setBeautyCrmUsers(p => p.map(u => u.id === selectedBeautyUser.id ? editBeautyUser : u))
-                      setSelectedBeautyUser(null)
-                      setMessage('Modifié !')
-                    }}>Sauvegarder</Btn>
-                    </div>
+                      </thead>
+                      <tbody>
+                        {beautyCrmUsers.length === 0 ? (
+                          <tr><td colSpan="10" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun utilisateur BeautyCRM enregistré</td></tr>
+                        ) : (
+                          beautyCrmUsers.map(u => (
+                            <tr key={u.id} onClick={() => { setSelectedBeautyUser(u); setEditBeautyUser({...u}) }} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e=>e.currentTarget.style.background=T.bg2} onMouseLeave={e=>e.currentTarget.style.background=''}>
+                              <td style={{ padding: '10px 14px', color: T.textSub, whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
+                              <td style={{ padding: '10px 14px', color: T.text, fontWeight: '600' }}>{u.nom || '—'}</td>
+                              <td style={{ padding: '10px 14px', color: T.textSub }}>{u.email}</td>
+                              <td style={{ padding: '10px 14px', color: T.textSub }}>{u.telephone || '—'}</td>
+                              <td style={{ padding: '10px 14px', color: T.textSub }}>{u.pays || '—'}</td>
+                              <td style={{ padding: '10px 14px', color: T.textSub }}>{u.ville || '—'}</td>
+                              <td style={{ padding: '10px 14px', color: T.textSub }}>{u.entreprise || '—'}</td>
+                              <td style={{ padding: '10px 14px', color: T.textSub }}>{u.role || '—'}</td>
+                              <td style={{ padding: '10px 14px', color: T.textSub }}>{u.devise || '—'}</td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', backgroundColor: T.accentDim, color: T.accent, fontWeight: '600' }}>
+                                  {u.version || '—'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 14px', color: T.textSub, fontSize: '11px', fontFamily: 'monospace' }}>{u.ip_address || '—'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
+
+                {selectedBeautyUser && editBeautyUser && (
+                  <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '540px', border: `1px solid ${T.border}`, maxHeight: '90vh', overflowY: 'auto' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Fiche utilisateur</h2>
+                        <button onClick={() => setSelectedBeautyUser(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+                      </div>
+
+                      {[['nom','Nom'],['email','Email'],['telephone','Téléphone'],['pays','Pays'],['ville','Ville'],['entreprise','Entreprise'],['role','Rôle'],['devise','Devise']].map(([k,l]) => (
+                        <div key={k} style={{ marginBottom: '12px' }}>
+                          <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>{l}</label>
+                          <input value={editBeautyUser[k] || ''} onChange={e => setEditBeautyUser(p => ({...p, [k]: e.target.value}))}
+                            style={{ width: '100%', padding: '8px 12px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '13px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+                        </div>
+                      ))}
+
+                      <div style={{ backgroundColor: T.bg, borderRadius: '8px', padding: '12px 16px', margin: '16px 0', border: `1px solid ${T.border}` }}>
+                        <label style={{ fontSize: '11px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Email de connexion</label>
+                        <span style={{ color: T.accent, fontFamily: 'monospace', fontSize: '14px' }}>{selectedBeautyUser.email}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', marginTop: '20px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <Btn onClick={() => window.open(`mailto:${selectedBeautyUser.email}?subject=BeautyCRM&body=Bonjour ${selectedBeautyUser.nom || ''},`, '_blank')} color="#3B82F6">
+                            Email
+                          </Btn>
+                          <Btn onClick={() => window.open(`https://wa.me/${(selectedBeautyUser.telephone||'').replace(/[^0-9]/g,'')}?text=Bonjour ${encodeURIComponent(selectedBeautyUser.nom||'')}`, '_blank')} color="#25D366" textColor="#fff">
+                            WhatsApp
+                          </Btn>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <Btn color="#EF4444" onClick={async () => {
+                          if (!confirm('Supprimer cet utilisateur ?')) return
+                          await fetch(`${API}/beautycrm/users/${selectedBeautyUser.id}`, { method: 'DELETE', headers })
+                          setBeautyCrmUsers(p => p.filter(u => u.id !== selectedBeautyUser.id))
+                          setSelectedBeautyUser(null)
+                        }}>Supprimer</Btn>
+                        <Btn onClick={async () => {
+                          await fetch(`${API}/beautycrm/users/${selectedBeautyUser.id}`, {
+                            method: 'PATCH', headers,
+                            body: JSON.stringify(editBeautyUser)
+                          })
+                          setBeautyCrmUsers(p => p.map(u => u.id === selectedBeautyUser.id ? editBeautyUser : u))
+                          setSelectedBeautyUser(null)
+                          setMessage('Modifié !')
+                        }}>Sauvegarder</Btn>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Modal Notification */}
+            {beautyCrmTab === 'parrainage' && (
+              <div>
+                <Card style={{ marginBottom: '16px', display: 'flex', gap: '24px' }}>
+                  <div><div style={{ fontSize: '2rem', fontWeight: '700', color: T.accent }}>{parrainage.length}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Parrains actifs</div></div>
+                  <div><div style={{ fontSize: '2rem', fontWeight: '700', color: '#A78BFA' }}>{parrainage.reduce((a,p) => a + parseInt(p.nb_filleuls||0), 0)}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Total filleuls</div></div>
+                </Card>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  <input
+                    type='number'
+                    min='0'
+                    value={filtreFilleuls}
+                    onChange={e => setFiltreFilleuls(e.target.value)}
+                    placeholder='Nb filleuls'
+                    style={{ width: '110px', background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit' }}
+                  />
+                  {filtreFilleuls !== '' && (
+                    <button onClick={() => setFiltreFilleuls('')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>
+                      Réinitialiser
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setTriFilleuls(triFilleuls === 'desc' ? 'asc' : 'desc')}
+                    style={{ background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    Trier par filleuls {triFilleuls === 'desc' ? '↓' : '↑'}
+                  </button>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: T.card, borderRadius: '12px', overflow: 'hidden' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: T.bg2 }}>
+                        {['Parrain', 'Email', 'Code', 'Filleuls', 'Détails'].map(h => (
+                          <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', fontSize: '12px' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...parrainage]
+                        .filter(p => filtreFilleuls === '' || parseInt(p.nb_filleuls||0) >= parseInt(filtreFilleuls))
+                        .sort((a, b) => {
+                        const diff = parseInt(a.nb_filleuls||0) - parseInt(b.nb_filleuls||0)
+                        return (filtreFilleuls !== '' || triFilleuls === 'desc') ? -diff : diff
+                      }).map(p => (
+                        <tr key={p.id} onClick={() => setParrainSelectionne(p)} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer' }}>
+                          <td style={{ padding: '12px 14px', color: T.text, fontWeight: '600' }}>{p.nom || '—'}</td>
+                          <td style={{ padding: '12px 14px', color: T.textSub }}>{p.email}</td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span style={{ fontFamily: 'monospace', backgroundColor: T.accentDim, color: T.accent, padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>{p.referral_code}</span>
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span style={{ backgroundColor: parseInt(p.nb_filleuls)>0 ? 'rgba(167,139,250,0.15)' : T.bg, color: parseInt(p.nb_filleuls)>0 ? '#A78BFA' : T.textSub, padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>
+                              {p.nb_filleuls} filleul{parseInt(p.nb_filleuls)>1?'s':''}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 14px', color: T.textSub, fontSize: '12px' }}>
+                            {p.filleuls ? p.filleuls.map((f,i) => (
+                              <div key={i}>{f.nom || f.email}</div>
+                            )) : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                      {parrainage.length === 0 && (
+                        <tr><td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun parrainage enregistré</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {parrainSelectionne && (
+                  <div onClick={() => setParrainSelectionne(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+                    <div onClick={e => e.stopPropagation()} style={{ backgroundColor: T.card, borderRadius: '14px', padding: '24px', maxWidth: '420px', width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                        <div>
+                          <div style={{ color: T.text, fontWeight: '700', fontSize: '18px' }}>{parrainSelectionne.nom || '—'}</div>
+                          <div style={{ color: T.textSub, fontSize: '13px', marginTop: '4px' }}>{parrainSelectionne.email}</div>
+                          {parrainSelectionne.telephone && (
+                            <div style={{ color: T.textSub, fontSize: '13px', marginTop: '2px' }}>{parrainSelectionne.telephone}</div>
+                          )}
+                        </div>
+                        <button onClick={() => setParrainSelectionne(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>×</button>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                        {parrainSelectionne.telephone && (
+                          <a href={`https://wa.me/${parrainSelectionne.telephone.replace(/[^0-9]/g,'')}`} target='_blank' rel='noreferrer' style={{ flex: '1 1 auto', textDecoration: 'none', textAlign: 'center', backgroundColor: '#25D366', color: '#fff', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '700' }}>
+                            📱 WhatsApp
+                          </a>
+                        )}
+                        {parrainSelectionne.email && (
+                          <a href={`mailto:${parrainSelectionne.email}`} style={{ flex: '1 1 auto', textDecoration: 'none', textAlign: 'center', backgroundColor: T.accent, color: '#fff', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '700' }}>
+                            ✉️ Email
+                          </a>
+                        )}
+                      </div>
+
+                      <div style={{ color: T.text, fontWeight: '700', fontSize: '14px', marginBottom: '10px' }}>
+                        Filleuls ({parrainSelectionne.nb_filleuls || 0})
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {parrainSelectionne.filleuls ? parrainSelectionne.filleuls.map((f, i) => (
+                          <div key={i} style={{ backgroundColor: T.bg2, borderRadius: '8px', padding: '10px 12px' }}>
+                            <div style={{ color: T.text, fontWeight: '600', fontSize: '13px' }}>{f.nom || '—'}</div>
+                            <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{f.email}</div>
+                            {f.telephone && <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{f.telephone}</div>}
+                          </div>
+                        )) : (
+                          <div style={{ color: T.textSub, fontSize: '13px' }}>Aucun filleul</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {beautyCrmTab === 'entreprise' && (
+              <Card>
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: T.textSub, fontSize: '14px' }}>
+                  🏢 Section Entreprise — à construire prochainement.
+                </div>
+              </Card>
+            )}
+
+            {beautyCrmTab === 'notifier' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                <Card style={{ textAlign: 'center', padding: '28px 20px' }}>
+                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>✉️</div>
+                  <div style={{ color: T.text, fontWeight: '700', fontSize: '15px', marginBottom: '16px' }}>Email</div>
+                  <Btn onClick={() => setShowNotifModal(true)} style={{ padding: '10px 20px', backgroundColor: '#A78BFA' }}>
+                    Configurer
+                  </Btn>
+                </Card>
+                <Card style={{ textAlign: 'center', padding: '28px 20px', opacity: 0.6 }}>
+                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>📱</div>
+                  <div style={{ color: T.text, fontWeight: '700', fontSize: '15px', marginBottom: '6px' }}>WhatsApp</div>
+                  <div style={{ color: T.textSub, fontSize: '12px' }}>Bientôt disponible</div>
+                </Card>
+                <Card style={{ textAlign: 'center', padding: '28px 20px', opacity: 0.6 }}>
+                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>🔔</div>
+                  <div style={{ color: T.text, fontWeight: '700', fontSize: '15px', marginBottom: '6px' }}>Notification in-app</div>
+                  <div style={{ color: T.textSub, fontSize: '12px' }}>Bientôt disponible</div>
+                </Card>
+              </div>
+            )}
+
             {showNotifModal && (
               <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
                 <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '520px', border: `1px solid ${T.border}` }}>
@@ -722,127 +883,6 @@ export default function AdminDashboard() {
                         📧 Envoyer à tous ({beautyCrmUsers.length})
                       </Btn>
                     </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* PARRAINAGE */}
-        {!loading && page === 'parrainage' && (
-          <div>
-            <button onClick={() => setPage('stats')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Dashboard</button>
-            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Parrainage BeautyCRM</h1>
-            
-            <Card style={{ marginBottom: '16px', display: 'flex', gap: '24px' }}>
-              <div><div style={{ fontSize: '2rem', fontWeight: '700', color: T.accent }}>{parrainage.length}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Parrains actifs</div></div>
-              <div><div style={{ fontSize: '2rem', fontWeight: '700', color: '#A78BFA' }}>{parrainage.reduce((a,p) => a + parseInt(p.nb_filleuls||0), 0)}</div><div style={{ color: T.textSub, fontSize: '12px' }}>Total filleuls</div></div>
-            </Card>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
-              <input
-                type='number'
-                min='0'
-                value={filtreFilleuls}
-                onChange={e => setFiltreFilleuls(e.target.value)}
-                placeholder='Nb filleuls'
-                style={{ width: '110px', background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit' }}
-              />
-              {filtreFilleuls !== '' && (
-                <button onClick={() => setFiltreFilleuls('')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>
-                  Réinitialiser
-                </button>
-              )}
-              <button
-                onClick={() => setTriFilleuls(triFilleuls === 'desc' ? 'asc' : 'desc')}
-                style={{ background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                Trier par filleuls {triFilleuls === 'desc' ? '↓' : '↑'}
-              </button>
-            </div>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: T.card, borderRadius: '12px', overflow: 'hidden' }}>
-                <thead>
-                  <tr style={{ backgroundColor: T.bg2 }}>
-                    {['Parrain', 'Email', 'Code', 'Filleuls', 'Détails'].map(h => (
-                      <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', fontSize: '12px' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...parrainage]
-                    .filter(p => filtreFilleuls === '' || parseInt(p.nb_filleuls||0) >= parseInt(filtreFilleuls))
-                    .sort((a, b) => {
-                    const diff = parseInt(a.nb_filleuls||0) - parseInt(b.nb_filleuls||0)
-                    return (filtreFilleuls !== '' || triFilleuls === 'desc') ? -diff : diff
-                  }).map(p => (
-                    <tr key={p.id} onClick={() => setParrainSelectionne(p)} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer' }}>
-                      <td style={{ padding: '12px 14px', color: T.text, fontWeight: '600' }}>{p.nom || '—'}</td>
-                      <td style={{ padding: '12px 14px', color: T.textSub }}>{p.email}</td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <span style={{ fontFamily: 'monospace', backgroundColor: T.accentDim, color: T.accent, padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>{p.referral_code}</span>
-                      </td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <span style={{ backgroundColor: parseInt(p.nb_filleuls)>0 ? 'rgba(167,139,250,0.15)' : T.bg, color: parseInt(p.nb_filleuls)>0 ? '#A78BFA' : T.textSub, padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>
-                          {p.nb_filleuls} filleul{parseInt(p.nb_filleuls)>1?'s':''}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 14px', color: T.textSub, fontSize: '12px' }}>
-                        {p.filleuls ? p.filleuls.map((f,i) => (
-                          <div key={i}>{f.nom || f.email}</div>
-                        )) : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                  {parrainage.length === 0 && (
-                    <tr><td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun parrainage enregistré</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {parrainSelectionne && (
-              <div onClick={() => setParrainSelectionne(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
-                <div onClick={e => e.stopPropagation()} style={{ backgroundColor: T.card, borderRadius: '14px', padding: '24px', maxWidth: '420px', width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                    <div>
-                      <div style={{ color: T.text, fontWeight: '700', fontSize: '18px' }}>{parrainSelectionne.nom || '—'}</div>
-                      <div style={{ color: T.textSub, fontSize: '13px', marginTop: '4px' }}>{parrainSelectionne.email}</div>
-                      {parrainSelectionne.telephone && (
-                        <div style={{ color: T.textSub, fontSize: '13px', marginTop: '2px' }}>{parrainSelectionne.telephone}</div>
-                      )}
-                    </div>
-                    <button onClick={() => setParrainSelectionne(null)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>×</button>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                    {parrainSelectionne.telephone && (
-                      <a href={`https://wa.me/${parrainSelectionne.telephone.replace(/[^0-9]/g,'')}`} target='_blank' rel='noreferrer' style={{ flex: '1 1 auto', textDecoration: 'none', textAlign: 'center', backgroundColor: '#25D366', color: '#fff', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '700' }}>
-                        📱 WhatsApp
-                      </a>
-                    )}
-                    {parrainSelectionne.email && (
-                      <a href={`mailto:${parrainSelectionne.email}`} style={{ flex: '1 1 auto', textDecoration: 'none', textAlign: 'center', backgroundColor: T.accent, color: '#fff', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '700' }}>
-                        ✉️ Email
-                      </a>
-                    )}
-                  </div>
-
-                  <div style={{ color: T.text, fontWeight: '700', fontSize: '14px', marginBottom: '10px' }}>
-                    Filleuls ({parrainSelectionne.nb_filleuls || 0})
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {parrainSelectionne.filleuls ? parrainSelectionne.filleuls.map((f, i) => (
-                      <div key={i} style={{ backgroundColor: T.bg2, borderRadius: '8px', padding: '10px 12px' }}>
-                        <div style={{ color: T.text, fontWeight: '600', fontSize: '13px' }}>{f.nom || '—'}</div>
-                        <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{f.email}</div>
-                        {f.telephone && <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{f.telephone}</div>}
-                      </div>
-                    )) : (
-                      <div style={{ color: T.textSub, fontSize: '13px' }}>Aucun filleul</div>
-                    )}
                   </div>
                 </div>
               </div>
