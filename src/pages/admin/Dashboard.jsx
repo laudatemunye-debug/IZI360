@@ -647,26 +647,51 @@ export default function AdminDashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
 
                   <Card>
-                    <div style={{ color: T.text, fontWeight: '700', fontSize: '14px', marginBottom: '16px' }}>Évolution des inscriptions</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <div style={{ color: T.text, fontWeight: '700', fontSize: '14px' }}>Évolution des inscriptions (par semaine)</div>
+                      <div style={{ display: 'flex', gap: '10px', fontSize: '10px', color: T.textSub }}>
+                        <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#60A5FA', marginRight: '4px' }} />Faible</span>
+                        <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#F59E0B', marginRight: '4px' }} />Moyen</span>
+                        <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', backgroundColor: T.accent, marginRight: '4px' }} />Fort</span>
+                      </div>
+                    </div>
                     {(() => {
+                      const getWeekKey = (dateStr) => {
+                        const d = new Date(dateStr)
+                        const target = new Date(d.valueOf())
+                        const dayNr = (d.getUTCDay() + 6) % 7
+                        target.setUTCDate(target.getUTCDate() - dayNr + 3)
+                        const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4))
+                        const week = 1 + Math.round(((target - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7)
+                        return { key: `${target.getUTCFullYear()}-S${String(week).padStart(2, '0')}`, label: `S${week}`, start: new Date(d.setUTCDate(d.getUTCDate() - dayNr)) }
+                      }
                       const map = {}
                       beautyCrmUsers.forEach(u => {
                         if (!u.created_at) return
-                        const key = u.created_at.slice(0, 7)
-                        map[key] = (map[key] || 0) + 1
+                        const { key, label } = getWeekKey(u.created_at)
+                        if (!map[key]) map[key] = { label, count: 0 }
+                        map[key].count += 1
                       })
-                      const data = Object.entries(map).sort((a, b) => a[0].localeCompare(b[0])).slice(-6)
-                      const max = Math.max(...data.map(([, v]) => v), 1)
+                      const data = Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]))
                       if (data.length === 0) return <p style={{ color: T.textSub, fontSize: '13px' }}>Pas encore assez de données.</p>
+                      const max = Math.max(...data.map(([, v]) => v.count), 1)
+                      const colorFor = (val) => {
+                        const ratio = val / max
+                        if (ratio >= 0.66) return T.accent
+                        if (ratio >= 0.33) return '#F59E0B'
+                        return '#60A5FA'
+                      }
                       return (
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', height: '160px', padding: '0 6px' }}>
-                          {data.map(([mois, val]) => (
-                            <div key={mois} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '6px' }}>
-                              <div style={{ color: T.accent, fontSize: '12px', fontWeight: '700' }}>{val}</div>
-                              <div style={{ width: '100%', maxWidth: '36px', height: `${Math.max((val / max) * 110, 4)}px`, backgroundColor: T.accent, borderRadius: '6px 6px 0 0' }} />
-                              <div style={{ color: T.textSub, fontSize: '10px', whiteSpace: 'nowrap' }}>{mois}</div>
-                            </div>
-                          ))}
+                        <div style={{ overflowX: 'auto', paddingBottom: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '14px', height: '170px', padding: '10px 6px 0', minWidth: `${data.length * 46}px` }}>
+                            {data.map(([key, v]) => (
+                              <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0, width: '32px' }}>
+                                <div style={{ color: T.text, fontSize: '11px', fontWeight: '700' }}>{v.count}</div>
+                                <div style={{ width: '100%', height: `${Math.max((v.count / max) * 110, 6)}px`, backgroundColor: colorFor(v.count), borderRadius: '8px 8px 3px 3px', transition: 'height 0.3s' }} />
+                                <div style={{ color: T.textSub, fontSize: '9px', whiteSpace: 'nowrap' }}>{v.label}</div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )
                     })()}
