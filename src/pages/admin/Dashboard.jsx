@@ -115,6 +115,7 @@ export default function AdminDashboard() {
   const [beautyCrmUsers, setBeautyCrmUsers] = useState([])
   const [beautyCrmStats, setBeautyCrmStats] = useState(null)
   const [beautyCrmTab, setBeautyCrmTab] = useState('dashboard')
+  const [moisInscrits, setMoisInscrits] = useState('')
   const [selectedBCUser, setSelectedBCUser] = useState(null)
   const [bcEmailTarget, setBcEmailTarget] = useState(null)
   const [message, setMessage] = useState('')
@@ -597,6 +598,88 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 {!beautyCrmStats && <p style={{ color: T.textSub, fontSize: '14px' }}>Chargement des statistiques...</p>}
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginTop: '24px' }}>
+
+                  <Card>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ color: T.text, fontWeight: '700', fontSize: '14px' }}>10 derniers inscrits</div>
+                      <select
+                        value={moisInscrits}
+                        onChange={e => setMoisInscrits(e.target.value)}
+                        style={{ padding: '6px 10px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }}
+                      >
+                        <option value="">Tous les mois</option>
+                        {Array.from(new Set(beautyCrmUsers.filter(u => u.created_at).map(u => u.created_at.slice(0, 7)))).sort().reverse().map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {beautyCrmUsers
+                        .filter(u => !moisInscrits || (u.created_at && u.created_at.slice(0, 7) === moisInscrits))
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        .slice(0, 10)
+                        .map(u => (
+                          <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', backgroundColor: T.bg, borderRadius: '8px' }}>
+                            <div>
+                              <div style={{ color: T.text, fontSize: '13px', fontWeight: '600' }}>{u.nom || '—'}</div>
+                              <div style={{ color: T.textSub, fontSize: '11px' }}>{u.pays || '—'}</div>
+                            </div>
+                            <div style={{ color: T.textSub, fontSize: '11px', whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString('fr-FR')}</div>
+                          </div>
+                        ))}
+                      {beautyCrmUsers.filter(u => !moisInscrits || (u.created_at && u.created_at.slice(0, 7) === moisInscrits)).length === 0 && (
+                        <p style={{ color: T.textSub, fontSize: '13px' }}>Aucun inscrit pour cette période.</p>
+                      )}
+                    </div>
+                  </Card>
+
+                  <Card>
+                    <div style={{ color: T.text, fontWeight: '700', fontSize: '14px', marginBottom: '14px' }}>10 derniers paiements</div>
+                    <div style={{ textAlign: 'center', padding: '30px 10px', color: T.textSub, fontSize: '13px' }}>
+                      💳 En attente de l'intégration du système de paiement BeautyCRM.
+                    </div>
+                  </Card>
+
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
+
+                  <Card>
+                    <div style={{ color: T.text, fontWeight: '700', fontSize: '14px', marginBottom: '16px' }}>Évolution des inscriptions</div>
+                    {(() => {
+                      const map = {}
+                      beautyCrmUsers.forEach(u => {
+                        if (!u.created_at) return
+                        const key = u.created_at.slice(0, 7)
+                        map[key] = (map[key] || 0) + 1
+                      })
+                      const data = Object.entries(map).sort((a, b) => a[0].localeCompare(b[0])).slice(-6)
+                      const max = Math.max(...data.map(([, v]) => v), 1)
+                      if (data.length === 0) return <p style={{ color: T.textSub, fontSize: '13px' }}>Pas encore assez de données.</p>
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', height: '160px', padding: '0 6px' }}>
+                          {data.map(([mois, val]) => (
+                            <div key={mois} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '6px' }}>
+                              <div style={{ color: T.accent, fontSize: '12px', fontWeight: '700' }}>{val}</div>
+                              <div style={{ width: '100%', maxWidth: '36px', height: `${Math.max((val / max) * 110, 4)}px`, backgroundColor: T.accent, borderRadius: '6px 6px 0 0' }} />
+                              <div style={{ color: T.textSub, fontSize: '10px', whiteSpace: 'nowrap' }}>{mois}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                  </Card>
+
+                  <Card>
+                    <div style={{ color: T.text, fontWeight: '700', fontSize: '14px', marginBottom: '16px' }}>Évolution des paiements</div>
+                    <div style={{ textAlign: 'center', padding: '40px 10px', color: T.textSub, fontSize: '13px' }}>
+                      📊 Graphique disponible dès l'intégration du système de paiement.
+                    </div>
+                  </Card>
+
+                </div>
               </div>
             )}
 
