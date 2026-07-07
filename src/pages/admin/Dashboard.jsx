@@ -563,8 +563,8 @@ export default function AdminDashboard() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
                     {[
                       { label: 'Total inscrits', value: beautyCrmStats.total, icon: '👥', color: T.accent },
-                      { label: 'Mode Entreprise', value: beautyCrmUsers.filter(u => u.entreprise && u.entreprise.trim() !== '').length, icon: '🏢', color: '#F59E0B' },
-                      { label: 'Mode Personnel', value: beautyCrmUsers.filter(u => !u.entreprise || u.entreprise.trim() === '').length, icon: '👤', color: '#60A5FA' },
+                      { label: 'Mode Entreprise', value: beautyCrmUsers.filter(u => !u.entreprise || u.entreprise.trim() === '').length, icon: '🏢', color: '#F59E0B' },
+                      { label: 'Mode Personnel', value: beautyCrmUsers.filter(u => u.entreprise && u.entreprise.trim() !== '').length, icon: '👤', color: '#60A5FA' },
                     ].map(s => (
                       <Card key={s.label}>
                         <div style={{ fontSize: '24px', marginBottom: '8px' }}>{s.icon}</div>
