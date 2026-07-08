@@ -130,6 +130,11 @@ export default function AdminDashboard() {
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const [formations, setFormations] = useState([])
   const [selectedFormationInscrits, setSelectedFormationInscrits] = useState(null)
+  const [entreprises, setEntreprises] = useState([])
+  const [loadingEntreprises, setLoadingEntreprises] = useState(false)
+  const [entrepriseConfirmAction, setEntrepriseConfirmAction] = useState(null) // { type: 'suspend'|'delete'|'unsuspend', entreprise }
+  const [entrepriseMotif, setEntrepriseMotif] = useState('')
+  const [confirmingEntreprise, setConfirmingEntreprise] = useState(false)
   const [selectedInscrit, setSelectedInscrit] = useState(null)
   const [brevets, setBrevets] = useState([])
   const [showAncienModal, setShowAncienModal] = useState(false)
@@ -147,7 +152,7 @@ export default function AdminDashboard() {
   const token = localStorage.getItem('izi360_token')
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
 
-  useEffect(() => { if (!token) { navigate('/login'); return }; fetchAll() }, [])
+  useEffect(() => { if (!token) { navigate('/login'); return }; fetchAll(); fetchEntreprises() }, [])
 
   const fetchAll = async () => {
     setLoading(true)
@@ -170,6 +175,42 @@ export default function AdminDashboard() {
   }
 
   const msg = (text) => { setMessage(text); setTimeout(() => setMessage(''), 4000) }
+
+  const fetchEntreprises = async () => {
+    setLoadingEntreprises(true)
+    try {
+      const res = await fetch(`${API}/beautycrm/entreprise/admin/list`, { headers })
+      const data = await res.json()
+      setEntreprises(Array.isArray(data) ? data : [])
+    } catch (e) { console.error(e) }
+    setLoadingEntreprises(false)
+  }
+
+  useEffect(() => { if (beautyCrmTab === 'entreprise') fetchEntreprises() }, [beautyCrmTab])
+
+  const confirmerActionEntreprise = async () => {
+    if (!entrepriseConfirmAction || confirmingEntreprise) return
+    const { type, entreprise } = entrepriseConfirmAction
+    const endpoint = type === 'suspend' ? 'admin/suspend' : type === 'unsuspend' ? 'admin/unsuspend' : 'admin/delete'
+    setConfirmingEntreprise(true)
+    try {
+      const res = await fetch(`${API}/beautycrm/entreprise/${endpoint}`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ admin_email: entreprise.admin_email, motif: entrepriseMotif }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) { msg(data.message || 'Erreur lors de l\'action.'); return }
+      msg(type === 'suspend' ? 'Entreprise suspendue.' : type === 'unsuspend' ? 'Entreprise reactivee.' : 'Entreprise marquee pour suppression. La purge se fera au prochain acces de l\'admin.')
+      setEntrepriseConfirmAction(null)
+      setEntrepriseMotif('')
+      fetchEntreprises()
+    } catch (e) {
+      console.error(e)
+      msg('Erreur reseau.')
+    } finally {
+      setConfirmingEntreprise(false)
+    }
+  }
 
   const deleteBCUser = async (id) => {
     await fetch(`${API}/beautycrm/users/${id}`, { method: 'DELETE', headers })
@@ -564,7 +605,7 @@ export default function AdminDashboard() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
                     {[
                       { label: 'Total inscrits', value: beautyCrmStats.total, icon: '👥', color: T.accent },
-                      { label: 'Mode Entreprise', value: beautyCrmUsers.filter(u => !u.entreprise || u.entreprise.trim() === '').length, icon: '🏢', color: '#F59E0B' },
+                      { label: 'Mode Entreprise', value: entreprises.filter(e => !e.suspendue).length, icon: '🏢', color: '#F59E0B' },
                       { label: 'Mode Personnel', value: beautyCrmUsers.filter(u => u.entreprise && u.entreprise.trim() !== '').length, icon: '👤', color: '#60A5FA' },
                     ].map(s => (
                       <Card key={s.label}>
@@ -922,10 +963,88 @@ export default function AdminDashboard() {
 
             {beautyCrmTab === 'entreprise' && (
               <Card>
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: T.textSub, fontSize: '14px' }}>
-                  🏢 Section Entreprise — à construire prochainement.
-                </div>
+                {loadingEntreprises ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', color: T.textSub, fontSize: '14px' }}>Chargement...</div>
+                ) : entreprises.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', color: T.textSub, fontSize: '14px' }}>
+                    🏢 Aucune entreprise pour le moment.
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${T.border}` }}>
+                          {['Admin', 'Employes', 'Statut', 'Cree le', 'Actions'].map(h => (
+                            <th key={h} style={{ textAlign: 'left', padding: '10px 12px', color: T.textSub, fontSize: '12px', fontWeight: '700' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {entreprises.map((e) => (
+                          <tr key={e.admin_email} style={{ borderBottom: `1px solid ${T.border}` }}>
+                            <td style={{ padding: '10px 12px', color: T.text, fontSize: '13px' }}>{e.admin_email}</td>
+                            <td style={{ padding: '10px 12px', color: T.text, fontSize: '13px' }}>{e.nb_employes ?? 0}</td>
+                            <td style={{ padding: '10px 12px', fontSize: '12px' }}>
+                              {e.suspendue ? (
+                                <span style={{ color: '#F59E0B', fontWeight: '700' }}>Suspendue</span>
+                              ) : e.fermee ? (
+                                <span style={{ color: T.textMuted, fontWeight: '700' }}>Fermee (par admin)</span>
+                              ) : (
+                                <span style={{ color: T.accent, fontWeight: '700' }}>Active</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '10px 12px', color: T.textSub, fontSize: '12px' }}>{e.created_at ? new Date(e.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+                            <td style={{ padding: '10px 12px' }}>
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {e.suspendue ? (
+                                  <Btn color={T.accent} onClick={() => setEntrepriseConfirmAction({ type: 'unsuspend', entreprise: e })}>Reactiver</Btn>
+                                ) : (
+                                  <Btn color='#F59E0B' onClick={() => setEntrepriseConfirmAction({ type: 'suspend', entreprise: e })}>Suspendre</Btn>
+                                )}
+                                <Btn color='#DC2626' onClick={() => setEntrepriseConfirmAction({ type: 'delete', entreprise: e })}>Supprimer</Btn>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </Card>
+            )}
+
+            {entrepriseConfirmAction && (
+              <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000, padding: 20 }}>
+                <Card style={{ maxWidth: 420, width: '100%' }}>
+                  <div style={{ color: T.text, fontWeight: '700', fontSize: '16px', marginBottom: '10px' }}>
+                    {entrepriseConfirmAction.type === 'delete' && 'Supprimer definitivement cette entreprise ?'}
+                    {entrepriseConfirmAction.type === 'suspend' && 'Suspendre cette entreprise ?'}
+                    {entrepriseConfirmAction.type === 'unsuspend' && 'Reactiver cette entreprise ?'}
+                  </div>
+                  <div style={{ color: T.textSub, fontSize: '13px', marginBottom: '14px', lineHeight: 1.5 }}>
+                    {entrepriseConfirmAction.entreprise.admin_email}
+                    {entrepriseConfirmAction.type === 'delete' && (
+                      <div style={{ marginTop: '8px', color: '#DC2626', fontWeight: '600' }}>
+                        ⚠️ Action irreversible. Toutes les donnees (locales et Drive) seront definitivement effacees des que l'admin ouvrira l'app.
+                      </div>
+                    )}
+                  </div>
+                  {(entrepriseConfirmAction.type === 'delete' || entrepriseConfirmAction.type === 'suspend') && (
+                    <input
+                      value={entrepriseMotif}
+                      onChange={(ev) => setEntrepriseMotif(ev.target.value)}
+                      placeholder='Motif (optionnel)'
+                      style={{ width: '100%', padding: '10px 12px', backgroundColor: T.bg2, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '13px', marginBottom: '16px', boxSizing: 'border-box' }}
+                    />
+                  )}
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                    <Btn color={T.bg2} textColor={T.textSub} onClick={() => { if (!confirmingEntreprise) { setEntrepriseConfirmAction(null); setEntrepriseMotif('') } }} style={confirmingEntreprise ? { opacity: 0.5, cursor: 'not-allowed' } : {}}>Annuler</Btn>
+                    <Btn color={entrepriseConfirmAction.type === 'delete' ? '#DC2626' : T.accent} onClick={confirmerActionEntreprise} style={confirmingEntreprise ? { opacity: 0.7, cursor: 'not-allowed' } : {}}>
+                      {confirmingEntreprise ? '⏳ Confirmation...' : 'Confirmer'}
+                    </Btn>
+                  </div>
+                </Card>
+              </div>
             )}
 
             {beautyCrmTab === 'notifier' && (
