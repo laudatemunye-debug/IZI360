@@ -135,6 +135,7 @@ export default function AdminDashboard() {
   const [entrepriseConfirmAction, setEntrepriseConfirmAction] = useState(null) // { type: 'suspend'|'delete'|'unsuspend', entreprise }
   const [entrepriseMotif, setEntrepriseMotif] = useState('')
   const [confirmingEntreprise, setConfirmingEntreprise] = useState(false)
+  const [entrepriseFiltre, setEntrepriseFiltre] = useState('active')
   const [selectedInscrit, setSelectedInscrit] = useState(null)
   const [brevets, setBrevets] = useState([])
   const [showAncienModal, setShowAncienModal] = useState(false)
@@ -961,13 +962,24 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {beautyCrmTab === 'entreprise' && (
-              <Card>
+            {beautyCrmTab === 'entreprise' && (() => {
+              const actives = entreprises.filter(e => !e.suspendue && !e.supprimee)
+              const desactivees = entreprises.filter(e => e.suspendue && !e.supprimee)
+              const supprimees = entreprises.filter(e => e.supprimee)
+              const listeAffichee = entrepriseFiltre === 'active' ? actives : entrepriseFiltre === 'suspendue' ? desactivees : supprimees
+              return (
+              <>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                  <Btn color={entrepriseFiltre === 'active' ? T.accent : T.bg2} textColor={entrepriseFiltre === 'active' ? '#fff' : T.textSub} onClick={() => setEntrepriseFiltre('active')}>Actives ({actives.length})</Btn>
+                  <Btn color={entrepriseFiltre === 'suspendue' ? '#F59E0B' : T.bg2} textColor={entrepriseFiltre === 'suspendue' ? '#fff' : T.textSub} onClick={() => setEntrepriseFiltre('suspendue')}>Desactivees ({desactivees.length})</Btn>
+                  <Btn color={entrepriseFiltre === 'supprimee' ? '#DC2626' : T.bg2} textColor={entrepriseFiltre === 'supprimee' ? '#fff' : T.textSub} onClick={() => setEntrepriseFiltre('supprimee')}>Supprimees ({supprimees.length})</Btn>
+                </div>
+                <Card>
                 {loadingEntreprises ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px', color: T.textSub, fontSize: '14px' }}>Chargement...</div>
-                ) : entreprises.length === 0 ? (
+                ) : listeAffichee.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px', color: T.textSub, fontSize: '14px' }}>
-                    🏢 Aucune entreprise pour le moment.
+                    🏢 Aucune entreprise dans cette categorie.
                   </div>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
@@ -980,12 +992,14 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {entreprises.map((e) => (
+                        {listeAffichee.map((e) => (
                           <tr key={e.admin_email} style={{ borderBottom: `1px solid ${T.border}` }}>
                             <td style={{ padding: '10px 12px', color: T.text, fontSize: '13px' }}>{e.admin_email}</td>
                             <td style={{ padding: '10px 12px', color: T.text, fontSize: '13px' }}>{e.nb_employes ?? 0}</td>
                             <td style={{ padding: '10px 12px', fontSize: '12px' }}>
-                              {e.suspendue ? (
+                              {e.supprimee ? (
+                                <span style={{ color: '#DC2626', fontWeight: '700' }}>Supprimee (en attente de purge)</span>
+                              ) : e.suspendue ? (
                                 <span style={{ color: '#F59E0B', fontWeight: '700' }}>Suspendue</span>
                               ) : e.fermee ? (
                                 <span style={{ color: T.textMuted, fontWeight: '700' }}>Fermee (par admin)</span>
@@ -995,6 +1009,9 @@ export default function AdminDashboard() {
                             </td>
                             <td style={{ padding: '10px 12px', color: T.textSub, fontSize: '12px' }}>{e.created_at ? new Date(e.created_at).toLocaleDateString('fr-FR') : '—'}</td>
                             <td style={{ padding: '10px 12px' }}>
+                              {e.supprimee ? (
+                                <span style={{ color: T.textSub, fontSize: '12px' }}>En attente que l'admin ouvre l'app</span>
+                              ) : (
                               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                 {e.suspendue ? (
                                   <Btn color={T.accent} onClick={() => setEntrepriseConfirmAction({ type: 'unsuspend', entreprise: e })}>Reactiver</Btn>
@@ -1003,6 +1020,7 @@ export default function AdminDashboard() {
                                 )}
                                 <Btn color='#DC2626' onClick={() => setEntrepriseConfirmAction({ type: 'delete', entreprise: e })}>Supprimer</Btn>
                               </div>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -1010,8 +1028,10 @@ export default function AdminDashboard() {
                     </table>
                   </div>
                 )}
-              </Card>
-            )}
+                </Card>
+              </>
+              )
+            })()}
 
             {entrepriseConfirmAction && (
               <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000, padding: 20 }}>
