@@ -128,6 +128,9 @@ export default function AdminDashboard() {
   const [triFilleuls, setTriFilleuls] = useState('desc')
   const [parrainSelectionne, setParrainSelectionne] = useState(null)
   const [filtreFilleuls, setFiltreFilleuls] = useState('')
+  const [rechercheUtilisateurs, setRechercheUtilisateurs] = useState('')
+  const [rechercheParrainage, setRechercheParrainage] = useState('')
+  const [rechercheEntreprise, setRechercheEntreprise] = useState('')
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
   const [formations, setFormations] = useState([])
@@ -811,6 +814,12 @@ export default function AdminDashboard() {
 
             {beautyCrmTab === 'utilisateurs' && (
               <div>
+                <input
+                  value={rechercheUtilisateurs}
+                  onChange={e => setRechercheUtilisateurs(e.target.value)}
+                  placeholder='Rechercher par nom ou email...'
+                  style={{ width: '100%', maxWidth: '360px', background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit', marginBottom: '14px', boxSizing: 'border-box' }}
+                />
                 <div style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', overflow: 'hidden' }}>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -822,10 +831,10 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {beautyCrmUsers.length === 0 ? (
-                          <tr><td colSpan="10" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun utilisateur BeautyCRM enregistré</td></tr>
+                        {beautyCrmUsers.filter(u => rechercheUtilisateurs === '' || (u.nom||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase()) || (u.email||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase())).length === 0 ? (
+                          <tr><td colSpan="10" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun utilisateur trouve</td></tr>
                         ) : (
-                          beautyCrmUsers.map(u => (
+                          beautyCrmUsers.filter(u => rechercheUtilisateurs === '' || (u.nom||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase()) || (u.email||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase())).map(u => (
                             <tr key={u.id} onClick={() => { setSelectedBeautyUser(u); setEditBeautyUser({...u}) }} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e=>e.currentTarget.style.background=T.bg2} onMouseLeave={e=>e.currentTarget.style.background=''}>
                               <td style={{ padding: '10px 14px', color: T.textSub, whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
                               <td style={{ padding: '10px 14px', color: T.text, fontWeight: '600' }}>{u.nom || '—'}</td>
@@ -926,6 +935,12 @@ export default function AdminDashboard() {
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
                   <input
+                    value={rechercheParrainage}
+                    onChange={e => setRechercheParrainage(e.target.value)}
+                    placeholder='Rechercher par nom ou email...'
+                    style={{ width: '220px', background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit' }}
+                  />
+                  <input
                     type='number'
                     min='0'
                     value={filtreFilleuls}
@@ -958,6 +973,7 @@ export default function AdminDashboard() {
                     <tbody>
                       {[...parrainage]
                         .filter(p => filtreFilleuls === '' || parseInt(p.nb_filleuls||0) >= parseInt(filtreFilleuls))
+                        .filter(p => rechercheParrainage === '' || (p.nom||'').toLowerCase().includes(rechercheParrainage.toLowerCase()) || (p.email||'').toLowerCase().includes(rechercheParrainage.toLowerCase()))
                         .sort((a, b) => {
                         const diff = parseInt(a.nb_filleuls||0) - parseInt(b.nb_filleuls||0)
                         return (filtreFilleuls !== '' || triFilleuls === 'desc') ? -diff : diff
@@ -1038,9 +1054,16 @@ export default function AdminDashboard() {
               const actives = entreprises.filter(e => !e.suspendue && !e.supprimee)
               const desactivees = entreprises.filter(e => e.suspendue && !e.supprimee)
               const supprimees = entreprises.filter(e => e.supprimee)
-              const listeAffichee = entrepriseFiltre === 'active' ? actives : entrepriseFiltre === 'suspendue' ? desactivees : supprimees
+              const listeAffichee = (entrepriseFiltre === 'active' ? actives : entrepriseFiltre === 'suspendue' ? desactivees : supprimees)
+                .filter(e => rechercheEntreprise === '' || (e.admin_email||'').toLowerCase().includes(rechercheEntreprise.toLowerCase()) || (e.nom||'').toLowerCase().includes(rechercheEntreprise.toLowerCase()))
               return (
               <>
+                <input
+                  value={rechercheEntreprise}
+                  onChange={e => setRechercheEntreprise(e.target.value)}
+                  placeholder='Rechercher par nom ou email...'
+                  style={{ width: '100%', maxWidth: '360px', background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit', marginBottom: '14px', boxSizing: 'border-box' }}
+                />
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
                   <Btn color={entrepriseFiltre === 'active' ? T.accent : T.bg2} textColor={entrepriseFiltre === 'active' ? '#fff' : T.textSub} onClick={() => setEntrepriseFiltre('active')}>Actives ({actives.length})</Btn>
                   <Btn color={entrepriseFiltre === 'suspendue' ? '#F59E0B' : T.bg2} textColor={entrepriseFiltre === 'suspendue' ? '#fff' : T.textSub} onClick={() => setEntrepriseFiltre('suspendue')}>Desactivees ({desactivees.length})</Btn>
