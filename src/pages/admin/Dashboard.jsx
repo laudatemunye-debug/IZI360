@@ -115,6 +115,8 @@ export default function AdminDashboard() {
   const [beautyCrmUsers, setBeautyCrmUsers] = useState([])
   const [beautyCrmStats, setBeautyCrmStats] = useState(null)
   const [beautyCrmTab, setBeautyCrmTab] = useState('dashboard')
+  const [desactivesPersonnel, setDesactivesPersonnel] = useState([])
+  const [loadingDesactives, setLoadingDesactives] = useState(false)
   const [moisInscrits, setMoisInscrits] = useState('')
   const [selectedBCUser, setSelectedBCUser] = useState(null)
   const [bcEmailTarget, setBcEmailTarget] = useState(null)
@@ -188,6 +190,28 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => { if (beautyCrmTab === 'entreprise') fetchEntreprises() }, [beautyCrmTab])
+
+  const fetchDesactivesPersonnel = async () => {
+    setLoadingDesactives(true)
+    try {
+      const res = await fetch(`${API}/beautycrm/entreprise/admin/list-personal`, { headers })
+      const data = await res.json()
+      setDesactivesPersonnel(Array.isArray(data) ? data : [])
+    } catch (e) { console.error(e) }
+    setLoadingDesactives(false)
+  }
+
+  useEffect(() => { if (beautyCrmTab === 'desactives') fetchDesactivesPersonnel() }, [beautyCrmTab])
+
+  const reactiverPersonnel = async (email) => {
+    if (!window.confirm(`Reactiver le compte ${email} ?`)) return
+    await fetch(`${API}/beautycrm/entreprise/admin/unsuspend-personal`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ email }),
+    })
+    msg('Compte reactive.')
+    fetchDesactivesPersonnel()
+  }
 
   const confirmerActionEntreprise = async () => {
     if (!entrepriseConfirmAction || confirmingEntreprise) return
@@ -587,6 +611,7 @@ export default function AdminDashboard() {
                 { key: 'utilisateurs', label: '👥 Utilisateurs' },
                 { key: 'parrainage', label: '🔗 Parrainage' },
                 { key: 'entreprise', label: '🏢 Entreprise' },
+                { key: 'desactives', label: '🚫 Desactives' },
                 { key: 'notifier', label: '📣 Notifier' },
               ].map(t => (
                 <button key={t.key} onClick={() => setBeautyCrmTab(t.key)} style={{
@@ -599,6 +624,40 @@ export default function AdminDashboard() {
                 </button>
               ))}
             </div>
+
+            {beautyCrmTab === 'desactives' && (
+              <div>
+                {loadingDesactives && <p style={{ color: T.textSub, fontSize: '14px' }}>Chargement...</p>}
+                {!loadingDesactives && desactivesPersonnel.length === 0 && (
+                  <p style={{ color: T.textSub, fontSize: '14px' }}>Aucun compte desactive ou supprime en attente.</p>
+                )}
+                {!loadingDesactives && desactivesPersonnel.map(u => (
+                  <Card key={u.email} style={{ marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <div style={{ color: T.text, fontWeight: '700', fontSize: '14px' }}>{u.nom || '—'}</div>
+                        <div style={{ color: T.accent, fontSize: '13px', fontFamily: 'monospace' }}>{u.email}</div>
+                        {u.supprime && (
+                          <div style={{ marginTop: '6px' }}>
+                            <span style={{ backgroundColor: '#EF444422', color: '#EF4444', fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '6px' }}>SUPPRIME - en attente de purge par l'utilisateur</span>
+                            {u.motif_suppression && <div style={{ color: T.textSub, fontSize: '12px', marginTop: '4px' }}>Motif : {u.motif_suppression}</div>}
+                          </div>
+                        )}
+                        {u.suspendu && !u.supprime && (
+                          <div style={{ marginTop: '6px' }}>
+                            <span style={{ backgroundColor: '#F59E0B22', color: '#F59E0B', fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '6px' }}>DESACTIVE</span>
+                            {u.motif_suspension && <div style={{ color: T.textSub, fontSize: '12px', marginTop: '4px' }}>Motif : {u.motif_suspension}</div>}
+                          </div>
+                        )}
+                      </div>
+                      {u.suspendu && !u.supprime && (
+                        <Btn color="#10B981" onClick={() => reactiverPersonnel(u.email)}>Reactiver</Btn>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             {beautyCrmTab === 'dashboard' && (
               <div>
