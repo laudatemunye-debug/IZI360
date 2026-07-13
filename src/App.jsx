@@ -12,6 +12,7 @@ import FormationChampignon from './pages/partenaires/FormationChampignon'
 import LandingFormation from './pages/partenaires/LandingFormation'
 import DevenirFormateur from './pages/partenaires/DevenirFormateur'
 import EspaceFormateur from './pages/partenaires/EspaceFormateur'
+import LandingBeautyCRM from './pages/partenaires/LandingBeautyCRM'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/admin/brevet/champignon" element={<ProtectedRoute><FormationChampignon /></ProtectedRoute>} />
         <Route path="/formation/champignon" element={<LandingFormation />} />
         <Route path="/devenir-formateur" element={<DevenirFormateur />} />
+        <Route path="/formation/lancement-beautycrm" element={<LandingBeautyCRM />} />
         <Route path="/espace-formateur" element={<FormateurRoute><EspaceFormateur /></FormateurRoute>} />
       </Routes>
     </BrowserRouter>
