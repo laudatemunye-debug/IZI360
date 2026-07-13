@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { ProtectedRoute, AdminRoute, PublicRoute, FormateurRoute } from './components/ProtectedRoute'
+import { ProtectedRoute, AdminRoute, PublicRoute, FormateurRoute, AdminOrFormateurRoute } from './components/ProtectedRoute'
 import Accueil from './pages/Accueil'
 import Login from './pages/Login'
 import VerifyEmail from './pages/VerifyEmail'
@@ -12,6 +12,8 @@ import FormationChampignon from './pages/partenaires/FormationChampignon'
 import LandingFormation from './pages/partenaires/LandingFormation'
 import DevenirFormateur from './pages/partenaires/DevenirFormateur'
 import EspaceFormateur from './pages/partenaires/EspaceFormateur'
+import FormationDashboard from './pages/FormationDashboard'
+import FormationContenus from './pages/partenaires/FormationContenus'
 import LandingBeautyCRM from './pages/partenaires/LandingBeautyCRM'
 
 function App() {
@@ -36,6 +38,8 @@ function App() {
         <Route path="/devenir-formateur" element={<DevenirFormateur />} />
         <Route path="/formation/lancement-beautycrm" element={<LandingBeautyCRM />} />
         <Route path="/espace-formateur" element={<FormateurRoute><EspaceFormateur /></FormateurRoute>} />
+        <Route path="/formation/:id/dashboard" element={<AdminOrFormateurRoute><FormationDashboard /></AdminOrFormateurRoute>} />
+        <Route path="/formation/:id/contenus" element={<FormationContenus />} />
       </Routes>
     </BrowserRouter>
   )

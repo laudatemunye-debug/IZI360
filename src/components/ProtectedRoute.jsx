@@ -42,6 +42,23 @@ export function FormateurRoute({ children }) {
   return children
 }
 
+export function AdminOrFormateurRoute({ children }) {
+  const token = localStorage.getItem('izi360_token')
+  if (!token) return <Navigate to="/login" replace />
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    if (payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem('izi360_token')
+      localStorage.removeItem('izi360_user')
+      return <Navigate to="/login" replace />
+    }
+    if (payload.role !== 'admin' && payload.role !== 'formateur') return <Navigate to="/" replace />
+  } catch {
+    return <Navigate to="/login" replace />
+  }
+  return children
+}
+
 export function PublicRoute({ children }) {
   const token = localStorage.getItem('izi360_token')
   if (token) {

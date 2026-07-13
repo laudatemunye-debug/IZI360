@@ -1,26 +1,45 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import beautyLogo from '../../assets/beautycrm-logo.jpg'
 
 const API = 'https://izi360-backend.vercel.app/api'
 
+function FadeStep({ children, stepKey }) {
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    setVisible(false)
+    const t = setTimeout(() => setVisible(true), 20)
+    return () => clearTimeout(t)
+  }, [stepKey])
+  return (
+    <div style={{
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(16px)',
+      transition: 'opacity 0.35s ease, transform 0.35s ease',
+    }}>
+      {children}
+    </div>
+  )
+}
+
 const C = {
-  bg:        '#0D1117',
-  card:      '#1A1F36',
+  bg:        '#F5F6FA',
+  card:      '#FFFFFF',
   accent:    '#3D5AFE',
   accent2:   '#5C6BC0',
   success:   '#26A69A',
   warning:   '#FFA726',
   pink:      '#D4537E',
-  text:      '#E5E7EB',
-  muted:     '#9CA3AF',
-  border:    'rgba(255,255,255,0.08)',
+  text:      '#1A1F36',
+  muted:     '#6B7280',
+  border:    '#E8EAF0',
 }
 
 const DOMAINES = [
   'Cosmétiques / Beauté',
   'Coiffure / Barbier',
   'Spa / Bien-être',
+  'Boutique',
+  'Prestation de service',
   'MLM / Vente directe',
   'Commerce général',
   'Restauration / Alimentation',
@@ -28,6 +47,31 @@ const DOMAINES = [
   'Santé / Pharmacie',
   'Autre',
 ]
+
+const PAYS = [
+  { nom: 'RD Congo', indicatif: '+243' },
+  { nom: 'Rwanda', indicatif: '+250' },
+  { nom: 'Burundi', indicatif: '+257' },
+  { nom: 'Ouganda', indicatif: '+256' },
+  { nom: 'Kenya', indicatif: '+254' },
+  { nom: 'Tanzanie', indicatif: '+255' },
+  { nom: 'Congo-Brazzaville', indicatif: '+242' },
+  { nom: 'Cameroun', indicatif: '+237' },
+  { nom: "Côte d'Ivoire", indicatif: '+225' },
+  { nom: 'Sénégal', indicatif: '+221' },
+  { nom: 'Mali', indicatif: '+223' },
+  { nom: 'Burkina Faso', indicatif: '+226' },
+  { nom: 'Togo', indicatif: '+228' },
+  { nom: 'Bénin', indicatif: '+229' },
+  { nom: 'Gabon', indicatif: '+241' },
+  { nom: 'France', indicatif: '+33' },
+  { nom: 'Belgique', indicatif: '+32' },
+  { nom: 'Canada', indicatif: '+1' },
+  { nom: 'États-Unis', indicatif: '+1' },
+  { nom: 'Autre pays', indicatif: '+' },
+]
+
+const STEP_LABELS = ['Bienvenue', 'Avantages', 'Coordonnées', 'Votre activité']
 
 function Countdown({ targetDate }) {
   const [time, setTime] = useState({ j: 0, h: 0, m: 0, s: 0 })
@@ -67,16 +111,27 @@ function Countdown({ targetDate }) {
   )
 }
 
+function ProgressBar({ step }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, maxWidth: 420, margin: '0 auto 28px', padding: '0 20px' }}>
+      {STEP_LABELS.map((label, i) => (
+        <div key={label} style={{ flex: 1 }}>
+          <div style={{ height: 4, borderRadius: 4, background: i <= step ? C.accent : C.border, transition: 'background 0.3s ease' }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function LandingBeautyCRM() {
-  const navigate = useNavigate()
-  const formRef = useRef(null)
+  const [step, setStep] = useState(0)
   const [formation, setFormation] = useState(null)
   const [nbInscrits, setNbInscrits] = useState(0)
   const [inscrit, setInscrit] = useState(false)
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState('')
   const [form, setForm] = useState({
-    nom: '', telephone: '', email: '', ville: '',
+    nom: '', pays: '', telephone: '', email: '', ville: '',
     domaine: '', utilise_beautycrm: '', version_beautycrm: '', entendu_parler: '',
   })
 
@@ -90,10 +145,49 @@ export default function LandingBeautyCRM() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const soumettre = async (e) => {
-    e.preventDefault()
-    if (!form.nom.trim() || !form.telephone.trim()) {
-      setErreur('Nom et téléphone sont requis')
+  const setPays = (nomPays) => {
+    const p = PAYS.find(x => x.nom === nomPays)
+    setForm(f => {
+      const dejaUnIndicatif = PAYS.some(x => f.telephone.trim() === x.indicatif || f.telephone.trim().startsWith(x.indicatif + ' '))
+      const telephone = (!f.telephone.trim() || dejaUnIndicatif) ? (p ? p.indicatif + ' ' : '') : f.telephone
+      return { ...f, pays: nomPays, telephone }
+    })
+  }
+
+  const goNext = () => {
+    setErreur('')
+    if (step === 2) {
+      if (!form.nom.trim() || !form.pays.trim() || !form.telephone.trim() || !form.email.trim()) {
+        setErreur('Nom, pays, téléphone et email sont requis')
+        return
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(form.email.trim())) {
+        setErreur('Email invalide')
+        return
+      }
+    }
+    if (step === 3) {
+      soumettre()
+      return
+    }
+    setStep(s => s + 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const goBack = () => {
+    setErreur('')
+    setStep(s => Math.max(0, s - 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const soumettre = async () => {
+    if (!form.domaine) {
+      setErreur("Merci de préciser votre domaine d'activité")
+      return
+    }
+    if (!form.utilise_beautycrm) {
+      setErreur("Merci de préciser si vous utilisez déjà BeautyCRM")
       return
     }
     setEnvoi(true); setErreur('')
@@ -106,6 +200,8 @@ export default function LandingBeautyCRM() {
       if (!res.ok) throw new Error()
       setInscrit(true)
       setNbInscrits(n => n + 1)
+      setStep(4)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
       setErreur("Erreur lors de l'inscription, réessayez.")
     } finally {
@@ -113,102 +209,205 @@ export default function LandingBeautyCRM() {
     }
   }
 
-  const dateFormation = formation?.date_evenement || '2026-08-15'
+  const dateFormation = formation?.date_debut || '2026-08-15'
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: C.bg, color: C.text, fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ minHeight: '100vh', backgroundColor: C.bg, color: C.text, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
 
-      {/* HERO */}
-      <div style={{
-        background: `linear-gradient(135deg, #0D1117 0%, #1A1F36 50%, #0D1117 100%)`,
-        padding: 'clamp(40px,8vw,80px) 20px clamp(30px,6vw,60px)',
-        textAlign: 'center',
-        borderBottom: `1px solid ${C.border}`,
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Glow */}
-        <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 600, height: 300, background: 'radial-gradient(ellipse, rgba(61,90,254,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      {step > 0 && step < 4 && <div style={{ paddingTop: 24 }}><ProgressBar step={step} /></div>}
 
-        <img src={beautyLogo} alt="BeautyCRM" style={{ width: 72, height: 72, borderRadius: 18, objectFit: 'cover', border: `2px solid ${C.accent}`, marginBottom: 16, display: 'block', margin: '0 auto 16px' }} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
 
-        <div style={{ fontSize: 12, letterSpacing: 3, color: C.accent, textTransform: 'uppercase', marginBottom: 12, fontWeight: 600 }}>
-          🚀 Événement officiel · IZIsoft
-        </div>
+        {/* ÉTAPE 0 — HERO */}
+        {step === 0 && (
+          <FadeStep stepKey="hero">
+            <div style={{
+              background: `linear-gradient(160deg, #EEF0FF 0%, #FFFFFF 60%, #F0F4FF 100%)`,
+              padding: 'clamp(40px,8vw,80px) 20px clamp(30px,6vw,60px)',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+              <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 600, height: 300, background: 'radial-gradient(ellipse, rgba(61,90,254,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        <h1 style={{ fontSize: 'clamp(1.6rem,5.5vw,2.8rem)', fontWeight: 900, lineHeight: 1.2, maxWidth: 700, margin: '0 auto 16px', background: `linear-gradient(135deg, #fff 0%, ${C.accent} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Lancement Officiel de BeautyCRM
-        </h1>
+              <img src={beautyLogo} alt="BeautyCRM" style={{ width: 72, height: 72, borderRadius: 18, objectFit: 'cover', border: `2px solid ${C.accent}`, marginBottom: 16, display: 'block', margin: '0 auto 16px' }} />
 
-        <p style={{ color: C.muted, fontSize: 'clamp(14px,2.5vw,17px)', maxWidth: 560, margin: '0 auto 32px', lineHeight: 1.7 }}>
-          La première formation complète sur l'outil CRM dédié aux professionnels de la beauté et du commerce en Afrique francophone.
-        </p>
+              <div style={{ fontSize: 12, letterSpacing: 3, color: C.accent, textTransform: 'uppercase', marginBottom: 12, fontWeight: 600 }}>
+                🚀 Événement officiel · IZIsoft
+              </div>
 
-        {/* Compteur */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 12, color: C.muted, marginBottom: 12, letterSpacing: 1 }}>LA FORMATION COMMENCE DANS</div>
-          <Countdown targetDate={dateFormation} />
-        </div>
+              <h1 style={{ fontSize: 'clamp(1.6rem,5.5vw,2.8rem)', fontWeight: 900, lineHeight: 1.2, maxWidth: 700, margin: '0 auto 16px', color: C.text }}>
+                Lancement Officiel de{' '}
+                <span style={{ color: C.accent }}>BeautyCRM</span>
+              </h1>
 
-        {/* Social proof */}
-        <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
-          <div style={{ background: 'rgba(61,90,254,0.1)', border: `1px solid rgba(61,90,254,0.3)`, borderRadius: 12, padding: '10px 20px' }}>
-            <span style={{ fontWeight: 900, fontSize: 20, color: C.accent }}>{nbInscrits}</span>
-            <span style={{ color: C.muted, fontSize: 13, marginLeft: 8 }}>personnes inscrites</span>
-          </div>
-          <div style={{ background: 'rgba(38,166,154,0.1)', border: `1px solid rgba(38,166,154,0.3)`, borderRadius: 12, padding: '10px 20px' }}>
-            <span style={{ fontWeight: 900, fontSize: 20, color: C.success }}>Gratuit</span>
-            <span style={{ color: C.muted, fontSize: 13, marginLeft: 8 }}>· Places limitées</span>
-          </div>
-        </div>
+              <p style={{ color: C.muted, fontSize: 'clamp(14px,2.5vw,17px)', maxWidth: 560, margin: '0 auto 32px', lineHeight: 1.7 }}>
+                Apprenez à gérer vos clients, suivre vos ventes, contrôler votre stock et relancer vos prospects automatiquement — depuis votre téléphone, tablette ou ordinateur.
+              </p>
 
-        <button
-          onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          style={{ padding: '14px 36px', borderRadius: 14, background: `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: `0 8px 32px rgba(61,90,254,0.4)` }}
-        >
-          Je m'inscris maintenant →
-        </button>
-      </div>
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ fontSize: 12, color: C.accent, marginBottom: 12, letterSpacing: 2, fontWeight: 700 }}>LA FORMATION COMMENCE DANS</div>
+                <Countdown targetDate={dateFormation} />
+              </div>
 
-      {/* POURQUOI CETTE FORMATION */}
-      <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 20px' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.2rem,4vw,1.6rem)', fontWeight: 800, marginBottom: 8 }}>
-          Pourquoi cette formation ?
-        </h2>
-        <p style={{ textAlign: 'center', color: C.muted, marginBottom: 32, fontSize: 15 }}>
-          BeautyCRM est l'outil qu'il vous faut pour gérer votre activité comme un pro.
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-          {[
-            { icon: '📱', titre: 'Application mobile', desc: 'Gérez votre activité depuis votre téléphone, partout au Congo' },
-            { icon: '👥', titre: 'Gestion clients', desc: 'Centralisez tous vos prospects et clients en un seul endroit' },
-            { icon: '🧾', titre: 'Facturation rapide', desc: 'Créez des factures en quelques secondes, suivez vos ventes' },
-            { icon: '📊', titre: 'Statistiques', desc: 'Visualisez la croissance de votre activité avec des graphiques clairs' },
-            { icon: '🔄', titre: 'Sync Google Drive', desc: 'Vos données sauvegardées automatiquement, zéro perte' },
-            { icon: '💬', titre: 'Relance WhatsApp', desc: 'Envoyez des rappels à vos clients directement depuis l\'app' },
-          ].map(f => (
-            <div key={f.titre} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '20px 16px' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>{f.icon}</div>
-              <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 15 }}>{f.titre}</div>
-              <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6 }}>{f.desc}</div>
+              <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
+                <div style={{ background: C.accent, borderRadius: 12, padding: '10px 20px', boxShadow: '0 4px 16px rgba(61,90,254,0.25)' }}>
+                  <span style={{ fontWeight: 900, fontSize: 20, color: '#fff' }}>{nbInscrits}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, marginLeft: 8 }}>personnes inscrites</span>
+                </div>
+                <div style={{ background: C.success, borderRadius: 12, padding: '10px 20px', boxShadow: '0 4px 16px rgba(38,166,154,0.25)' }}>
+                  <span style={{ fontWeight: 900, fontSize: 20, color: '#fff' }}>Gratuit</span>
+                  <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, marginLeft: 8 }}>· Places limitées</span>
+                </div>
+              </div>
+
+              <button
+                onClick={goNext}
+                style={{ padding: '14px 36px', borderRadius: 14, background: `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: `0 8px 32px rgba(61,90,254,0.4)` }}
+              >
+                Je m'inscris maintenant →
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
+          </FadeStep>
+        )}
 
-      {/* FORMULAIRE */}
-      <div ref={formRef} style={{ maxWidth: 560, margin: '0 auto', padding: '0 20px 60px' }}>
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 24, padding: 'clamp(24px,5vw,40px)' }}>
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ fontSize: 12, letterSpacing: 2, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>📝 Inscription gratuite</div>
-            <h2 style={{ fontSize: 'clamp(1.2rem,4vw,1.5rem)', fontWeight: 800 }}>Réservez votre place</h2>
-            <p style={{ color: C.muted, fontSize: 13, marginTop: 6 }}>Places limitées · Inscription en 1 minute</p>
-          </div>
+        {/* ÉTAPE 1 — POURQUOI */}
+        {step === 1 && (
+          <FadeStep stepKey="pourquoi">
+            <div style={{ maxWidth: 700, margin: '0 auto', padding: '20px 20px 48px' }}>
+              <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.2rem,4vw,1.6rem)', fontWeight: 800, marginBottom: 8 }}>
+                Pourquoi cette formation ?
+              </h2>
+              <p style={{ textAlign: 'center', color: C.muted, marginBottom: 32, fontSize: 15 }}>
+                BeautyCRM est l'outil qu'il vous faut pour gérer votre activité comme un pro.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+                {[
+                  { icon: '📱', titre: 'Application mobile', desc: 'Gérez votre activité depuis votre téléphone, où que vous soyez' },
+                  { icon: '👥', titre: 'Gestion clients', desc: 'Centralisez tous vos prospects et clients en un seul endroit' },
+                  { icon: '🧾', titre: 'Facturation rapide', desc: 'Créez des factures en quelques secondes, suivez vos ventes' },
+                  { icon: '📊', titre: 'Statistiques', desc: 'Visualisez la croissance de votre activité avec des graphiques clairs' },
+                  { icon: '🏢', titre: 'Mode Entreprise', desc: 'Accès en temps réel aux ventes de tous vos vendeurs, journal de paie intégré et comptabilité complète' },
+                  { icon: '💬', titre: 'Relance WhatsApp', desc: "Envoyez des rappels à vos clients directement depuis l'app" },
+                ].map(f => (
+                  <div key={f.titre} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '20px 16px' }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>{f.icon}</div>
+                    <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 15 }}>{f.titre}</div>
+                    <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6 }}>{f.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <StepNav onBack={goBack} onNext={goNext} nextLabel="Continuer →" />
+            </div>
+          </FadeStep>
+        )}
 
-          {inscrit ? (
-            <div style={{ textAlign: 'center', padding: '32px 0' }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-              <div style={{ color: C.success, fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Inscription confirmée !</div>
+        {/* ÉTAPE 2 — COORDONNÉES */}
+        {step === 2 && (
+          <FadeStep stepKey="coordonnees">
+            <div style={{ maxWidth: 480, margin: '0 auto', padding: '10px 20px 48px' }}>
+              <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 24, padding: 'clamp(24px,5vw,40px)' }}>
+                <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                  <div style={{ fontSize: 12, letterSpacing: 2, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>📝 Étape 1 / 2</div>
+                  <h2 style={{ fontSize: 'clamp(1.2rem,4vw,1.5rem)', fontWeight: 800 }}>Vos coordonnées</h2>
+                  <p style={{ color: C.muted, fontSize: 13, marginTop: 6 }}>Places limitées · Inscription en 1 minute</p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <input value={form.nom} onChange={e => set('nom', e.target.value)} placeholder="Nom complet *" style={inp} />
+                  <select value={form.pays} onChange={e => setPays(e.target.value)} style={{ ...inp, color: form.pays ? C.text : C.muted }}>
+                    <option value="" disabled>Pays *</option>
+                    {PAYS.map(p => <option key={p.nom} value={p.nom} style={{ background: '#fff', color: '#1A1F36' }}>{p.nom} ({p.indicatif})</option>)}
+                  </select>
+                  <input value={form.telephone} onChange={e => set('telephone', e.target.value)} placeholder="Téléphone WhatsApp *" style={inp} type="tel" />
+                  <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="Email *" style={inp} type="email" />
+                  <input value={form.ville} onChange={e => set('ville', e.target.value)} placeholder="Ville" style={inp} />
+
+                  {erreur && <div style={{ color: '#F87171', fontSize: 13, padding: '8px 12px', background: 'rgba(239,83,80,0.1)', borderRadius: 8 }}>{erreur}</div>}
+                </div>
+              </div>
+              <StepNav onBack={goBack} onNext={goNext} nextLabel="Suivant →" />
+            </div>
+          </FadeStep>
+        )}
+
+        {/* ÉTAPE 3 — ACTIVITÉ */}
+        {step === 3 && (
+          <FadeStep stepKey="activite">
+            <div style={{ maxWidth: 480, margin: '0 auto', padding: '10px 20px 48px' }}>
+              <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 24, padding: 'clamp(24px,5vw,40px)' }}>
+                <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                  <div style={{ fontSize: 12, letterSpacing: 2, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>📝 Étape 2 / 2</div>
+                  <h2 style={{ fontSize: 'clamp(1.2rem,4vw,1.5rem)', fontWeight: 800 }}>Votre activité</h2>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <select value={form.domaine} onChange={e => set('domaine', e.target.value)} style={{ ...inp, color: form.domaine ? C.text : C.muted }}>
+                    <option value="" disabled>Domaine d'activité *</option>
+                    {DOMAINES.map(d => <option key={d} value={d} style={{ background: '#fff', color: '#1A1F36' }}>{d}</option>)}
+                  </select>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#F9FAFB', borderRadius: 12, padding: '14px 16px', border: `1px solid ${C.border}` }}>
+                    <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>Utilisez-vous déjà BeautyCRM ?</div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      {['Oui', 'Non'].map(v => (
+                        <button key={v} type="button"
+                          onClick={() => set('utilise_beautycrm', v)}
+                          style={{ flex: 1, padding: '8px', borderRadius: 10, border: `1px solid ${form.utilise_beautycrm === v ? C.accent : C.border}`, background: form.utilise_beautycrm === v ? 'rgba(61,90,254,0.15)' : 'transparent', color: form.utilise_beautycrm === v ? C.accent : C.muted, cursor: 'pointer', fontSize: 14, fontWeight: form.utilise_beautycrm === v ? 700 : 400 }}>
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+
+                    {form.utilise_beautycrm === 'Oui' && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontSize: 13, color: C.muted, marginBottom: 6 }}>Quelle version utilisez-vous ?</div>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {['Mobile', 'Web', 'Les deux'].map(v => (
+                            <button key={v} type="button"
+                              onClick={() => set('version_beautycrm', v)}
+                              style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${form.version_beautycrm === v ? C.success : C.border}`, background: form.version_beautycrm === v ? 'rgba(38,166,154,0.15)' : 'transparent', color: form.version_beautycrm === v ? C.success : C.muted, cursor: 'pointer', fontSize: 13 }}>
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {form.utilise_beautycrm === 'Non' && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontSize: 13, color: C.muted, marginBottom: 6 }}>Avez-vous déjà entendu parler de BeautyCRM ?</div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {['Oui', 'Non'].map(v => (
+                            <button key={v} type="button"
+                              onClick={() => set('entendu_parler', v)}
+                              style={{ flex: 1, padding: '6px', borderRadius: 8, border: `1px solid ${form.entendu_parler === v ? C.warning : C.border}`, background: form.entendu_parler === v ? 'rgba(255,167,38,0.1)' : 'transparent', color: form.entendu_parler === v ? C.warning : C.muted, cursor: 'pointer', fontSize: 13 }}>
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {erreur && <div style={{ color: '#F87171', fontSize: 13, padding: '8px 12px', background: 'rgba(239,83,80,0.1)', borderRadius: 8 }}>{erreur}</div>}
+
+                  <div style={{ textAlign: 'center', fontSize: 12, color: C.muted }}>
+                    🔒 Vos données sont sécurisées · Zéro spam
+                  </div>
+                </div>
+              </div>
+              <StepNav onBack={goBack} onNext={goNext} nextLabel={envoi ? 'Envoi...' : '🎯 Confirmer mon inscription'} nextDisabled={envoi} />
+            </div>
+          </FadeStep>
+        )}
+
+        {/* ÉTAPE 4 — CONFIRMATION */}
+        {step === 4 && inscrit && (
+          <FadeStep stepKey="confirmation">
+            <div style={{ maxWidth: 480, margin: '0 auto', padding: '40px 20px 60px', textAlign: 'center' }}>
+              <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+              <div style={{ color: C.success, fontWeight: 700, fontSize: 20, marginBottom: 8 }}>Inscription confirmée !</div>
               <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6 }}>
                 Merci <strong style={{ color: C.text }}>{form.nom}</strong> ! Nous vous contacterons sur WhatsApp au <strong style={{ color: C.text }}>{form.telephone}</strong> avec tous les détails.
               </p>
@@ -219,89 +418,35 @@ export default function LandingBeautyCRM() {
                   Télécharger gratuitement
                 </a>
               </div>
+
+              {formation?.id && (
+                <a href={`/formation/${formation.id}/contenus`}
+                  style={{ display: 'block', marginTop: 12, padding: '12px 20px', background: C.card, border: `1px solid ${C.border}`, color: C.accent, borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14, textAlign: 'center' }}>
+                  🎥 Voir la vidéo du lancement et les explications de l'app
+                </a>
+              )}
             </div>
-          ) : (
-            <form onSubmit={soumettre} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-              {/* Infos de base */}
-              <div style={{ fontSize: 12, color: C.accent, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: -4 }}>Vos coordonnées</div>
-              <input value={form.nom} onChange={e => set('nom', e.target.value)} placeholder="Nom complet *" style={inp} />
-              <input value={form.telephone} onChange={e => set('telephone', e.target.value)} placeholder="Téléphone WhatsApp * (+243...)" style={inp} type="tel" />
-              <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="Email (optionnel)" style={inp} type="email" />
-              <input value={form.ville} onChange={e => set('ville', e.target.value)} placeholder="Ville / Pays" style={inp} />
-
-              {/* Domaine */}
-              <div style={{ fontSize: 12, color: C.accent, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginTop: 4, marginBottom: -4 }}>Votre activité</div>
-              <select value={form.domaine} onChange={e => set('domaine', e.target.value)} style={{ ...inp, color: form.domaine ? C.text : C.muted }}>
-                <option value="" disabled>Domaine d'activité *</option>
-                {DOMAINES.map(d => <option key={d} value={d} style={{ background: C.card }}>{d}</option>)}
-              </select>
-
-              {/* Statut BeautyCRM */}
-              <div style={{ fontSize: 12, color: C.accent, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginTop: 4, marginBottom: -4 }}>Votre rapport avec BeautyCRM</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '14px 16px', border: `1px solid ${C.border}` }}>
-                <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>Utilisez-vous déjà BeautyCRM ?</div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {['Oui', 'Non'].map(v => (
-                    <button key={v} type="button"
-                      onClick={() => set('utilise_beautycrm', v)}
-                      style={{ flex: 1, padding: '8px', borderRadius: 10, border: `1px solid ${form.utilise_beautycrm === v ? C.accent : C.border}`, background: form.utilise_beautycrm === v ? 'rgba(61,90,254,0.15)' : 'transparent', color: form.utilise_beautycrm === v ? C.accent : C.muted, cursor: 'pointer', fontSize: 14, fontWeight: form.utilise_beautycrm === v ? 700 : 400 }}>
-                      {v}
-                    </button>
-                  ))}
-                </div>
-
-                {form.utilise_beautycrm === 'Oui' && (
-                  <div style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: 13, color: C.muted, marginBottom: 6 }}>Quelle version utilisez-vous ?</div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {['Mobile', 'Web', 'Les deux'].map(v => (
-                        <button key={v} type="button"
-                          onClick={() => set('version_beautycrm', v)}
-                          style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${form.version_beautycrm === v ? C.success : C.border}`, background: form.version_beautycrm === v ? 'rgba(38,166,154,0.15)' : 'transparent', color: form.version_beautycrm === v ? C.success : C.muted, cursor: 'pointer', fontSize: 13 }}>
-                          {v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {form.utilise_beautycrm === 'Non' && (
-                  <div style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: 13, color: C.muted, marginBottom: 6 }}>Avez-vous déjà entendu parler de BeautyCRM ?</div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {['Oui', 'Non'].map(v => (
-                        <button key={v} type="button"
-                          onClick={() => set('entendu_parler', v)}
-                          style={{ flex: 1, padding: '6px', borderRadius: 8, border: `1px solid ${form.entendu_parler === v ? C.warning : C.border}`, background: form.entendu_parler === v ? 'rgba(255,167,38,0.1)' : 'transparent', color: form.entendu_parler === v ? C.warning : C.muted, cursor: 'pointer', fontSize: 13 }}>
-                          {v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {erreur && <div style={{ color: '#F87171', fontSize: 13, padding: '8px 12px', background: 'rgba(239,83,80,0.1)', borderRadius: 8 }}>{erreur}</div>}
-
-              <button type="submit" disabled={envoi}
-                style={{ padding: '15px', borderRadius: 14, background: envoi ? C.muted : `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: envoi ? 'wait' : 'pointer', marginTop: 4, boxShadow: envoi ? 'none' : `0 8px 24px rgba(61,90,254,0.35)` }}>
-                {envoi ? 'Inscription en cours...' : '🎯 Confirmer mon inscription'}
-              </button>
-
-              <div style={{ textAlign: 'center', fontSize: 12, color: C.muted }}>
-                🔒 Vos données sont sécurisées · Zéro spam
-              </div>
-            </form>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: 40, padding: '20px 0', borderTop: `1px solid ${C.border}`, color: C.muted, fontSize: 12 }}>
-          <img src={beautyLogo} alt="BeautyCRM" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover', verticalAlign: 'middle', marginRight: 8 }} />
-          BeautyCRM · IZIsoft © 2026 · Butembo, Nord-Kivu, DRC
-        </div>
+          </FadeStep>
+        )}
       </div>
+
+      <div style={{ textAlign: 'center', padding: '20px 0', borderTop: `1px solid ${C.border}`, color: C.muted, fontSize: 12 }}>
+        <img src={beautyLogo} alt="BeautyCRM" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover', verticalAlign: 'middle', marginRight: 8 }} />
+        BeautyCRM · IZIsoft © 2026 · Tous droits réservés.
+      </div>
+    </div>
+  )
+}
+
+function StepNav({ onBack, onNext, nextLabel, nextDisabled }) {
+  return (
+    <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+      <button onClick={onBack} style={{ padding: '13px 20px', borderRadius: 14, background: 'transparent', color: C.muted, fontWeight: 600, fontSize: 14, border: `1px solid ${C.border}`, cursor: 'pointer' }}>
+        ← Retour
+      </button>
+      <button onClick={onNext} disabled={nextDisabled} style={{ flex: 1, padding: '13px 20px', borderRadius: 14, background: nextDisabled ? C.muted : `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', cursor: nextDisabled ? 'wait' : 'pointer', boxShadow: nextDisabled ? 'none' : `0 8px 24px rgba(61,90,254,0.35)` }}>
+        {nextLabel}
+      </button>
     </div>
   )
 }
@@ -310,9 +455,9 @@ const inp = {
   width: '100%',
   padding: '11px 14px',
   borderRadius: 10,
-  border: '1px solid rgba(255,255,255,0.1)',
-  backgroundColor: 'rgba(255,255,255,0.04)',
-  color: '#E5E7EB',
+  border: '1px solid #D1D5DB',
+  backgroundColor: '#F9FAFB',
+  color: C.text,
   fontSize: 14,
   outline: 'none',
   boxSizing: 'border-box',

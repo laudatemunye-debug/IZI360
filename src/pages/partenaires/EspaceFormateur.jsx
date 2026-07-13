@@ -205,7 +205,7 @@ export default function EspaceFormateur() {
             <h2 style={{ color: T.text, fontSize: '1rem', fontWeight: '700', marginBottom: '12px' }}>Ma formation</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {formations.map(f => (
-                <Card key={f.id}>
+                <Card key={f.id} onClick={() => navigate(`/formation/${f.id}/dashboard`)} style={{ cursor: 'pointer' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                     <div>
                       <div style={{ color: T.text, fontWeight: '600', fontSize: '15px' }}>{f.titre}</div>
@@ -219,13 +219,9 @@ export default function EspaceFormateur() {
                         </span>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <Btn onClick={async () => {
-                        const res = await fetch(`${API}/formations/${f.id}/inscriptions`, { headers })
-                        const data = await res.json()
-                        setSelectedFormationInscrits({ formation: f, inscrits: Array.isArray(data) ? data : [] })
-                      }} color="rgba(96,165,250,0.15)" textColor="#60A5FA">
-                        Voir inscrits
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+                      <Btn onClick={() => navigate(`/formation/${f.id}/dashboard`)} color="rgba(96,165,250,0.15)" textColor="#60A5FA">
+                        Tableau de bord
                       </Btn>
                     </div>
                   </div>
