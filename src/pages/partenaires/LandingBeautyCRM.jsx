@@ -308,11 +308,11 @@ export default function LandingBeautyCRM() {
                   { icon: iconRelanceWhatsapp, titre: 'Relance WhatsApp', desc: "Envoyez des rappels à vos clients directement depuis l'app" },
                 ].map(f => (
                   <div key={f.titre} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '20px 16px', overflow: 'hidden' }}>
-                    <div style={{ width: '100%', height: 120, borderRadius: 12, background: '#F5F6FA', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, overflow: 'hidden' }}>
+                    <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 15 }}>{f.titre}</div>
+                    <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>{f.desc}</div>
+                    <div style={{ width: '100%', height: 120, borderRadius: 12, background: '#F5F6FA', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       <img src={f.icon} alt={f.titre} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
-                    <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 15 }}>{f.titre}</div>
-                    <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6 }}>{f.desc}</div>
                   </div>
                 ))}
               </div>
