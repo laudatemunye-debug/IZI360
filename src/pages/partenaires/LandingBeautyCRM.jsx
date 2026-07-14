@@ -327,7 +327,7 @@ export default function LandingBeautyCRM() {
             <div style={{ maxWidth: 480, margin: '0 auto', padding: '10px 20px 48px' }}>
               <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 24, padding: 'clamp(24px,5vw,40px)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                  <div style={{ fontSize: 12, letterSpacing: 2, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>📝 Étape 1 / 2</div>
+                  <div style={{ fontSize: 12, letterSpacing: 2, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>Étape 1 / 2</div>
                   <h2 style={{ fontSize: 'clamp(1.2rem,4vw,1.5rem)', fontWeight: 800 }}>Vos coordonnées</h2>
                   <p style={{ color: C.muted, fontSize: 13, marginTop: 6 }}>Places limitées · Inscription en 1 minute</p>
                 </div>
@@ -356,7 +356,7 @@ export default function LandingBeautyCRM() {
             <div style={{ maxWidth: 480, margin: '0 auto', padding: '10px 20px 48px' }}>
               <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 24, padding: 'clamp(24px,5vw,40px)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                  <div style={{ fontSize: 12, letterSpacing: 2, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>📝 Étape 2 / 2</div>
+                  <div style={{ fontSize: 12, letterSpacing: 2, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>Étape 2 / 2</div>
                   <h2 style={{ fontSize: 'clamp(1.2rem,4vw,1.5rem)', fontWeight: 800 }}>Votre activité</h2>
                 </div>
 
