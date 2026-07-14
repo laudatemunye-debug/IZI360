@@ -465,8 +465,8 @@ export default function LandingBeautyCRM() {
             </p>
             {formation?.id && (
               <a href={`/formation/${formation.id}/contenus`}
-                style={{ display: 'block', padding: '14px 20px', background: `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', borderRadius: 14, textDecoration: 'none', fontWeight: 700, fontSize: 15, marginBottom: 10 }}>
-                🎥 Voir les vidéos et explications de l'app
+                style={{ display: 'block', padding: '14px 20px', background: C.accent, color: '#fff', borderRadius: 14, textDecoration: 'none', fontWeight: 700, fontSize: 15, marginBottom: 10 }}>
+                Voir les vidéos et explications de l'app
               </a>
             )}
             <button onClick={() => setDejaInscrit(false)} style={{ width: '100%', padding: '12px 20px', background: 'transparent', border: `1px solid ${C.border}`, color: C.muted, borderRadius: 14, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>

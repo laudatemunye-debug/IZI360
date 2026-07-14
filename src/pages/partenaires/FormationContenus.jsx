@@ -397,9 +397,9 @@ export default function FormationContenus() {
         })}
 
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 24, textAlign: 'center', marginTop: 12 }}>
-          <div style={{ fontSize: 13, color: C.success, fontWeight: 700, marginBottom: 10 }}>📲 Téléchargez BeautyCRM</div>
+          <div style={{ fontSize: 13, color: C.success, fontWeight: 700, marginBottom: 10 }}>Téléchargez BeautyCRM</div>
           <a href="https://beautycrm-web.vercel.app?ref=LAUD-K99N" target="_blank" rel="noopener noreferrer"
-            style={{ display: 'inline-block', padding: '12px 24px', background: `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
+            style={{ display: 'inline-block', padding: '12px 24px', background: C.accent, color: '#fff', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
             Télécharger gratuitement
           </a>
         </div>
