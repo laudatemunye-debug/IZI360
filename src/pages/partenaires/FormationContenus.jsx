@@ -220,7 +220,7 @@ export default function FormationContenus() {
     fetch(`${API}/formations/${id}/videos/${item.id}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ commentaire: nouveauCommentaire })
+      body: JSON.stringify({ nom: 'Visiteur', texte: nouveauCommentaire })
     }).then(r => r.json()).then(c => {
       setComments(p => ({ ...p, [item.id]: [...(p[item.id] || []), c] }))
       setNouveauCommentaire('')
@@ -351,11 +351,11 @@ export default function FormationContenus() {
                     {(comments[item.id] || []).map(c => (
                       <div key={c.id} style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                         <div style={{ width: 32, height: 32, borderRadius: '50%', background: C.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
-                          {(c.auteur || 'A')[0].toUpperCase()}
+                          {(c.nom || "V")[0].toUpperCase()}
                         </div>
                         <div style={{ background: C.bg, borderRadius: 16, padding: '8px 14px', maxWidth: '80%' }}>
-                          <div style={{ fontSize: 12, fontWeight: 700 }}>{c.auteur || 'Anonyme'}</div>
-                          <div style={{ fontSize: 13, color: C.text }}>{c.commentaire}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700 }}>{c.nom || 'Visiteur'}</div>
+                          <div style={{ fontSize: 13, color: C.text }}>{c.texte}</div>
                         </div>
                       </div>
                     ))}

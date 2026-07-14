@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react'
 import beautyLogo from '../../assets/beautycrm-logo.jpg'
+import beautyAd from '../../assets/beautycrm-ad.png'
+import iconAppMobile from '../../assets/icon-app-mobile.png'
+import iconGestionClients from '../../assets/icon-gestion-clients.png'
+import iconFacturation from '../../assets/icon-facturation.png'
+import iconStatistiques from '../../assets/icon-statistiques.png'
+import iconModeEntreprise from '../../assets/icon-mode-entreprise.png'
+import iconRelanceWhatsapp from '../../assets/icon-relance-whatsapp.png'
 
 const API = 'https://izi360-backend.vercel.app/api'
 
@@ -130,6 +137,7 @@ export default function LandingBeautyCRM() {
   const [inscrit, setInscrit] = useState(false)
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState('')
+  const [dejaInscrit, setDejaInscrit] = useState(false)
   const [form, setForm] = useState({
     nom: '', pays: '', telephone: '', email: '', ville: '',
     domaine: '', utilise_beautycrm: '', version_beautycrm: '', entendu_parler: '',
@@ -197,13 +205,21 @@ export default function LandingBeautyCRM() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (!res.ok) throw new Error()
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        if ((data.message || '').toLowerCase().includes('déjà inscrit')) {
+          setDejaInscrit(true)
+        } else {
+          setErreur(data.message || "Erreur lors de l'inscription, réessayez.")
+        }
+        return
+      }
       setInscrit(true)
       setNbInscrits(n => n + 1)
       setStep(4)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
-      setErreur("Erreur lors de l'inscription, réessayez.")
+      setErreur("Erreur de connexion, réessayez.")
     } finally {
       setEnvoi(false)
     }
@@ -222,7 +238,7 @@ export default function LandingBeautyCRM() {
         {step === 0 && (
           <FadeStep stepKey="hero">
             <div style={{
-              background: `linear-gradient(160deg, #EEF0FF 0%, #FFFFFF 60%, #F0F4FF 100%)`,
+              background: '#F5F6FA',
               padding: 'clamp(40px,8vw,80px) 20px clamp(30px,6vw,60px)',
               textAlign: 'center',
               position: 'relative',
@@ -233,7 +249,7 @@ export default function LandingBeautyCRM() {
               <img src={beautyLogo} alt="BeautyCRM" style={{ width: 72, height: 72, borderRadius: 18, objectFit: 'cover', border: `2px solid ${C.accent}`, marginBottom: 16, display: 'block', margin: '0 auto 16px' }} />
 
               <div style={{ fontSize: 12, letterSpacing: 3, color: C.accent, textTransform: 'uppercase', marginBottom: 12, fontWeight: 600 }}>
-                🚀 Événement officiel · IZIsoft
+                Événement officiel · IZIsoft
               </div>
 
               <h1 style={{ fontSize: 'clamp(1.6rem,5.5vw,2.8rem)', fontWeight: 900, lineHeight: 1.2, maxWidth: 700, margin: '0 auto 16px', color: C.text }}>
@@ -263,7 +279,7 @@ export default function LandingBeautyCRM() {
 
               <button
                 onClick={goNext}
-                style={{ padding: '14px 36px', borderRadius: 14, background: `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: `0 8px 32px rgba(61,90,254,0.4)` }}
+                style={{ padding: '14px 36px', borderRadius: 14, background: C.accent, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: `0 8px 32px rgba(61,90,254,0.4)` }}
               >
                 Je m'inscris maintenant →
               </button>
@@ -278,20 +294,23 @@ export default function LandingBeautyCRM() {
               <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.2rem,4vw,1.6rem)', fontWeight: 800, marginBottom: 8 }}>
                 Pourquoi cette formation ?
               </h2>
-              <p style={{ textAlign: 'center', color: C.muted, marginBottom: 32, fontSize: 15 }}>
+              <p style={{ textAlign: 'center', color: C.muted, marginBottom: 24, fontSize: 15 }}>
                 BeautyCRM est l'outil qu'il vous faut pour gérer votre activité comme un pro.
               </p>
+              <img src={beautyAd} alt="BeautyCRM" style={{ width: '100%', borderRadius: 20, marginBottom: 32, display: 'block', boxShadow: '0 12px 32px rgba(61,90,254,0.15)' }} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
                 {[
-                  { icon: '📱', titre: 'Application mobile', desc: 'Gérez votre activité depuis votre téléphone, où que vous soyez' },
-                  { icon: '👥', titre: 'Gestion clients', desc: 'Centralisez tous vos prospects et clients en un seul endroit' },
-                  { icon: '🧾', titre: 'Facturation rapide', desc: 'Créez des factures en quelques secondes, suivez vos ventes' },
-                  { icon: '📊', titre: 'Statistiques', desc: 'Visualisez la croissance de votre activité avec des graphiques clairs' },
-                  { icon: '🏢', titre: 'Mode Entreprise', desc: 'Accès en temps réel aux ventes de tous vos vendeurs, journal de paie intégré et comptabilité complète' },
-                  { icon: '💬', titre: 'Relance WhatsApp', desc: "Envoyez des rappels à vos clients directement depuis l'app" },
+                  { icon: iconAppMobile, titre: 'Application mobile', desc: 'Gérez votre activité depuis votre téléphone, où que vous soyez' },
+                  { icon: iconGestionClients, titre: 'Gestion clients', desc: 'Centralisez tous vos prospects et clients en un seul endroit' },
+                  { icon: iconFacturation, titre: 'Facturation rapide', desc: 'Créez des factures en quelques secondes, suivez vos ventes' },
+                  { icon: iconStatistiques, titre: 'Statistiques', desc: 'Visualisez la croissance de votre activité avec des graphiques clairs' },
+                  { icon: iconModeEntreprise, titre: 'Mode Entreprise', desc: 'Accès en temps réel aux ventes de tous vos vendeurs, journal de paie intégré et comptabilité complète' },
+                  { icon: iconRelanceWhatsapp, titre: 'Relance WhatsApp', desc: "Envoyez des rappels à vos clients directement depuis l'app" },
                 ].map(f => (
-                  <div key={f.titre} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '20px 16px' }}>
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>{f.icon}</div>
+                  <div key={f.titre} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '20px 16px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: 120, borderRadius: 12, background: '#F5F6FA', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, overflow: 'hidden' }}>
+                      <img src={f.icon} alt={f.titre} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </div>
                     <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 15 }}>{f.titre}</div>
                     <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6 }}>{f.desc}</div>
                   </div>
@@ -393,11 +412,11 @@ export default function LandingBeautyCRM() {
                   {erreur && <div style={{ color: '#F87171', fontSize: 13, padding: '8px 12px', background: 'rgba(239,83,80,0.1)', borderRadius: 8 }}>{erreur}</div>}
 
                   <div style={{ textAlign: 'center', fontSize: 12, color: C.muted }}>
-                    🔒 Vos données sont sécurisées · Zéro spam
+                    Vos données sont sécurisées
                   </div>
                 </div>
               </div>
-              <StepNav onBack={goBack} onNext={goNext} nextLabel={envoi ? 'Envoi...' : '🎯 Confirmer mon inscription'} nextDisabled={envoi} />
+              <StepNav onBack={goBack} onNext={goNext} nextLabel={envoi ? 'Envoi...' : 'Confirmer mon inscription'} nextDisabled={envoi} />
             </div>
           </FadeStep>
         )}
@@ -412,7 +431,7 @@ export default function LandingBeautyCRM() {
                 Merci <strong style={{ color: C.text }}>{form.nom}</strong> ! Nous vous contacterons sur WhatsApp au <strong style={{ color: C.text }}>{form.telephone}</strong> avec tous les détails.
               </p>
               <div style={{ marginTop: 24, padding: 16, background: 'rgba(38,166,154,0.1)', borderRadius: 12, border: '1px solid rgba(38,166,154,0.2)' }}>
-                <div style={{ fontSize: 13, color: C.success }}>📲 Téléchargez BeautyCRM en attendant</div>
+                <div style={{ fontSize: 13, color: C.success }}>Téléchargez BeautyCRM en attendant</div>
                 <a href="https://beautycrm-web.vercel.app?ref=LAUD-K99N" target="_blank" rel="noopener noreferrer"
                   style={{ display: 'inline-block', marginTop: 10, padding: '10px 20px', background: C.success, color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
                   Télécharger gratuitement
@@ -434,6 +453,28 @@ export default function LandingBeautyCRM() {
         <img src={beautyLogo} alt="BeautyCRM" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover', verticalAlign: 'middle', marginRight: 8 }} />
         BeautyCRM · IZIsoft © 2026 · Tous droits réservés.
       </div>
+
+      {dejaInscrit && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: C.card, borderRadius: 24, padding: 'clamp(28px,6vw,40px)', width: '100%', maxWidth: 400, textAlign: 'center', position: 'relative' }}>
+            <button onClick={() => setDejaInscrit(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: C.muted, fontSize: 24, cursor: 'pointer', lineHeight: 1 }}>×</button>
+            <div style={{ fontSize: 44, marginBottom: 12 }}>✅</div>
+            <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Vous êtes déjà inscrit(e) !</h2>
+            <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
+              Ce numéro est déjà enregistré pour cette formation. Retrouvez dès maintenant les vidéos et explications sur l'utilisation de l'application.
+            </p>
+            {formation?.id && (
+              <a href={`/formation/${formation.id}/contenus`}
+                style={{ display: 'block', padding: '14px 20px', background: `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', borderRadius: 14, textDecoration: 'none', fontWeight: 700, fontSize: 15, marginBottom: 10 }}>
+                🎥 Voir les vidéos et explications de l'app
+              </a>
+            )}
+            <button onClick={() => setDejaInscrit(false)} style={{ width: '100%', padding: '12px 20px', background: 'transparent', border: `1px solid ${C.border}`, color: C.muted, borderRadius: 14, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -444,7 +485,7 @@ function StepNav({ onBack, onNext, nextLabel, nextDisabled }) {
       <button onClick={onBack} style={{ padding: '13px 20px', borderRadius: 14, background: 'transparent', color: C.muted, fontWeight: 600, fontSize: 14, border: `1px solid ${C.border}`, cursor: 'pointer' }}>
         ← Retour
       </button>
-      <button onClick={onNext} disabled={nextDisabled} style={{ flex: 1, padding: '13px 20px', borderRadius: 14, background: nextDisabled ? C.muted : `linear-gradient(135deg, ${C.accent} 0%, ${C.pink} 100%)`, color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', cursor: nextDisabled ? 'wait' : 'pointer', boxShadow: nextDisabled ? 'none' : `0 8px 24px rgba(61,90,254,0.35)` }}>
+      <button onClick={onNext} disabled={nextDisabled} style={{ flex: 1, padding: '13px 20px', borderRadius: 14, background: nextDisabled ? C.muted : C.accent, color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', cursor: nextDisabled ? 'wait' : 'pointer', boxShadow: nextDisabled ? 'none' : `0 8px 24px rgba(61,90,254,0.35)` }}>
         {nextLabel}
       </button>
     </div>
