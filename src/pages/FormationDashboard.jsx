@@ -36,6 +36,16 @@ export default function FormationDashboard() {
   const [contenus, setContenus] = useState([])
   const [editContenu, setEditContenu] = useState(null)
   const [formContenu, setFormContenu] = useState({ titre: '', description: '', urlVideo: '', typeContenu: 'video' })
+  const [showEditFormation, setShowEditFormation] = useState(false)
+  const [formFormation, setFormFormation] = useState({ titre: '', description: '', lieu: '', duree: '', dateDebut: '', heureDebut: '', fuseauHoraire: 'Africa/Lubumbashi', formateur: '' })
+
+  const FUSEAUX = [
+    { v: 'Africa/Lubumbashi', l: 'RD Congo Est (UTC+2)' },
+    { v: 'Africa/Kinshasa', l: 'RD Congo Ouest (UTC+1)' },
+    { v: 'Africa/Kigali', l: 'Rwanda / Burundi (UTC+2)' },
+    { v: 'Africa/Nairobi', l: 'Kenya / EAT (UTC+3)' },
+    { v: 'Europe/Paris', l: 'France / Belgique (UTC+1/+2)' },
+  ]
 
   const token = localStorage.getItem('izi360_token')
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
@@ -102,6 +112,34 @@ export default function FormationDashboard() {
     }
   }
 
+  const ouvrirEditionFormation = () => {
+    setFormFormation({
+      titre: formation.titre || '',
+      description: formation.description || '',
+      lieu: formation.lieu || '',
+      duree: formation.duree || '',
+      dateDebut: formation.date_debut ? formation.date_debut.slice(0, 10) : '',
+      heureDebut: formation.heure_debut || '',
+      fuseauHoraire: formation.fuseau_horaire || 'Africa/Lubumbashi',
+      formateur: formation.formateur || '',
+    })
+    setShowEditFormation(true)
+  }
+
+  const sauvegarderFormation = async () => {
+    if (!formFormation.titre.trim()) { msg('Titre requis'); return }
+    try {
+      const res = await fetch(`${API}/formations/${id}`, { method: 'PATCH', headers, body: JSON.stringify(formFormation) })
+      if (!res.ok) throw new Error()
+      const updated = await res.json()
+      setFormation(updated)
+      setShowEditFormation(false)
+      msg('✅ Formation modifiée')
+    } catch {
+      msg('Erreur lors de l\'enregistrement')
+    }
+  }
+
   const supprimerContenu = async (contenuId) => {
     if (!confirm('Supprimer ce contenu ?')) return
     const res = await fetch(`${API}/formations/${id}/videos/${contenuId}`, { method: 'DELETE', headers })
@@ -156,6 +194,9 @@ export default function FormationDashboard() {
           <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>{formation.lieu} {formation.duree ? `— ${formation.duree}` : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Btn onClick={ouvrirEditionFormation} color="rgba(96,165,250,0.15)" textColor="#60A5FA">
+            ✏️ Modifier
+          </Btn>
           <Btn onClick={ouvrirContenus} color="rgba(167,139,250,0.15)" textColor="#A78BFA">
             🎥 Contenus
           </Btn>
@@ -293,6 +334,59 @@ export default function FormationDashboard() {
             <Btn onClick={() => supprimerInscrit(selectedInscrit.id, selectedInscrit.nom)} color="rgba(226,75,74,0.15)" textColor="#E24B4A" style={{ width: '100%' }}>
               Supprimer
             </Btn>
+          </div>
+        </div>
+      )}
+
+      {showEditFormation && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: T.card, borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '520px', border: `1px solid ${T.border}`, maxHeight: '88vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ color: T.text, margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>✏️ Modifier la formation</h2>
+              <button onClick={() => setShowEditFormation(false)} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '22px', cursor: 'pointer' }}>×</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Titre *</label>
+                <input style={inp} value={formFormation.titre} onChange={e => setFormFormation(p => ({ ...p, titre: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Description</label>
+                <textarea style={{ ...inp, minHeight: '70px', resize: 'vertical' }} value={formFormation.description} onChange={e => setFormFormation(p => ({ ...p, description: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Lieu</label>
+                <input style={inp} value={formFormation.lieu} onChange={e => setFormFormation(p => ({ ...p, lieu: e.target.value }))} placeholder="Ex: En ligne sur Google Meet" />
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Date</label>
+                  <input type="date" style={inp} value={formFormation.dateDebut} onChange={e => setFormFormation(p => ({ ...p, dateDebut: e.target.value }))} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Heure</label>
+                  <input type="time" style={inp} value={formFormation.heureDebut} onChange={e => setFormFormation(p => ({ ...p, heureDebut: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Fuseau horaire</label>
+                <select style={inp} value={formFormation.fuseauHoraire} onChange={e => setFormFormation(p => ({ ...p, fuseauHoraire: e.target.value }))}>
+                  {FUSEAUX.map(tz => <option key={tz.v} value={tz.v}>{tz.l}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Durée</label>
+                <input style={inp} value={formFormation.duree} onChange={e => setFormFormation(p => ({ ...p, duree: e.target.value }))} placeholder="Ex: 2h" />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: T.textSub, fontWeight: '600', display: 'block', marginBottom: '4px' }}>Formateur</label>
+                <input style={inp} value={formFormation.formateur} onChange={e => setFormFormation(p => ({ ...p, formateur: e.target.value }))} />
+              </div>
+              <Btn onClick={sauvegarderFormation} style={{ padding: '12px', marginTop: '6px' }}>
+                Enregistrer les modifications
+              </Btn>
+            </div>
           </div>
         </div>
       )}
