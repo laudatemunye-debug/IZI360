@@ -432,7 +432,7 @@ export default function LandingBeautyCRM() {
               </p>
               <div style={{ marginTop: 24, padding: 16, background: 'rgba(38,166,154,0.1)', borderRadius: 12, border: '1px solid rgba(38,166,154,0.2)' }}>
                 <div style={{ fontSize: 13, color: C.success }}>Téléchargez BeautyCRM en attendant</div>
-                <a href="https://beautycrm-web.vercel.app?ref=LAUD-K99N" target="_blank" rel="noopener noreferrer"
+                <a href="https://beautycrm.izi360.org?ref=LAUD-K99N" target="_blank" rel="noopener noreferrer"
                   style={{ display: 'inline-block', marginTop: 10, padding: '10px 20px', background: C.success, color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
                   Télécharger gratuitement
                 </a>
