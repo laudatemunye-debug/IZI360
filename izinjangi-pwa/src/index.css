@@ -1,0 +1,56 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #F4F4F0;
+  overscroll-behavior-y: contain;
+}
+
+input, select, button {
+  font-family: inherit;
+}
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- UnionPro : adaptation automatique à la taille d'écran (tous écrans) --- */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #E7E5DD;
+}
+
+#root {
+  display: flex;
+  justify-content: center;
+}
+
+/* Écrans UnionPro (association) : grilles déjà adaptatives en JSX, rien à faire ici. */
+
+/* Écrans du module Tontine (AllScreens.jsx + TontineModule.jsx + BottomNav) :
+   tous partagent le même conteneur maxWidth:480 (rendu DOM : "480px").
+   Largeur 100% fluide, sans palier fixe : elle suit en continu la taille
+   de la fenêtre/appareil, avec juste un plafond pour rester lisible sur
+   très grand écran. */
+[style*="480px"] {
+  max-width: min(96vw, 1600px) !important;
+  width: 100% !important;
+}

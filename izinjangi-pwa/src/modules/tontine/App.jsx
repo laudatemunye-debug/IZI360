@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getAssociations, createAssociation, migrateLegacyTontinesIfNeeded } from './data/associations'
+import { getAssociations, createAssociation, migrateLegacyTontinesIfNeeded, ASSOCIATION_TYPES } from './data/associations'
 import AssociationSelectScreen from './screens/association/AssociationSelectScreen'
 import AssociationSetupScreen from './screens/association/AssociationSetupScreen'
 import AssociationDashboard from './screens/association/AssociationDashboard'
@@ -9,11 +9,13 @@ import TontineModule from './modules/tontine/TontineModule'
 export default function App() {
   const [loading, setLoading] = useState(true)
   const [associations, setAssociations] = useState([])
-  const [view, setView] = useState('assocSelect')
+  const [view, setView] = useState('assocSelect') // assocSelect | assocSetup | dashboard | module
   const [activeAssoc, setActiveAssoc] = useState(null)
   const [activeModule, setActiveModule] = useState(null)
 
   useEffect(() => {
+    // Migration one-shot : rattache les tontines créées avant UnionPro
+    // à une association "Groupe simple", sans perte de données.
     migrateLegacyTontinesIfNeeded()
     setAssociations(getAssociations())
     setLoading(false)
@@ -24,6 +26,7 @@ export default function App() {
   const openAssociation = (assoc) => {
     setActiveAssoc(assoc)
     if (assoc.type === 'groupe') {
+      // Un "Groupe simple" n'a qu'un seul module : on saute le dashboard.
       setActiveModule('tontine')
       setView('module')
     } else {
