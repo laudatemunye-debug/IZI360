@@ -57,8 +57,8 @@ export default function AssociationSelectScreen({ associations, onSelect, onNew 
   const isEmpty = associations.length === 0
 
   return (
-    <div style={{ position: 'fixed', inset: 0, display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
-      <div style={{ width: '100%', maxWidth: 720, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, height: '100dvh', display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
+      <div style={{ width: '100%', maxWidth: 720, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
 
         <div style={{ backgroundColor: C.g, padding: 'calc(env(safe-area-inset-top) + 28px) 20px 24px', textAlign: 'center', flexShrink: 0 }}>
           <div style={{
