@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 
 import { FREQUENCY_UNITS, WEEKDAYS, buildFrequencyLabel, getNextDueDate, formatDueDate, resolveInputMode, clampFrequencyCount, MAX_MOIS_DAY } from '../data/frequency'
+import { useGoogleDrive } from '../hooks/useGoogleDrive'
+import GoogleSyncButton from '../components/GoogleSyncButton'
 
 const C = {
   g:'#1D9E75', gd:'#085041', gl:'#E1F5EE', g2:'#0F6E56',
@@ -679,22 +681,22 @@ export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvance
  ]
 
  return (
- <div style={{flex:1,overflowY:'auto',paddingBottom:70}}>
+ <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
  {showCycles&&<CyclesModal config={config} members={members} payments={payments} payouts={payouts} onClose={()=>setShowCycles(false)}/>}
- <div style={{backgroundColor:C.g,padding:'calc(env(safe-area-inset-top) + 14px) 16px 20px'}}>
- <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
- <div style={{display:'flex',alignItems:'center',gap:9}}>
+ <div style={{backgroundColor:C.g,padding:'calc(env(safe-area-inset-top) + 14px) 16px 14px',flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+ <div style={{display:'flex',alignItems:'center',gap:9,minWidth:0}}>
  <Logo src={config.logo} size={34} bg="#fff" radius={9}/>
- <div>
- <div style={{color:'#fff',fontSize:17,fontWeight:700,letterSpacing:0.3}}>IZI NJANGI</div>
- <div style={{color:'rgba(255,255,255,0.75)',fontSize:10,letterSpacing:0.5}}>GESTION DE TONTINE</div>
+ <div style={{minWidth:0}}>
+ <div style={{color:'#fff',fontSize:16,fontWeight:700,letterSpacing:0.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{config.tontineName}</div>
  </div>
  </div>
- <button onClick={()=>nav('notifications')} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.18)',border:'none',cursor:'pointer',position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
+ <button onClick={()=>nav('notifications')} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.18)',border:'none',cursor:'pointer',position:'relative',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
  <Bell size={17} color="#fff"/>
  {notifications.length>0&&<span style={{position:'absolute',top:-2,right:-2,backgroundColor:C.rd,color:'#fff',fontSize:9,fontWeight:700,borderRadius:8,minWidth:16,height:16,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 3px'}}>{notifications.length}</span>}
  </button>
  </div>
+ <div style={{flex:1,overflowY:'auto',paddingBottom:70}}>
+ <div style={{backgroundColor:C.g,margin:'0 0 0',padding:'0 16px 20px'}}>
  <div style={{backgroundColor:'rgba(255,255,255,0.13)',borderRadius:12,padding:12}}>
  <div style={{color:'rgba(255,255,255,0.8)',fontSize:11,marginBottom:3}}>Cagnotte du cycle en cours</div>
  <div style={{color:'#fff',fontSize:26,fontWeight:700,letterSpacing:-1}}>{fmt(totalCollected,sym)}</div>
@@ -812,6 +814,7 @@ export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvance
  ))}
  </div>
  <div style={{textAlign:'center',padding:16,fontSize:10,color:C.text2}}>Powered by IZIsoft</div>
+ </div>
  </div>
  )
 }
@@ -2436,7 +2439,8 @@ function CurrencyModal({current,onSave,onCancel}) {
  )
 }
 
-export function ParametresScreen({config,members,payments,payouts,onUpdateConfig,onReset,onSwitchTontine=null}) {
+export function ParametresScreen({config,members,payments,payouts,assocId,onUpdateConfig,onReset,onSwitchTontine=null}) {
+ const { googleUser, connect, disconnect, syncAssociation } = useGoogleDrive()
  const sym=config.currency?.symbol||config.currency?.code||'F'
  const nbSlotsTotal=config.nbSlots||config.nbMembers||1
  const currentCycleNow=config.currentCycle||1
@@ -2567,7 +2571,7 @@ export function ParametresScreen({config,members,payments,payouts,onUpdateConfig
  }
 
  return (
- <div style={{flex:1,overflowY:'auto',paddingBottom:80}}>
+ <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
  {pinFlow&&<PinModal {...pinModalProps()} error={pinError} onClearError={()=>setPinError('')} onConfirm={pinFlow==='disable'?handleDisableVerify:handlePinStep} onCancel={cancelPin}/>}
  {editField&&<EditFieldModal title={editField.title} placeholder={editField.placeholder} initialValue={String(editField.value??'')} multiline={editField.kind==='textarea'} type={editField.kind.startsWith('number')?'number':'text'} onSave={saveEdit} onCancel={closeEdit}/>}
  {datesModalOpen&&<CotisationDatesModal config={config} onSave={(vals)=>{onUpdateConfig({...config,...vals});setDatesModalOpen(false)}} onCancel={()=>setDatesModalOpen(false)}/>}
@@ -2618,10 +2622,11 @@ export function ParametresScreen({config,members,payments,payouts,onUpdateConfig
  </div>
  </div>
  )}
- <div style={{backgroundColor:C.g,padding:'calc(env(safe-area-inset-top) + 14px) 16px 16px'}}>
+ <div style={{backgroundColor:C.g,padding:'calc(env(safe-area-inset-top) + 14px) 16px 16px',flexShrink:0}}>
  <div style={{color:'#fff',fontSize:17,fontWeight:700}}>Paramètres</div>
  <div style={{color:'rgba(255,255,255,0.8)',fontSize:11,marginTop:2}}>{config.tontineName}</div>
  </div>
+ <div style={{flex:1,overflowY:'auto',paddingBottom:80}}>
  <div style={{backgroundColor:C.gl,border:`1px solid #5DCAA5`,borderRadius:10,margin:'12px 14px',padding:14,display:'flex',alignItems:'center',gap:10}}>
  <Logo src={config.logo} size={36} bg="#fff" radius={10} border/>
  <div>
@@ -2630,6 +2635,18 @@ export function ParametresScreen({config,members,payments,payouts,onUpdateConfig
  <div style={{fontSize:11,color:C.text2,marginTop:1}}>Cycle {config.currentCycle||1} en cours</div>
  </div>
  </div>
+
+ <Section icon={Save} bgIcon={C.gl} fgIcon={C.gd} title="Sauvegarde Google Drive" sub={googleUser?'Connecté':'Non connecté'}>
+ <div style={{padding:'0 14px 14px'}}>
+ <GoogleSyncButton
+ googleUser={googleUser}
+ connect={connect}
+ disconnect={disconnect}
+ onSync={()=>syncAssociation(assocId)}
+ storageKeySuffix={'_'+assocId}
+ />
+ </div>
+ </Section>
 
  <Section icon={ImageUp} bgIcon={C.pur} fgIcon={C.purd} title="Apparence" sub="Logo de la tontine">
    <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoFile} style={{display:'none'}}/>
@@ -2737,6 +2754,7 @@ export function ParametresScreen({config,members,payments,payouts,onUpdateConfig
  <div style={{textAlign:'center',padding:16,fontSize:11,color:C.text2}}>
  <div style={{fontWeight:700,color:C.g}}>IZI NJANGI v1.0</div>
  <div style={{marginTop:3,letterSpacing:0.4}}>Powered by IZIsoft</div>
+ </div>
  </div>
  </div>
  )

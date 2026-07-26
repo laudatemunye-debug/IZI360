@@ -48,6 +48,82 @@ export function saveTontinesForAssociation(assocId, list) {
   localStorage.setItem(tontineListKey(assocId), JSON.stringify(list))
 }
 
+const SYNC_FIELDS = ['config', 'members', 'payments', 'payouts', 'cycles', 'forcedAdvances']
+
+// Rassemble toute une association (liste de tontines + toutes leurs données) en un seul objet,
+// prêt à être envoyé sur Google Drive.
+export function collectAssociationData(assocId) {
+  const tontines = getTontinesForAssociation(assocId)
+  const records = {}
+  tontines.forEach((t) => {
+    const rec = {}
+    SYNC_FIELDS.forEach((field) => {
+      const raw = localStorage.getItem(tontineKey(assocId, t.id, field))
+      rec[field] = raw !== null ? JSON.parse(raw) : (field === 'config' ? null : [])
+    })
+    records[t.id] = rec
+  })
+  return { assocId, tontines, records, exported_at: new Date().toISOString() }
+}
+
+// Réécrit en local toutes les données d'une association à partir d'un objet collecté (écrase tout).
+export function restoreAssociationData(assocId, data) {
+  if (!data) return
+  saveTontinesForAssociation(assocId, data.tontines || [])
+  Object.entries(data.records || {}).forEach(([tontineId, rec]) => {
+    SYNC_FIELDS.forEach((field) => {
+      if (rec[field] !== undefined) {
+        localStorage.setItem(tontineKey(assocId, tontineId, field), JSON.stringify(rec[field]))
+      }
+    })
+  })
+}
+
+function unionById(localArr = [], remoteArr = []) {
+  const map = {}
+  remoteArr.forEach((item) => { map[item.id || item.slotId || JSON.stringify(item)] = item })
+  localArr.forEach((item) => { map[item.id || item.slotId || JSON.stringify(item)] = item }) // local gagne en cas de conflit d'id
+  return Object.values(map)
+}
+
+// Fusionne les données locales et celles venant de Drive, sans perte : les tableaux (membres,
+// paiements, versements...) sont unifiés par id ; le plus récent des deux objets globaux
+// (exported_at) l'emporte pour la config si elle diffère.
+export function mergeAssociationData(localData, remoteData) {
+  if (!remoteData) return localData
+  if (!localData) return remoteData
+
+  const localNewer = new Date(localData.exported_at) >= new Date(remoteData.exported_at)
+  const tontineIds = new Set([
+    ...(localData.tontines || []).map((t) => t.id),
+    ...(remoteData.tontines || []).map((t) => t.id),
+  ])
+  const tontinesById = {}
+;(remoteData.tontines || []).forEach((t) => { tontinesById[t.id] = t })
+;(localData.tontines || []).forEach((t) => { tontinesById[t.id] = t }) // local gagne (métadonnées : nom, username...)
+
+  const records = {}
+  tontineIds.forEach((id) => {
+    const l = localData.records?.[id] || {}
+    const r = remoteData.records?.[id] || {}
+    records[id] = {
+      config: localNewer ? (l.config || r.config) : (r.config || l.config),
+      members: unionById(l.members, r.members),
+      payments: unionById(l.payments, r.payments),
+      payouts: unionById(l.payouts, r.payouts),
+      cycles: unionById(l.cycles, r.cycles),
+      forcedAdvances: unionById(l.forcedAdvances, r.forcedAdvances),
+    }
+  })
+
+  return {
+    assocId: localData.assocId,
+    tontines: Array.from(tontineIds).map((id) => tontinesById[id]).filter(Boolean),
+    records,
+    exported_at: new Date().toISOString(),
+  }
+}
+
 export function migrateLegacyTontinesIfNeeded() {
   if (localStorage.getItem(MIGRATION_FLAG_KEY)) return null
 

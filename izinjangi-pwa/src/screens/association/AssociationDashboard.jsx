@@ -15,18 +15,22 @@ export default function AssociationDashboard({ association, onOpenModule, onBack
   const typeLabel = ASSOCIATION_TYPES[association.type]?.label || association.type
 
   return (
-    <div style={{ width: '100%', maxWidth: 1100, margin: '0 auto', minHeight: '100vh', backgroundColor: C.bg, display: 'flex', flexDirection: 'column', boxSizing: 'border-box', padding: '0 20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 0 4px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-          <ArrowLeft size={22} color={C.dark} />
-        </button>
-        <div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: C.dark, margin: 0 }}>{association.name}</h1>
-          <span style={{ fontSize: 12, color: C.text2 }}>{typeLabel}</span>
-        </div>
-      </div>
+    <div style={{ position: 'fixed', inset: 0, height: '100dvh', display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
+      <div style={{ width: '100%', maxWidth: 1100, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
 
-      <div style={{ padding: '20px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+        <div style={{ backgroundColor: C.g, padding: 'calc(env(safe-area-inset-top) + 16px) 20px 16px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: 9, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <ArrowLeft size={18} color="#fff" />
+          </button>
+          <div>
+            <h1 style={{ fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>{association.name}</h1>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>{typeLabel}</span>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', boxSizing: 'border-box' }}>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
         {modules.map(({ key, label, Icon, active }) => (
           <button
             key={key}
@@ -46,6 +50,9 @@ export default function AssociationDashboard({ association, onOpenModule, onBack
             </div>
           </button>
         ))}
+      </div>
+
+        </div>
       </div>
     </div>
   )

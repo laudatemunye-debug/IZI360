@@ -367,7 +367,7 @@ export default function TontineModule({ assocId, onExit }) {
         return <RapportScreen config={config} members={members} payments={payments} payouts={payouts} cycles={cycles} forcedAdvances={forcedAdvances}
           onPayout={handlePayout} onRenew={handleRenew} onForceAdvance={handleForceAdvance} onUpdateConfig={handleUpdateConfig} onBack={() => setScreen('home')} />
       case 'settings':
-        return <ParametresScreen config={config} members={members} payments={payments} payouts={payouts}
+        return <ParametresScreen config={config} members={members} payments={payments} payouts={payouts} assocId={assocId}
           onUpdateConfig={handleUpdateConfig} onReset={handleReset} onSwitchTontine={() => setAppState('select')} />
       default:
         return null
