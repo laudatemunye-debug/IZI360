@@ -50,7 +50,15 @@ body {
    Largeur 100% fluide, sans palier fixe : elle suit en continu la taille
    de la fenêtre/appareil, avec juste un plafond pour rester lisible sur
    très grand écran. */
-[style*="480px"] {
-  max-width: min(96vw, 1600px) !important;
-  width: 100% !important;
+@media (min-width: 560px) {
+  [style*="480px"] {
+    max-width: min(96vw, 1600px) !important;
+    width: 100% !important;
+  }
+}
+@media (max-width: 559px) {
+  [style*="480px"] {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
 }
