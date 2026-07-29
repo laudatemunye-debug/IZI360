@@ -321,17 +321,17 @@ const SetupHeader = ({title,sub,step,onBack}) => (
 export function TontineSelectScreen({tontines, onSelect, onNew, onExit}) {
  return (
  <div style={{height:'100vh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column'}}>
- <div style={{padding:'calc(env(safe-area-inset-top) + 24px) 24px 20px',textAlign:'center'}}>
+ <div style={{padding:'calc(env(safe-area-inset-top) + 14px) 24px 18px',textAlign:'center'}}>
  {onExit && (
-   <div style={{textAlign:'left',marginBottom:8}}>
+   <div style={{textAlign:'left',marginBottom:6}}>
      <BackBtn onClick={onExit}/>
    </div>
  )}
- <div style={{width:60,height:60,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px'}}>
- <img src={getAppLogo() || tontineLogoDefault} alt="Logo" style={{width:'70%',height:'70%',objectFit:'contain',borderRadius:8}}/>
+ <div style={{width:56,height:56,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px'}}>
+ <img src={getAppLogo() || tontineLogoDefault} alt="Logo" onError={(e)=>{e.currentTarget.onerror=null;e.currentTarget.src=tontineLogoDefault}} style={{width:'70%',height:'70%',objectFit:'contain',borderRadius:8}}/>
  </div>
- <h1 style={{color:'#fff',fontSize:26,fontWeight:800,letterSpacing:0.5,margin:0}}>IZI NJANGI</h1>
- <p style={{color:'rgba(255,255,255,0.75)',fontSize:13,marginTop:6}}>Sélectionnez votre tontine</p>
+ <h1 style={{color:'#fff',fontSize:22,fontWeight:800,letterSpacing:0.5,margin:0}}>IZI NJANGI</h1>
+ <p style={{color:'rgba(255,255,255,0.75)',fontSize:12,marginTop:4}}>Sélectionnez votre tontine</p>
  </div>
  <div style={{flex:1,backgroundColor:C.bg,borderRadius:'24px 24px 0 0',padding:'20px 16px',overflowY:'auto'}}>
  <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:16}}>
@@ -1277,7 +1277,7 @@ export function AddMembreScreen({members,config,payouts=[],onBack,onSave}) {
 
 /* ---------------------------- Fiche membre ---------------------------- */
 
-export function FicheMembreScreen({member, members, payments, payouts=[], config, onBack, onUpdate, onDelete, onAddSlot, onRemoveSlot, onExit}) {
+export function FicheMembreScreen({member, members, payments, payouts=[], config, onBack, onUpdate, onDelete, onAddSlot, onRemoveSlot, onExit, onDeletePayment}) {
  const sym=config.currency?.symbol||config.currency?.code||'F'
  const versedCycles=payouts.length
  const catchupAmount=(config.cotisation||0)*versedCycles
@@ -1466,7 +1466,7 @@ export function FicheMembreScreen({member, members, payments, payouts=[], config
  )
 
  if(selectedPayment) return (
-   <Recu receipt={selectedPayment} config={config} onBack={()=>setSelectedPayment(null)} onNew={()=>setSelectedPayment(null)}/>
+   <Recu receipt={selectedPayment} config={config} onBack={()=>setSelectedPayment(null)} onNew={()=>setSelectedPayment(null)} onDelete={onDeletePayment}/>
  )
 
  return (
@@ -1607,12 +1607,26 @@ export function FicheMembreScreen({member, members, payments, payouts=[], config
 
 /* ---------------------------- Reçu ---------------------------- */
 
-function Recu({receipt,config,onBack,onNew}) {
+function Recu({receipt,config,onBack,onNew,onDelete}) {
  const sym=config.currency?.symbol||config.currency?.code||'F'
  const typeLabel=TYPES_PAY.find(t=>t.key===receipt.type)?.label||receipt.type
  const recuRef=useRef(null)
  const handlePrint=async()=>{ if(recuRef.current) await printPDFElement(recuRef.current) }
  const handleWhatsApp=async()=>{ if(recuRef.current) await shareViaPDF(recuRef.current,receipt,config.tontineName) }
+ const [deleteConfirm,setDeleteConfirm]=useState(false)
+ const [deletePinStep,setDeletePinStep]=useState(false)
+ const [deletePinError,setDeletePinError]=useState('')
+ const askDelete=()=>setDeleteConfirm(true)
+ const proceedDelete=()=>{
+ setDeleteConfirm(false)
+ if(config.pin){ setDeletePinStep(true) } else { onDelete(receipt.id); onBack() }
+ }
+ const verifyDeletePin=(pin)=>{
+ if(pin!==config.pin){ setDeletePinError('PIN incorrect'); return }
+ setDeletePinStep(false)
+ onDelete(receipt.id)
+ onBack()
+ }
 
  return (
  <div style={{flex:1,display:'flex',flexDirection:'column',backgroundColor:C.g}}>
@@ -1659,8 +1673,13 @@ function Recu({receipt,config,onBack,onNew}) {
  <button onClick={handlePrint} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:C.white,color:C.g,border:'2px solid '+C.g,borderRadius:12,padding:13,fontSize:14,fontWeight:700,cursor:'pointer'}}><Printer size={16}/> Imprimer le reçu (PDF)</button>
  <button onClick={handleWhatsApp} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:'#25D366',color:'#fff',border:'none',borderRadius:12,padding:13,fontSize:14,fontWeight:700,cursor:'pointer'}}><Share2 size={16}/> Envoyer sur WhatsApp</button>
  <button onClick={onNew} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:C.white,color:C.text2,border:'1px solid '+C.grb,borderRadius:12,padding:13,fontSize:14,fontWeight:600,cursor:'pointer'}}><Plus size={15}/> Nouveau paiement</button>
+ {onDelete&&receipt.id&&(
+ <button onClick={askDelete} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:'rgba(226,75,74,0.15)',color:'#fff',border:'1px solid rgba(255,255,255,0.4)',borderRadius:12,padding:13,fontSize:14,fontWeight:600,cursor:'pointer'}}><Trash2 size={15}/> Corriger / Supprimer ce paiement</button>
+ )}
  <button onClick={onBack} style={{background:'none',border:'none',color:'rgba(255,255,255,0.8)',fontSize:13,cursor:'pointer',padding:8}}>Retour</button>
  </div>
+ {deleteConfirm&&<ConfirmModal title="Supprimer ce paiement ?" message="Ce paiement sera retiré définitivement de l'historique et des cotisations du cycle. Cette action est irréversible." confirmLabel="Supprimer" danger onConfirm={proceedDelete} onCancel={()=>setDeleteConfirm(false)}/>}
+ {deletePinStep&&<PinModal title="PIN requis" sub="Confirmez la suppression avec votre PIN" error={deletePinError} onClearError={()=>setDeletePinError('')} onConfirm={verifyDeletePin} onCancel={()=>{setDeletePinStep(false);setDeletePinError('')}}/>}
  </div>
  </div>
  )

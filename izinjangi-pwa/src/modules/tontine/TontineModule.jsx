@@ -128,6 +128,12 @@ export default function TontineModule({ assocId, onExit }) {
     persist(activeTontineId, m, undefined, undefined, undefined, updatedConfig)
   }
 
+  const handleDeletePayment = (paymentId) => {
+    const p = payments.filter(pm => pm.id !== paymentId)
+    setPayments(p)
+    persist(activeTontineId, undefined, p)
+  }
+
   const handlePayment = (payment) => {
     const p = [...payments, payment]
     setPayments(p)
@@ -316,6 +322,7 @@ export default function TontineModule({ assocId, onExit }) {
       onAddSlot={handleAddSlot}
       onRemoveSlot={handleRemoveSlot}
       onExit={handleMemberExit}
+      onDeletePayment={handleDeletePayment}
     />
   )
 
