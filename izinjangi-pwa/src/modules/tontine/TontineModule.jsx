@@ -278,7 +278,7 @@ export default function TontineModule({ assocId, onExit }) {
   const nav = (sc) => { setSubScreen(null); setScreen(sc) }
 
   if (loading) return (
-    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh', backgroundColor:'#1D9E75' }}>
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100dvh', backgroundColor:'#1D9E75' }}>
       <p style={{ color:'#fff', fontSize:16 }}>Chargement…</p>
     </div>
   )
@@ -300,7 +300,7 @@ export default function TontineModule({ assocId, onExit }) {
   )
 
   const wrap = (child) => (
-    <div style={{ maxWidth:480, margin:'0 auto', height:'100vh', backgroundColor:'#F4F4F0', display:'flex', flexDirection:'column' }}>
+    <div style={{ maxWidth:480, margin:'0 auto', height:'100dvh', backgroundColor:'#F4F4F0', display:'flex', flexDirection:'column' }}>
       {child}
     </div>
   )
@@ -382,7 +382,7 @@ export default function TontineModule({ assocId, onExit }) {
   }
 
   return (
-    <div style={{ maxWidth:480, margin:'0 auto', height:'100vh', backgroundColor:'#F4F4F0', display:'flex', flexDirection:'column', position:'relative' }}>
+    <div style={{ maxWidth:480, margin:'0 auto', height:'100dvh', backgroundColor:'#F4F4F0', display:'flex', flexDirection:'column', position:'relative' }}>
       {mainContent()}
       <BottomNav current={screen} onNav={nav} />
     </div>

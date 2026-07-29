@@ -56,7 +56,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1D9E75' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100dvh', backgroundColor: '#1D9E75' }}>
         <p style={{ color: '#fff', fontSize: 16 }}>Chargement…</p>
       </div>
     )

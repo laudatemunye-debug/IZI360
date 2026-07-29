@@ -320,7 +320,7 @@ const SetupHeader = ({title,sub,step,onBack}) => (
 
 export function TontineSelectScreen({tontines, onSelect, onNew, onExit}) {
  return (
- <div style={{height:'100vh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column'}}>
+ <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column'}}>
  <div style={{padding:'calc(env(safe-area-inset-top) + 14px) 24px 18px',textAlign:'center'}}>
  {onExit && (
    <div style={{textAlign:'left',marginBottom:6}}>
@@ -396,7 +396,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  const btn={backgroundColor:C.g,color:'#fff',border:'none',borderRadius:12,padding:13,fontSize:15,fontWeight:700,cursor:'pointer',marginTop:8,width:'100%'}
 
  if(step===0) return (
- <div style={{height:'100vh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
+ <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
  <div style={{width:80,height:80,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:20,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20}}>
    <img src={getAppLogo() || tontineLogoDefault} alt="Logo" style={{width:'70%',height:'70%',objectFit:'contain',borderRadius:10}}/>
  </div>
@@ -408,7 +408,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  </div>
  )
  if(step===1) return (
- <div style={{height:'100vh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
+ <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
  <SetupHeader title="Nouvelle tontine" sub="Étape 1 / 3 — Informations" step={step} onBack={back}/>
  <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12}}>
  {[
@@ -509,7 +509,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  </div>
  )
  if(step===2) return (
- <div style={{height:'100vh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
+ <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
  <SetupHeader title="Devise" sub="Étape 2 / 3 — Sélectionnez votre devise" step={step} onBack={back}/>
  <div style={{padding:'12px 16px 8px'}}>
  <input style={inp} placeholder="Rechercher..." value={currSearch} onChange={e=>setCurrSearch(e.target.value)}/>
@@ -532,7 +532,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  </div>
  )
  if(step===3) return (
- <div style={{height:'100vh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
+ <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
  <SetupHeader title="Identifiants de connexion" sub="Étape 3 / 3 — Sécurisez l'accès" step={step} onBack={back}/>
  <div style={{flex:1,padding:16,display:'flex',flexDirection:'column',gap:12}}>
  <p style={{fontSize:14,color:C.text2,margin:0}}>Ces identifiants protègent l'accès à votre tontine</p>
@@ -578,7 +578,7 @@ export function LockScreen({config,onUnlock,onForgotPin}) {
  const del=()=>setPin(p=>p.slice(0,-1))
 
  if(forgot) return (
- <div style={{height:'100vh',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
+ <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
    <IconCircle icon={TriangleAlert} bg="rgba(255,255,255,0.15)" fg="#fff" size={64} iconSize={30}/>
    <h1 style={{color:'#fff',fontSize:19,fontWeight:800,marginTop:16,textAlign:'center'}}>PIN oublié</h1>
    <p style={{color:'rgba(255,255,255,0.75)',fontSize:13,textAlign:'center',marginTop:10,lineHeight:'19px',maxWidth:320}}>
@@ -603,8 +603,8 @@ export function LockScreen({config,onUnlock,onForgotPin}) {
  )
 
  return (
- <div style={{height:'100vh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
- <div style={{width:64,height:64,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:12}}>
+ <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px 24px calc(env(safe-area-inset-bottom) + 24px)',overflowY:'auto',boxSizing:'border-box'}}>
+ <div style={{width:64,height:64,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:12,flexShrink:0}}>
    <Lock size={30} color="#fff"/>
  </div>
  <h1 style={{color:'#fff',fontSize:24,fontWeight:800,letterSpacing:1,margin:0}}>IZI NJANGI</h1>
