@@ -130,6 +130,9 @@ export default function AdminDashboard() {
   const [filtreFilleuls, setFiltreFilleuls] = useState('')
   const [rechercheUtilisateurs, setRechercheUtilisateurs] = useState('')
   const [rechercheParrainage, setRechercheParrainage] = useState('')
+  const [tarifs, setTarifs] = useState([])
+  const [loadingTarifs, setLoadingTarifs] = useState(false)
+  const [editTarif, setEditTarif] = useState({})
   const [rechercheEntreprise, setRechercheEntreprise] = useState('')
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
@@ -193,6 +196,26 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => { if (beautyCrmTab === 'entreprise') fetchEntreprises() }, [beautyCrmTab])
+
+  const fetchTarifs = async () => {
+    setLoadingTarifs(true)
+    try {
+      const res = await fetch(`${API}/beautycrm/tarifs`, { headers })
+      const data = await res.json()
+      setTarifs(Array.isArray(data) ? data : [])
+    } catch (e) { console.error(e) }
+    setLoadingTarifs(false)
+  }
+
+  const saveTarif = async (forfait_type, duree_mois, champ, prix) => {
+    try {
+      await fetch(`${API}/beautycrm/tarifs`, { method: 'PUT', headers, body: JSON.stringify({ forfait_type, duree_mois, champ, prix: parseFloat(prix) }) })
+      msg('Tarif mis à jour')
+      fetchTarifs()
+    } catch (e) { console.error(e); msg('Erreur lors de la mise à jour') }
+  }
+
+  useEffect(() => { if (beautyCrmTab === 'tarifs') fetchTarifs() }, [beautyCrmTab])
 
   const fetchDesactivesPersonnel = async () => {
     setLoadingDesactives(true)
@@ -614,6 +637,7 @@ export default function AdminDashboard() {
                 { key: 'utilisateurs', label: '👥 Utilisateurs' },
                 { key: 'parrainage', label: '🔗 Parrainage' },
                 { key: 'entreprise', label: '🏢 Entreprise' },
+                { key: 'tarifs', label: '💰 Tarifs' },
                 { key: 'desactives', label: '🚫 Desactives' },
                 { key: 'notifier', label: '📣 Notifier' },
               ].map(t => (
@@ -1159,6 +1183,57 @@ export default function AdminDashboard() {
                     </Btn>
                   </div>
                 </Card>
+              </div>
+            )}
+
+            {beautyCrmTab === 'tarifs' && (
+              <div>
+                <div style={{ color: T.textSub, fontSize: '13px', marginBottom: '20px' }}>
+                  Modifie les prix appliqués directement dans l'application BeautyCRM (USD). Les changements prennent effet sous 30 secondes.
+                </div>
+                {loadingTarifs ? (
+                  <div style={{ color: T.textSub, padding: '24px', textAlign: 'center' }}>Chargement...</div>
+                ) : (
+                  <div style={{ display: 'grid', gap: '16px' }}>
+                    {['personnel', 'entreprise', 'employe_supplementaire'].map(type => {
+                      const lignes = tarifs.filter(t => t.forfait_type === type)
+                      if (lignes.length === 0) return null
+                      const labelType = type === 'personnel' ? '👤 Personnel' : type === 'entreprise' ? '🏢 Entreprise' : '➕ Employé supplémentaire'
+                      return (
+                        <Card key={type}>
+                          <div style={{ color: T.text, fontWeight: '700', fontSize: '15px', marginBottom: '14px' }}>{labelType}</div>
+                          <div style={{ display: 'grid', gap: '10px' }}>
+                            {lignes.map(t => {
+                              const editKey = `${t.forfait_type}-${t.duree_mois}-${t.champ}`
+                              const champLabel = t.champ === 'base' ? 'Base' : t.champ === 'ia_addon' ? 'Addon IA' : t.champ
+                              const dureeLabel = t.duree_mois === 1 ? 'Mensuel' : t.duree_mois === 12 ? 'Annuel' : `${t.duree_mois} mois`
+                              const valeurActuelle = editTarif[editKey] !== undefined ? editTarif[editKey] : t.prix
+                              return (
+                                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '8px 0', borderBottom: `1px solid ${T.border}` }}>
+                                  <div style={{ flex: '1 1 160px', color: T.textSub, fontSize: '13px' }}>{dureeLabel} — {champLabel}</div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ color: T.textSub, fontSize: '13px' }}>$</span>
+                                    <input
+                                      type='number'
+                                      step='0.01'
+                                      min='0'
+                                      value={valeurActuelle}
+                                      onChange={e => setEditTarif(prev => ({ ...prev, [editKey]: e.target.value }))}
+                                      style={{ width: '100px', background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '6px 10px', fontSize: '13px', fontFamily: 'inherit' }}
+                                    />
+                                    <Btn onClick={() => saveTarif(t.forfait_type, t.duree_mois, t.champ, valeurActuelle)} style={{ padding: '6px 14px', fontSize: '12px' }}>
+                                      Enregistrer
+                                    </Btn>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
