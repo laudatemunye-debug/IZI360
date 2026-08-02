@@ -133,6 +133,9 @@ export default function AdminDashboard() {
   const [tarifs, setTarifs] = useState([])
   const [loadingTarifs, setLoadingTarifs] = useState(false)
   const [editTarif, setEditTarif] = useState({})
+  const [dateEssai, setDateEssai] = useState('')
+  const [essaiActif, setEssaiActif] = useState(true)
+  const [loadingEssaiConfig, setLoadingEssaiConfig] = useState(false)
   const [rechercheEntreprise, setRechercheEntreprise] = useState('')
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
@@ -215,7 +218,38 @@ export default function AdminDashboard() {
     } catch (e) { console.error(e); msg('Erreur lors de la mise à jour') }
   }
 
-  useEffect(() => { if (beautyCrmTab === 'tarifs') fetchTarifs() }, [beautyCrmTab])
+  const fetchEssaiConfig = async () => {
+    setLoadingEssaiConfig(true)
+    try {
+      const [rDate, rActif] = await Promise.all([
+        fetch(`${API}/beautycrm/config/date-essai`, { headers }).then(r => r.json()),
+        fetch(`${API}/beautycrm/config/essai-actif`, { headers }).then(r => r.json()),
+      ])
+      if (rDate.valeur) setDateEssai(new Date(rDate.valeur).toISOString().slice(0, 10))
+      setEssaiActif(rActif.actif !== false)
+    } catch (e) { console.error(e) }
+    setLoadingEssaiConfig(false)
+  }
+
+  const saveDateEssai = async () => {
+    if (!dateEssai) return
+    try {
+      const iso = new Date(dateEssai + 'T00:00:00Z').toISOString()
+      await fetch(`${API}/beautycrm/config/date-essai`, { method: 'PUT', headers, body: JSON.stringify({ valeur: iso }) })
+      msg('Date de début d\'essai mise à jour')
+    } catch (e) { console.error(e); msg('Erreur lors de la mise à jour') }
+  }
+
+  const toggleEssaiActif = async () => {
+    const nouvelEtat = !essaiActif
+    try {
+      await fetch(`${API}/beautycrm/config/essai-actif`, { method: 'PUT', headers, body: JSON.stringify({ actif: nouvelEtat }) })
+      setEssaiActif(nouvelEtat)
+      msg(nouvelEtat ? 'Essai gratuit réactivé' : 'Essai gratuit désactivé - tous les comptes non payants passent en mode payant immédiatement')
+    } catch (e) { console.error(e); msg('Erreur lors de la mise à jour') }
+  }
+
+  useEffect(() => { if (beautyCrmTab === 'tarifs') { fetchTarifs(); fetchEssaiConfig() } }, [beautyCrmTab])
 
   const fetchDesactivesPersonnel = async () => {
     setLoadingDesactives(true)
@@ -1188,6 +1222,45 @@ export default function AdminDashboard() {
 
             {beautyCrmTab === 'tarifs' && (
               <div>
+                <Card style={{ marginBottom: '20px' }}>
+                  <div style={{ color: T.text, fontWeight: '700', fontSize: '15px', marginBottom: '14px' }}>Essai gratuit</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                    <div style={{ color: T.textSub, fontSize: '13px', flex: '1 1 200px' }}>
+                      Date de début d'essai fixe (les comptes créés avant cette date démarrent leurs 30 jours à cette date)
+                    </div>
+                    <input
+                      type='date'
+                      value={dateEssai}
+                      onChange={e => setDateEssai(e.target.value)}
+                      style={{ background: T.bg2, color: T.text, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontFamily: 'inherit' }}
+                    />
+                    <Btn onClick={saveDateEssai} style={{ padding: '8px 16px', fontSize: '12px' }}>Enregistrer</Btn>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', paddingTop: '12px', borderTop: `1px solid ${T.border}` }}>
+                    <div style={{ flex: '1 1 200px' }}>
+                      <div style={{ color: T.text, fontWeight: '600', fontSize: '13px' }}>
+                        Essai gratuit {essaiActif ? 'actif' : 'désactivé'}
+                      </div>
+                      <div style={{ color: T.textSub, fontSize: '12px', marginTop: '2px' }}>
+                        {essaiActif
+                          ? "Désactiver force immédiatement tous les comptes non payants en mode payant (lecture seule)."
+                          : "Tous les comptes non payants sont actuellement en mode payant, même s'ils avaient encore des jours d'essai restants."}
+                      </div>
+                    </div>
+                    <button
+                      onClick={toggleEssaiActif}
+                      disabled={loadingEssaiConfig}
+                      style={{
+                        padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                        backgroundColor: essaiActif ? T.danger || '#EF4444' : '#10B981',
+                        color: '#fff', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit',
+                      }}
+                    >
+                      {essaiActif ? 'Désactiver l\'essai' : 'Réactiver l\'essai'}
+                    </button>
+                  </div>
+                </Card>
+
                 <div style={{ color: T.textSub, fontSize: '13px', marginBottom: '20px' }}>
                   Modifie les prix appliqués directement dans l'application BeautyCRM (USD). Les changements prennent effet sous 30 secondes.
                 </div>
