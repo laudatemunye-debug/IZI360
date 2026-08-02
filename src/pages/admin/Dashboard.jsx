@@ -136,6 +136,7 @@ export default function AdminDashboard() {
   const [dateEssai, setDateEssai] = useState('')
   const [essaiActif, setEssaiActif] = useState(true)
   const [loadingEssaiConfig, setLoadingEssaiConfig] = useState(false)
+  const [confirmToggleEssai, setConfirmToggleEssai] = useState(false)
   const [rechercheEntreprise, setRechercheEntreprise] = useState('')
   const [selectedBeautyUser, setSelectedBeautyUser] = useState(null)
   const [editBeautyUser, setEditBeautyUser] = useState(null)
@@ -245,6 +246,7 @@ export default function AdminDashboard() {
     try {
       await fetch(`${API}/beautycrm/config/essai-actif`, { method: 'PUT', headers, body: JSON.stringify({ actif: nouvelEtat }) })
       setEssaiActif(nouvelEtat)
+      setConfirmToggleEssai(false)
       msg(nouvelEtat ? 'Essai gratuit réactivé' : 'Essai gratuit désactivé - tous les comptes non payants passent en mode payant immédiatement')
     } catch (e) { console.error(e); msg('Erreur lors de la mise à jour') }
   }
@@ -1247,17 +1249,39 @@ export default function AdminDashboard() {
                           : "Tous les comptes non payants sont actuellement en mode payant, même s'ils avaient encore des jours d'essai restants."}
                       </div>
                     </div>
-                    <button
-                      onClick={toggleEssaiActif}
-                      disabled={loadingEssaiConfig}
-                      style={{
-                        padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                        backgroundColor: essaiActif ? T.danger || '#EF4444' : '#10B981',
-                        color: '#fff', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit',
-                      }}
-                    >
-                      {essaiActif ? 'Désactiver l\'essai' : 'Réactiver l\'essai'}
-                    </button>
+                    {confirmToggleEssai ? (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => setConfirmToggleEssai(false)}
+                          style={{ padding: '10px 16px', borderRadius: '8px', border: `1px solid ${T.border}`, cursor: 'pointer', backgroundColor: T.bg2, color: T.text, fontSize: '13px', fontWeight: '600', fontFamily: 'inherit' }}
+                        >
+                          ← Annuler
+                        </button>
+                        <button
+                          onClick={toggleEssaiActif}
+                          disabled={loadingEssaiConfig}
+                          style={{
+                            padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                            backgroundColor: essaiActif ? T.danger || '#EF4444' : '#10B981',
+                            color: '#fff', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit',
+                          }}
+                        >
+                          Confirmer →
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmToggleEssai(true)}
+                        disabled={loadingEssaiConfig}
+                        style={{
+                          padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                          backgroundColor: essaiActif ? T.danger || '#EF4444' : '#10B981',
+                          color: '#fff', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit',
+                        }}
+                      >
+                        {essaiActif ? 'Désactiver l\'essai' : 'Réactiver l\'essai'}
+                      </button>
+                    )}
                   </div>
                 </Card>
 
