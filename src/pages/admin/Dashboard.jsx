@@ -129,6 +129,7 @@ export default function AdminDashboard() {
   const [parrainSelectionne, setParrainSelectionne] = useState(null)
   const [filtreFilleuls, setFiltreFilleuls] = useState('')
   const [rechercheUtilisateurs, setRechercheUtilisateurs] = useState('')
+  const [filtreActivite, setFiltreActivite] = useState('tous')
   const [rechercheParrainage, setRechercheParrainage] = useState('')
   const [tarifs, setTarifs] = useState([])
   const [loadingTarifs, setLoadingTarifs] = useState(false)
@@ -874,6 +875,22 @@ export default function AdminDashboard() {
 
             {beautyCrmTab === 'utilisateurs' && (
               <div>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                  {[
+                    { key: 'tous', label: 'Tous' },
+                    { key: 'actif', label: '🟢 Actifs' },
+                    { key: 'non_actif', label: '⚪ Non actifs' },
+                  ].map(f => (
+                    <button key={f.key} onClick={() => setFiltreActivite(f.key)} style={{
+                      padding: '6px 14px', borderRadius: '8px', border: `1px solid ${T.border}`, cursor: 'pointer',
+                      backgroundColor: filtreActivite === f.key ? T.accent : T.card,
+                      color: filtreActivite === f.key ? '#fff' : T.textSub,
+                      fontSize: '12px', fontWeight: '600', fontFamily: 'inherit',
+                    }}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
                 <input
                   value={rechercheUtilisateurs}
                   onChange={e => setRechercheUtilisateurs(e.target.value)}
@@ -885,18 +902,19 @@ export default function AdminDashboard() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${T.border}` }}>
-                          {['Date', 'Nom', 'Email', 'Téléphone', 'Pays', 'Ville', 'Entreprise', 'Rôle', 'Devise', 'Version', 'IP'].map(h => (
+                          {['Date', 'Derniere connexion', 'Nom', 'Email', 'Téléphone', 'Pays', 'Ville', 'Entreprise', 'Rôle', 'Devise', 'Version', 'IP'].map(h => (
                             <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: T.textSub, fontWeight: '600', whiteSpace: 'nowrap' }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {beautyCrmUsers.filter(u => rechercheUtilisateurs === '' || (u.nom||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase()) || (u.email||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase())).length === 0 ? (
+                        {beautyCrmUsers.filter(u => (filtreActivite === 'tous' || (filtreActivite === 'actif') === (!!u.derniere_connexion && (Date.now() - new Date(u.derniere_connexion).getTime()) <= 14*24*60*60*1000)) && (rechercheUtilisateurs === '' || (u.nom||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase()) || (u.email||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase()))).length === 0 ? (
                           <tr><td colSpan="10" style={{ padding: '24px', textAlign: 'center', color: T.textSub }}>Aucun utilisateur trouve</td></tr>
                         ) : (
-                          beautyCrmUsers.filter(u => rechercheUtilisateurs === '' || (u.nom||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase()) || (u.email||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase())).map(u => (
+                          beautyCrmUsers.filter(u => (filtreActivite === 'tous' || (filtreActivite === 'actif') === (!!u.derniere_connexion && (Date.now() - new Date(u.derniere_connexion).getTime()) <= 14*24*60*60*1000)) && (rechercheUtilisateurs === '' || (u.nom||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase()) || (u.email||'').toLowerCase().includes(rechercheUtilisateurs.toLowerCase()))).map(u => (
                             <tr key={u.id} onClick={() => { setSelectedBeautyUser(u); setEditBeautyUser({...u}) }} style={{ borderBottom: `1px solid ${T.border}`, cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e=>e.currentTarget.style.background=T.bg2} onMouseLeave={e=>e.currentTarget.style.background=''}>
                               <td style={{ padding: '10px 14px', color: T.textSub, whiteSpace: 'nowrap' }}>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
+                              <td style={{ padding: '10px 14px', color: T.textSub, whiteSpace: 'nowrap' }}>{u.derniere_connexion ? new Date(u.derniere_connexion).toLocaleDateString('fr-FR') : 'Jamais'}</td>
                               <td style={{ padding: '10px 14px', color: T.text, fontWeight: '600' }}>{u.nom || '—'}</td>
                               <td style={{ padding: '10px 14px', color: T.textSub }}>{u.email}</td>
                               <td style={{ padding: '10px 14px', color: T.textSub }}>{u.telephone || '—'}</td>
