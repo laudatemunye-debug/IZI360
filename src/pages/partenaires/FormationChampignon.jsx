@@ -339,7 +339,7 @@ export default function FormationChampignon() {
               zIndex: 2,
             }}
           >
-            {formatPeriode(dateFormation, duree)}
+            
           </div>
 
           <div
