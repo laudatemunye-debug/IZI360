@@ -377,6 +377,41 @@ export default function AdminDashboard() {
     pdf.save(`Brevet_${(selectedBrevet.participant || '').replace(/\s+/g, '_')}.pdf`)
   }
 
+  const telechargerTousBrevetsPDF = async () => {
+    if (brevets.length === 0) return
+    msg('⏳ Génération de tous les brevets en cours...')
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+
+    for (let i = 0; i < brevets.length; i++) {
+      const b = brevets[i]
+      setSelectedBrevet(b)
+      setEditBrevet({ ...b, dateFormation: b.date_formation ? b.date_formation.substring(0, 10) : '' })
+      try {
+        const url = await QRCode.toDataURL(`${SITE_URL}/formation/champignon?id=${b.id}`, { width: 300, margin: 1, color: { dark: '#1A1D27', light: '#FFFFFF' } })
+        setQrDataUrlBrevet(url)
+      } catch { setQrDataUrlBrevet('') }
+
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      if (!brevetCertRef.current) continue
+      const canvas = await html2canvas(brevetCertRef.current, { scale: 3, backgroundColor: '#ffffff' })
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = pageWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const y = Math.max((pageHeight - imgHeight) / 2, 0)
+
+      if (i > 0) pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 0, y, imgWidth, imgHeight)
+    }
+
+    pdf.save('Tous_les_brevets.pdf')
+    setSelectedBrevet(null)
+    setEditBrevet(null)
+    msg('✅ Tous les brevets ont été téléchargés !')
+  }
+
   const supprimerBrevet = async () => {
     if (!confirm(`Supprimer le brevet de ${selectedBrevet.participant} ?`)) return
     const res = await fetch(`${API}/brevets/${selectedBrevet.id}`, { method: 'DELETE', headers })
@@ -1742,7 +1777,10 @@ export default function AdminDashboard() {
         {!loading && page === 'brevetsListe' && (
           <div>
             <button onClick={() => setPage('formations')} style={{ background: 'none', border: 'none', color: T.textSub, fontSize: '13px', cursor: 'pointer', marginBottom: '16px', padding: 0, fontFamily: 'inherit' }}>← Formations</button>
-            <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', marginBottom: '24px' }}>Brevets générés ({brevets.length})</h1>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+              <h1 style={{ color: T.text, fontSize: 'clamp(1.15rem, 4vw, 1.5rem)', fontWeight: '700', margin: 0 }}>Brevets générés ({brevets.length})</h1>
+              <Btn onClick={telechargerTousBrevetsPDF} color="rgba(96,165,250,0.15)" textColor="#60A5FA">📥 Tout télécharger (PDF)</Btn>
+            </div>
 
             <div style={{ backgroundColor: T.card, border: `1px solid ${T.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
