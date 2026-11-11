@@ -1,3 +1,4 @@
+import { getCycleDueDate } from '../data/frequency'
 // ============================================================
 // IZI NJANGI — AllScreens.jsx
 // Design cohérent, iconographie lucide-react uniquement (zéro emoji)
@@ -635,6 +636,29 @@ export function LockScreen({config,onUnlock,onForgotPin}) {
 }
 
 const tontineNotStarted=(config)=>!!config?.startDate&&config.startDate>new Date().toLocaleDateString('en-CA')
+
+const memberCredibility=(m,config,payments,currentCycle)=>{
+ const orders=m.slots?m.slots.map(x=>x.order):[m.order].filter(Boolean)
+ const today=new Date(); today.setHours(0,0,0,0)
+ let onTime=0,late=0,missed=0,lateDays=0
+ orders.forEach(o=>{
+ for(let c=1;c<=currentCycle;c++){
+ const due=getCycleDueDate(config,c)
+ if(!due) continue
+ const special=payments.some(p=>p.type==='cotisation'&&p.slotOrder===o&&p.cycle===c&&(p.lateJoin||p.mode==='Rattrapage'||String(p.id).startsWith('ext_')))
+ if(special) continue
+ const pay=payments.find(p=>p.type==='cotisation'&&p.slotOrder===o&&p.cycle===c)
+ const dueStr=due.toLocaleDateString('en-CA')
+ if(pay){
+ if(!pay.date||pay.date<=dueStr) onTime++
+ else { late++; lateDays+=Math.max(1,Math.round((new Date(pay.date)-due)/86400000)) }
+ } else if(due<today) missed++
+ }
+ })
+ const total=onTime+late+missed
+ const score=total>=3?Math.round(onTime/total*100):null
+ return {onTime,late,missed,total,score,lateDays}
+}
 
 /* ---------------------------- Accueil ---------------------------- */
 
@@ -2035,6 +2059,13 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  const targetUnpaidMembers=activeSlots.filter(o=>!targetPaidSlots.has(o)).map(order=>members.find(m=>m.slots?m.slots.some(s=>s.order===order):m.order===order)).filter(Boolean)
  const targetFraisAmt=Math.round(targetBrut*fraisPct/100)
  const targetNet=targetBrut-targetFraisAmt
+ const enCaisse=payments.filter(p=>p.type==='cotisation'&&!closedCycles.has(p.cycle)).reduce((s,p)=>s+(p.amount||0),0)
+ const lateRows=tontineNotStarted(config)?[]:members.filter(m=>m.status!=='sorti').map(m=>{
+ const orders=m.slots?m.slots.map(x=>x.order):[m.order].filter(Boolean)
+ let late=0
+ orders.forEach(o=>{ for(let c=1;c<=currentCycle;c++){ if(!payments.some(p=>p.type==='cotisation'&&p.slotOrder===o&&p.cycle===c)) late++ } })
+ return {m,late}
+ }).filter(r=>r.late>0)
 
  const slotRows=Array.from({length:nbSlots},(_,i)=>{
  const order=i+1
@@ -2228,6 +2259,25 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  </div>
  )
  })()}
+ {config.fraudControl&&versForm.beneficiary&&(()=>{
+ const m=members.find(x=>x.id===versForm.beneficiary)
+ if(!m) return null
+ const cr=memberCredibility(m,config,payments,currentCycle)
+ const lvl=cr.score===null?'inconnu':cr.score>=80?'fiable':cr.score>=50?'moyen':'risque'
+ const bg=lvl==='fiable'?C.gl:lvl==='moyen'?C.ambl:lvl==='risque'?C.rdl:C.gr
+ const fg=lvl==='fiable'?C.gd:lvl==='moyen'?C.ambd:lvl==='risque'?C.rd:C.text2
+ const gotPaid=new Set(payouts.map(py=>py.memberId))
+ const better=lvl==='fiable'?[]:members.filter(x=>x.status!=='sorti'&&x.id!==m.id&&!gotPaid.has(x.id)).map(x=>({x,cr:memberCredibility(x,config,payments,currentCycle)})).filter(r=>r.cr.score!==null&&r.cr.score>=80).sort((a,b)=>b.cr.score-a.cr.score).slice(0,3)
+ return (
+ <div style={{backgroundColor:bg,borderRadius:10,padding:12,fontSize:12,color:fg,lineHeight:1.5}}>
+ <div style={{fontWeight:700,marginBottom:4}}>Contrôle de crédibilité : {lvl==='inconnu'?'données insuffisantes':`${cr.score}% — ${lvl==='fiable'?'fiable':lvl==='moyen'?'à surveiller':'risque élevé'}`}</div>
+ <div>{cr.onTime} paiement(s) à temps · {cr.late} en retard{cr.late>0?` (${cr.lateDays} jour(s) cumulés)`:''} · {cr.missed} non payé(s)</div>
+ {lvl==='risque'&&<div style={{marginTop:6,fontWeight:600}}>Attention : ce membre paie souvent en retard ou pas du tout. S'il reçoit la cagnotte maintenant, il pourrait arrêter de cotiser. Envisagez un membre plus fiable.</div>}
+ {lvl==='moyen'&&<div style={{marginTop:6}}>Historique irrégulier : surveillez ses prochains paiements.</div>}
+ {better.length>0&&<div style={{marginTop:6}}>Plus fiables (pas encore servis) : {better.map(r=>`${r.x.name} (${r.cr.score}%)`).join(', ')}.</div>}
+ </div>
+ )
+ })()}
  <div><label style={lbl}>Frais de gestion (%)</label><input style={inp} type="number" min="0" max="100" placeholder="0" value={versForm.frais} onChange={e=>setVersForm(p=>({...p,frais:e.target.value}))}/></div>
  <div>
  <label style={lbl}>Mode</label>
@@ -2263,6 +2313,8 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  {l:'Total collecté',v:totalCollected.toLocaleString('fr-FR'),sub:`${sym} global`,c:C.g },
  {l:'Slots impayés', v:unpaidCount, sub:'ce cycle', c:C.amb },
  {l:'Tours clôturés',v:payouts.length, sub:`sur ${nbSlots}`,c:C.bl },
+ {l:'En caisse (non versé)', v:enCaisse.toLocaleString('fr-FR'), sub:`${sym} cotisés, pas encore versés`, c:C.pur },
+ {l:'Membres en retard', v:lateRows.length, sub:`${lateRows.reduce((t,r)=>t+r.late,0)} tour(s) de retard au total`, c:C.rd },
  {l:'Total versé', v:totalPaid.toLocaleString('fr-FR'), sub:`${sym}`, c:C.gd },
  ].map(({l,v,sub,c})=>(
  <div key={l} style={{backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:8,padding:'10px 12px'}}>
@@ -2272,6 +2324,17 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  </div>
  ))}
  </div>
+ {lateRows.length>0&&(
+ <div style={{margin:'0 14px 8px',backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:10,overflow:'hidden'}}>
+ <div style={{padding:'8px 12px',fontSize:11,fontWeight:700,color:C.rd,textTransform:'uppercase',letterSpacing:0.5,backgroundColor:C.rdl}}>Retards par membre</div>
+ {lateRows.map(({m,late})=>(
+ <div key={m.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',borderTop:`0.5px solid ${C.gr}`}}>
+ <span style={{fontSize:13,fontWeight:600,color:C.text}}>{m.name}</span>
+ <span style={{fontSize:12,color:C.rd,fontWeight:700}}>{late} tour{late>1?'s':''} · {fmt(late*(config.cotisation||0),sym)}</span>
+ </div>
+ ))}
+ </div>
+ )}
  <button onClick={()=>{setVersForm(p=>({...p,targetCycle:String(pendingCycles[0]||currentCycle)}));setVersView(true)}} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:C.gd,color:'#fff',border:'none',borderRadius:10,padding:'12px 16px',margin:'0 14px 12px',width:'calc(100% - 28px)',fontSize:14,fontWeight:700,cursor:'pointer'}}>
  <Banknote size={16}/> Verser la cagnotte{pendingCycles.length>1?` (${pendingCycles.length} en attente)`:` — Cycle ${currentCycle}${currentSlotMember?` → ${currentSlotMember.name}`:''}`}
  </button>
@@ -2732,6 +2795,8 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  <Item icon={CalendarClock} bg={C.bll} fg={C.bld} label="Nombre de tours" sub={`${config.nbSlots||config.nbMembers||'?'} tours`} right={<ChevronRight size={16} color={C.text2}/>}/>
  <Item icon={Percent} bg={C.ambl} fg={C.ambd} label="Pénalité de retard" sub={`${config.penaltyRate||0}% par cycle de retard`} right={<ChevronRight size={16} color={C.text2}/>}
  onClick={()=>openEdit({key:'penaltyRate',kind:'number-percent',title:'Taux de pénalité',placeholder:'0 pour désactiver',value:config.penaltyRate||0})}/>
+ <Item icon={ShieldCheck} bg={C.pur} fg={C.purd} label="Contrôle de crédibilité" sub="Alerte au versement selon l'historique de paiement" right={<Badge label={config.fraudControl?'Actif':'Inactif'} type={config.fraudControl?'ok':'info'}/>}
+ onClick={()=>onUpdateConfig({...config,fraudControl:!config.fraudControl})}/>
  <Item icon={RotateCw} bg={C.pur} fg={C.purd} label="Avancer au cycle suivant" sub={currentCycleNow>=nbSlotsTotal?`Dernier cycle atteint (${currentCycleNow}/${nbSlotsTotal})`:`Actuellement : Cycle ${currentCycleNow}/${nbSlotsTotal}`} right={<ChevronRight size={16} color={currentCycleNow>=nbSlotsTotal?C.grb:C.text2}/>}
  onClick={()=>{if(currentCycleNow>=nbSlotsTotal){setConfirmCycleOpen('blocked')}else{setConfirmCycleOpen('confirm')}}}/>
  </Section>

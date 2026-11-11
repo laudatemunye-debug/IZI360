@@ -87,3 +87,24 @@ export function formatDueDate(date) {
   if (!date) return ''
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+
+
+// Échéance théorique du cycle N, comptée depuis la date de début (ou de création)
+export function getCycleDueDate(config, cycle) {
+  if (!config || !config.frequencyUnit) return null
+  const startStr = config.startDate || String(config.createdAt || '').slice(0, 10)
+  if (!startStr) return null
+  const start = new Date(startStr + 'T00:00:00')
+  if (isNaN(start)) return null
+  const { mode } = resolveInputMode(config.frequencyUnit, config.frequencyCount || 1)
+  const days = (config.cotisationDays || []).filter(Boolean).map((n) => (WEEKDAYS.indexOf(n) + 1) % 7)
+  const dates = (config.cotisationDates || []).filter(Boolean).map(Number)
+  let n = 0
+  const d = new Date(start)
+  for (let i = 0; i < 4000; i++) {
+    const hit = mode === 'none' ? true : mode === 'days' ? days.includes(d.getDay()) : dates.includes(d.getDate())
+    if (hit) { n++; if (n === cycle) return new Date(d) }
+    d.setDate(d.getDate() + 1)
+  }
+  return null
+}
