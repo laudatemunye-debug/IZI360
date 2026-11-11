@@ -634,6 +634,8 @@ export function LockScreen({config,onUnlock,onForgotPin}) {
  )
 }
 
+const tontineNotStarted=(config)=>!!config?.startDate&&config.startDate>new Date().toLocaleDateString('en-CA')
+
 /* ---------------------------- Accueil ---------------------------- */
 
 export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvances=[],nav}) {
@@ -647,7 +649,7 @@ export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvance
  const paidSlotOrders=new Set(cyclePayments.map(p=>p.slotOrder))
  const closedSlots=new Set(payouts.map(p=>p.slotOrder||p.cycle))
  const activeSlots=Array.from({length:nbSlots},(_,i)=>i+1).filter(o=>!closedSlots.has(o))
- const unpaidSlots=activeSlots.filter(o=>!paidSlotOrders.has(o))
+ const unpaidSlots=tontineNotStarted(config)?[]:activeSlots.filter(o=>!paidSlotOrders.has(o))
  const unpaidMemberIds=[...new Set(unpaidSlots.map(order=>{
  const m=members.find(m=>m.slots?m.slots.some(s=>s.order===order):m.order===order)
  return m?.id
@@ -665,7 +667,7 @@ export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvance
  notifications.push({id:'rappel',type:'rappel',title:'Rappel : demain dernier jour de paie',sub:`${unpaidMembersList.map(m=>m.name).join(', ')} n'ont pas encore payé`,icon:CalendarClock,bg:C.ambl,fg:C.ambd,members:unpaidMembersList,cycle:currentCycle})
  }
  const cycleVerse=payouts.some(p=>p.cycle===currentCycle)
- if(dueDate&&isDueOneDayPassed(dueDate)&&!cycleVerse){
+ if(!tontineNotStarted(config)&&dueDate&&isDueOneDayPassed(dueDate)&&!cycleVerse){
  notifications.push({id:'attente',type:'attente',title:'Versement en attente',sub:`La cagnotte du cycle ${currentCycle} n'a pas encore été versée`,icon:Banknote,bg:C.pur,fg:C.purd,cycle:currentCycle})
  }
  forcedAdvances.forEach(f=>{
@@ -828,11 +830,12 @@ export function MembresScreen({members,payments,config,onAddMember,onSelectMembe
  const paidIds=new Set(payments.filter(p=>p.cycle===cycle&&p.type==='cotisation').map(p=>p.memberId))
  const getStatus=m=>{
  if(m.status==='sorti') return 'sorti'
+ if(tontineNotStarted(config)) return 'attente'
  if(paidIds.has(m.id)) return 'actif'
  return 'impaye'
  }
  const filtered=members.filter(m=>m.name.toLowerCase().includes(search.toLowerCase())).filter(m=>filter==='tous'||getStatus(m)===filter)
- const counts={tous:members.length,actif:members.filter(m=>paidIds.has(m.id)).length,impaye:members.filter(m=>!paidIds.has(m.id)&&m.status!=='sorti').length,sorti:members.filter(m=>m.status==='sorti').length}
+ const counts={tous:members.length,actif:members.filter(m=>paidIds.has(m.id)).length,impaye:tontineNotStarted(config)?0:members.filter(m=>!paidIds.has(m.id)&&m.status!=='sorti').length,sorti:members.filter(m=>m.status==='sorti').length}
  return (
  <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
  <div style={{backgroundColor:C.g,padding:'calc(env(safe-area-inset-top) + 14px) 16px 16px'}}>
@@ -871,7 +874,7 @@ export function MembresScreen({members,payments,config,onAddMember,onSelectMembe
  </div>
  </div>
  <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
- <Badge label={st==='actif'?'Payé':st==='impaye'?'Retard':'Sorti'} type={st==='actif'?'ok':st==='impaye'?'warn':'bad'}/>
+ <Badge label={st==='actif'?'Payé':st==='impaye'?'Retard':st==='attente'?'En attente':'Sorti'} type={st==='actif'?'ok':st==='impaye'?'warn':st==='attente'?'info':'bad'}/>
  {nbSlotsMember>1&&<span style={{fontSize:10,backgroundColor:C.pur,color:C.purd,padding:'2px 6px',borderRadius:10,fontWeight:700}}>{nbSlotsMember} places</span>}
  </div>
  </div>
@@ -880,7 +883,7 @@ export function MembresScreen({members,payments,config,onAddMember,onSelectMembe
  <span style={{fontSize:10,color:C.text2}}>Cotisations payées</span>
  <span style={{fontSize:10,color:C.text2}}>{memberPay.length}/{cycle*nbSlotsMember}</span>
  </div>
- <ProgBar pct={pct} color={st==='actif'?C.g:st==='impaye'?C.amb:C.rd}/>
+ <ProgBar pct={pct} color={st==='actif'?C.g:st==='impaye'?C.amb:st==='attente'?C.bl:C.rd}/>
  </div>
  </button>
  )
@@ -1872,7 +1875,7 @@ export function ImpayesScreen({config,members,payments,payouts,onBack,onPay}) {
  const closedSlots=new Set(payouts.map(p=>p.slotOrder||p.cycle))
  const activeSlots=Array.from({length:nbSlots},(_,i)=>i+1).filter(o=>!closedSlots.has(o))
  const paidSlots=new Set(payments.filter(p=>p.cycle===currentCycle&&p.type==='cotisation').map(p=>p.slotOrder))
- const unpaid=activeSlots.filter(o=>!paidSlots.has(o)).map(order=>{
+ const unpaid=(tontineNotStarted(config)?[]:activeSlots.filter(o=>!paidSlots.has(o))).map(order=>{
  const member=members.find(m=>m.slots?m.slots.some(s=>s.order===order):m.order===order)
  return {order,member}
  })
@@ -1928,7 +1931,7 @@ export function NotificationsScreen({config,members,payments,payouts,forcedAdvan
  const paidSlotOrders=new Set(cyclePayments.map(p=>p.slotOrder))
  const closedSlots=new Set(payouts.map(p=>p.slotOrder||p.cycle))
  const activeSlots=Array.from({length:nbSlots},(_,i)=>i+1).filter(o=>!closedSlots.has(o))
- const unpaidSlots=activeSlots.filter(o=>!paidSlotOrders.has(o))
+ const unpaidSlots=tontineNotStarted(config)?[]:activeSlots.filter(o=>!paidSlotOrders.has(o))
  const unpaidMembersList=[...new Set(unpaidSlots.map(order=>members.find(m=>m.slots?m.slots.some(s=>s.order===order):m.order===order)?.id))].map(id=>members.find(m=>m.id===id)).filter(Boolean)
  const dueDate=config.frequencyUnit?getNextDueDate(config):null
  const cycleVerse=payouts.some(p=>p.cycle===currentCycle)
@@ -1940,7 +1943,7 @@ export function NotificationsScreen({config,members,payments,payouts,forcedAdvan
  if(dueDate&&isDueTomorrow(dueDate)&&unpaidMembersList.length>0){
  notifications.push({id:'rappel',type:'rappel',title:'Rappel : demain dernier jour de paie',sub:`Échéance le ${formatDueDate(dueDate)} — Cycle ${currentCycle}`,icon:CalendarClock,bg:C.ambl,fg:C.ambd,members:unpaidMembersList,cycle:currentCycle})
  }
- if(dueDate&&isDueOneDayPassed(dueDate)&&!cycleVerse){
+ if(!tontineNotStarted(config)&&dueDate&&isDueOneDayPassed(dueDate)&&!cycleVerse){
  notifications.push({id:'attente',type:'attente',title:'Versement en attente',sub:`La cagnotte du cycle ${currentCycle} n'a pas encore été versée`,icon:Banknote,bg:C.pur,fg:C.purd,cycle:currentCycle})
  }
  forcedAdvances.forEach(f=>{
@@ -2018,7 +2021,7 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  const paidSlots=new Set(payments.filter(p=>p.cycle===currentCycle&&p.type==='cotisation').map(p=>p.slotOrder))
  const closedSlots=new Set(payouts.map(p=>p.slotOrder||p.cycle))
  const activeSlots=Array.from({length:nbSlots},(_,i)=>i+1).filter(o=>!closedSlots.has(o))
- const unpaidCount=activeSlots.filter(o=>!paidSlots.has(o)).length
+ const unpaidCount=tontineNotStarted(config)?0:activeSlots.filter(o=>!paidSlots.has(o)).length
  const brut=cycleCollected
  const fraisPct=parseFloat(versForm.frais)||0
  const fraisAmt=Math.round(brut*fraisPct/100)
@@ -2499,6 +2502,9 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  } else if(kind==='number-optional-positive'){
  if(rawVal.trim()===''){ const cfg={...config}; delete cfg[key]; onUpdateConfig(cfg) }
  else if(!isNaN(Number(rawVal))&&Number(rawVal)>0) onUpdateConfig({...config,[key]:Number(rawVal)})
+ } else if(kind==='date'){
+ if(rawVal.trim()===''){ const cfg={...config}; delete cfg[key]; onUpdateConfig(cfg) }
+ else onUpdateConfig({...config,[key]:rawVal})
  } else if(kind==='number-percent'){
  if(!isNaN(Number(rawVal))&&Number(rawVal)>=0) onUpdateConfig({...config,[key]:Number(rawVal)})
  }
@@ -2592,7 +2598,7 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  return (
  <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
  {pinFlow&&<PinModal {...pinModalProps()} error={pinError} onClearError={()=>setPinError('')} onConfirm={pinFlow==='disable'?handleDisableVerify:handlePinStep} onCancel={cancelPin}/>}
- {editField&&<EditFieldModal title={editField.title} placeholder={editField.placeholder} initialValue={String(editField.value??'')} multiline={editField.kind==='textarea'} type={editField.kind.startsWith('number')?'number':'text'} onSave={saveEdit} onCancel={closeEdit}/>}
+ {editField&&<EditFieldModal title={editField.title} placeholder={editField.placeholder} initialValue={String(editField.value??'')} multiline={editField.kind==='textarea'} type={editField.kind==='date'?'date':editField.kind.startsWith('number')?'number':'text'} onSave={saveEdit} onCancel={closeEdit}/>}
  {datesModalOpen&&<CotisationDatesModal config={config} onSave={(vals)=>{onUpdateConfig({...config,...vals});setDatesModalOpen(false)}} onCancel={()=>setDatesModalOpen(false)}/>}
  {currencyModalOpen&&<CurrencyModal current={config.currency} onSave={(cur)=>{onUpdateConfig({...config,currency:cur});setCurrencyModalOpen(false)}} onCancel={()=>setCurrencyModalOpen(false)}/>}
  {resetFlow==='pin'&&<PinModal title="Entrez votre PIN actuel" sub="Vérification avant réinitialisation" error={resetPinError} onClearError={()=>setResetPinError('')} onConfirm={handleResetPinVerify} onCancel={()=>{setResetFlow(null);setResetPinError('')}}/>}
@@ -2716,6 +2722,8 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  onClick={()=>openEdit({key:'cotisation',kind:'number-required',title:'Montant de la cotisation',placeholder:'Ex: 65000',value:config.cotisation||''})}/>
  <Item icon={Coins} bg={C.gl} fg={C.gd} label="Devise" sub={config.currency?`${config.currency.name} (${config.currency.symbol||config.currency.code})`:'Non définie'} right={<ChevronRight size={16} color={C.text2}/>}
  onClick={()=>setCurrencyModalOpen(true)}/>
+ <Item icon={CalendarClock} bg={C.ambl} fg={C.ambd} label="Date de début" sub={config.startDate?fmtDate(config.startDate):'Non définie'} right={<ChevronRight size={16} color={C.text2}/>}
+ onClick={()=>openEdit({key:'startDate',kind:'date',title:'Date de début de la tontine',placeholder:'',value:config.startDate||''})}/>
  <Item icon={CalendarClock} bg={C.bll} fg={C.bld} label="Dates/jours de cotisation" sub={
    config.frequencyUnit==='jour' ? 'Chaque jour'
    : (config.cotisationDates?.filter(Boolean)?.length ? `Jour(s) ${config.cotisationDates.filter(Boolean).join(', ')} du mois`
