@@ -87,3 +87,15 @@ html, body, #root {
 }
 img, video, canvas, svg { max-width: 100%; }
 input, select, textarea { max-width: 100%; }
+
+/* fixed-headers-v1 : la page ne bouge pas, les titres restent en haut */
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+[style*="safe-area-inset-top) + "][style*="background-color"] {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}

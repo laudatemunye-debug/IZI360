@@ -2488,7 +2488,7 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
 
  return (
  <div style={{flex:1,overflowY:'auto',paddingBottom:80}}>
- <div style={{backgroundColor:C.gd,padding:'calc(env(safe-area-inset-top) + 14px) 16px 16px'}}>
+ <div style={{position:'sticky',top:0,zIndex:20,backgroundColor:C.gd,padding:'calc(env(safe-area-inset-top) + 14px) 16px 16px'}}>
  <div style={{color:'#fff',fontSize:17,fontWeight:700}}>Rapports</div>
  <div style={{color:'rgba(255,255,255,0.8)',fontSize:11,marginTop:2}}>{config.tontineName} · Cycle {currentCycle}/{nbSlots}</div>
  </div>
