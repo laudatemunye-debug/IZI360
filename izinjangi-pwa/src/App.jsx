@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react'
 import { getAssociations, createAssociation, migrateLegacyTontinesIfNeeded } from './data/associations'
 import TontineModule from './modules/tontine/TontineModule'
+import SplashScreen from './components/SplashScreen'
 
 // Likelemba : app dédiée uniquement à la tontine.
 // On utilise une seule association interne (type "groupe"), invisible pour l'utilisateur.
 export default function App() {
   const [assoc, setAssoc] = useState(null)
+  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     migrateLegacyTontinesIfNeeded()
     const list = getAssociations()
     const a = list.find(x => x.type === 'groupe') || list[0] || createAssociation({ type: 'groupe', name: 'Likelemba' })
     setAssoc(a)
+  }, [])
+
+  // Barre de progression du démarrage (environ 1,5 s)
+  useEffect(() => {
+    const id = setInterval(() => setProgress(p => (p >= 100 ? 100 : p + 100 / 15)), 100)
+    return () => clearInterval(id)
   }, [])
 
   // Champs numériques : le contenu est sélectionné au focus, le 1er chiffre tapé remplace la valeur par défaut
@@ -24,13 +32,7 @@ export default function App() {
     return () => document.removeEventListener('focusin', onFocus)
   }, [])
 
-  if (!assoc) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100dvh', backgroundColor: '#1D9E75' }}>
-        <p style={{ color: '#fff', fontSize: 16 }}>Chargement…</p>
-      </div>
-    )
-  }
+  if (!assoc || progress < 100) return <SplashScreen progress={progress} />
 
   return <TontineModule assocId={assoc.id} onExit={() => {}} />
 }

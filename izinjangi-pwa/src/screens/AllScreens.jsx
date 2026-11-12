@@ -1,4 +1,5 @@
 import { getCycleDueDate } from '../data/frequency'
+import { newChallenge, recoveryRef, recoveryAvailable, verifyRecovery } from '../data/recovery'
 // ============================================================
 // Likelemba — AllScreens.jsx
 // Design cohérent, iconographie lucide-react uniquement (zéro emoji)
@@ -228,6 +229,46 @@ function ConfirmModal({title,message,confirmLabel='Confirmer',cancelLabel='Annul
  <div style={{display:'flex',gap:10,marginTop:20}}>
  <button onClick={onCancel} style={{flex:1,padding:12,backgroundColor:C.gr,color:C.text2,border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>{cancelLabel}</button>
  <button onClick={onConfirm} style={{flex:1,padding:12,backgroundColor:danger?C.rd:C.g,color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>{confirmLabel}</button>
+ </div>
+ </div>
+ </div>
+ )
+}
+
+function SecurityQuestionModal({config,onSave,onCancel}) {
+ const [pin,setPin]=useState('')
+ const [q,setQ]=useState(config.securityQuestion||'')
+ const [a,setA]=useState('')
+ const [err,setErr]=useState('')
+ const [busy,setBusy]=useState(false)
+ const fld={width:'100%',padding:'10px 12px',fontSize:14,borderRadius:8,border:`1px solid ${C.grb}`,outline:'none',boxSizing:'border-box',marginTop:4,fontFamily:'inherit',backgroundColor:C.white}
+ const submit=async()=>{
+ if(pin!==config.pin) return setErr('PIN actuel incorrect.')
+ if(!q) return setErr('Choisissez une question.')
+ if(normAnswer(a).length<3) return setErr('La réponse doit contenir au moins 3 caractères.')
+ setBusy(true)
+ const h=await hashAnswer(a)
+ onSave(q,h)
+ }
+ return (
+ <div style={{position:'fixed',inset:0,backgroundColor:'rgba(0,0,0,0.55)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+ <div style={{width:'100%',maxWidth:480,maxHeight:'92dvh',overflowY:'auto',backgroundColor:C.white,borderRadius:'20px 20px 0 0',padding:'20px 20px calc(env(safe-area-inset-bottom) + 20px)',boxSizing:'border-box'}}>
+ <div style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:14}}>Question de sécurité</div>
+ <label style={{fontSize:12,fontWeight:600,color:C.text2}}>PIN actuel *</label>
+ <input type="password" inputMode="numeric" maxLength={4} value={pin} onChange={e=>{setPin(e.target.value);setErr('')}} placeholder="••••" style={fld}/>
+ <div style={{height:12}}/>
+ <label style={{fontSize:12,fontWeight:600,color:C.text2}}>Question *</label>
+ <select value={q} onChange={e=>{setQ(e.target.value);setErr('')}} style={{...fld,cursor:'pointer'}}>
+ <option value="">— Choisir une question —</option>
+ {SECURITY_QUESTIONS.map(x=><option key={x} value={x}>{x}</option>)}
+ </select>
+ <div style={{height:12}}/>
+ <label style={{fontSize:12,fontWeight:600,color:C.text2}}>Réponse *</label>
+ <input type="text" value={a} onChange={e=>{setA(e.target.value);setErr('')}} placeholder="Votre réponse secrète" style={fld}/>
+ {err&&<p style={{color:C.rd,fontSize:12,margin:'10px 0 0'}}>{err}</p>}
+ <div style={{display:'flex',gap:10,marginTop:18}}>
+ <button onClick={onCancel} style={{flex:1,padding:12,backgroundColor:C.gr,color:C.text2,border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Annuler</button>
+ <button onClick={submit} disabled={busy} style={{flex:1,padding:12,backgroundColor:C.g,color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Enregistrer</button>
  </div>
  </div>
  </div>
@@ -579,6 +620,43 @@ const hashAnswer=async(t)=>{const n=normAnswer(t);try{const b=await crypto.subtl
 
 /* ---------------------------- Verrouillage ---------------------------- */
 
+function RecoveryPanel({config,onResetPin}) {
+ const [code,setCode]=useState('')
+ const [resp,setResp]=useState('')
+ const [ok,setOk]=useState(false)
+ const [pin1,setPin1]=useState('')
+ const [pin2,setPin2]=useState('')
+ const [err,setErr]=useState('')
+ const [copied,setCopied]=useState(false)
+ if(!recoveryAvailable()) return null
+ const box={width:'100%',backgroundColor:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'10px 12px',fontSize:13,color:'#fff',outline:'none',boxSizing:'border-box'}
+ const wbtn={width:'100%',marginTop:10,padding:12,backgroundColor:'transparent',color:'#fff',border:'1px solid rgba(255,255,255,0.5)',borderRadius:12,fontSize:13,fontWeight:700,cursor:'pointer'}
+ if(!code) return <button onClick={()=>setCode(newChallenge()+'-'+recoveryRef(config))} style={{...wbtn,maxWidth:300,marginTop:14}}>Récupération par le support Likelemba</button>
+ return (
+ <div style={{width:'100%',maxWidth:300,marginTop:14,backgroundColor:'rgba(255,255,255,0.08)',borderRadius:12,padding:14,boxSizing:'border-box'}}>
+ {!ok?(<>
+ <div style={{color:'rgba(255,255,255,0.75)',fontSize:12,marginBottom:6}}>Envoyez ce code au support Likelemba :</div>
+ <div style={{color:'#fff',fontFamily:'monospace',fontSize:15,fontWeight:700,wordBreak:'break-all',marginBottom:8}}>{code}</div>
+ <button onClick={async()=>{try{await navigator.clipboard.writeText(code);setCopied(true)}catch{}}} style={{...wbtn,marginTop:0,padding:8}}>{copied?'Copié':'Copier le code'}</button>
+ <div style={{color:'rgba(255,255,255,0.75)',fontSize:12,margin:'14px 0 6px'}}>Collez ici le code de réponse reçu :</div>
+ <input value={resp} onChange={e=>{setResp(e.target.value);setErr('')}} placeholder="Code de réponse" style={box}/>
+ {err&&<p style={{color:'#FFB4B4',fontSize:12,margin:'8px 0 0'}}>{err}</p>}
+ <button onClick={async()=>{if(await verifyRecovery(code,resp)){setOk(true);setErr('')}else setErr('Code de réponse incorrect.')}} style={{...wbtn,backgroundColor:'#fff',color:C.gd,border:'none'}}>Vérifier</button>
+ </>):(<>
+ <div style={{color:'rgba(255,255,255,0.85)',fontSize:13,marginBottom:10}}>Code accepté. Choisissez un nouveau PIN.</div>
+ <input type="password" inputMode="numeric" maxLength={4} value={pin1} onChange={e=>{setPin1(e.target.value);setErr('')}} placeholder="Nouveau PIN (4 chiffres)" style={{...box,marginBottom:10}}/>
+ <input type="password" inputMode="numeric" maxLength={4} value={pin2} onChange={e=>{setPin2(e.target.value);setErr('')}} placeholder="Confirmer le PIN" style={box}/>
+ {err&&<p style={{color:'#FFB4B4',fontSize:12,margin:'8px 0 0'}}>{err}</p>}
+ <button onClick={()=>{
+ if(!/^\d{4}$/.test(pin1)) return setErr('Le PIN doit contenir 4 chiffres.')
+ if(pin1!==pin2) return setErr('Les PIN ne correspondent pas.')
+ onResetPin(pin1)
+ }} style={{...wbtn,backgroundColor:'#fff',color:C.gd,border:'none'}}>Enregistrer le nouveau PIN</button>
+ </>)}
+ </div>
+ )
+}
+
 export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  const [username,setUsername]=useState('')
  const [pin,setPin]=useState('')
@@ -591,6 +669,7 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  const [newPin,setNewPin]=useState('')
  const [newPin2,setNewPin2]=useState('')
  const [fErr,setFErr]=useState('')
+ const [tries,setTries]=useState(0)
  const press=d=>{
  const np=pin+d; setPin(np); setErr('')
  if(np.length===4){
@@ -610,7 +689,7 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  <p style={{color:'rgba(255,255,255,0.85)',fontSize:14,lineHeight:'20px',margin:'0 0 10px',textAlign:'center'}}>{config.securityQuestion}</p>
  <input value={ans} onChange={e=>{setAns(e.target.value);setFErr('')}} placeholder="Votre réponse" style={{width:'100%',backgroundColor:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'10px 12px',fontSize:14,color:'#fff',outline:'none',boxSizing:'border-box'}}/>
  {fErr&&<p style={{color:'#FFB4B4',fontSize:12,margin:'8px 0 0',textAlign:'center'}}>{fErr}</p>}
- <button onClick={async()=>{const h=await hashAnswer(ans);if(h===config.securityAnswerHash){setAnswerOk(true);setFErr('')}else setFErr('Réponse incorrecte.')}} style={{width:'100%',marginTop:14,padding:13,backgroundColor:'#fff',color:C.gd,border:'none',borderRadius:12,fontSize:14,fontWeight:800,cursor:'pointer'}}>Vérifier</button>
+ <button onClick={async()=>{const h=await hashAnswer(ans);if(h===config.securityAnswerHash){setAnswerOk(true);setFErr('')}else{const t=tries+1;setTries(t);if(t>=3)setShowWipe(true);else setFErr('Réponse incorrecte. '+(3-t)+' essai(s) restant(s).')}}} style={{width:'100%',marginTop:14,padding:13,backgroundColor:'#fff',color:C.gd,border:'none',borderRadius:12,fontSize:14,fontWeight:800,cursor:'pointer'}}>Vérifier</button>
  </>):(<>
  <p style={{color:'rgba(255,255,255,0.85)',fontSize:14,margin:'0 0 10px',textAlign:'center'}}>Réponse correcte. Choisissez un nouveau PIN.</p>
  <input type="password" inputMode="numeric" maxLength={4} value={newPin} onChange={e=>{setNewPin(e.target.value);setFErr('')}} placeholder="Nouveau PIN (4 chiffres)" style={{width:'100%',backgroundColor:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'10px 12px',fontSize:14,color:'#fff',outline:'none',boxSizing:'border-box',marginBottom:10}}/>
@@ -625,7 +704,26 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  </>)}
  </div>
  <button onClick={()=>setShowWipe(true)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.6)',fontSize:12,cursor:'pointer',padding:10,marginTop:10,textDecoration:'underline'}}>Je ne connais pas la réponse</button>
- <button onClick={()=>{setForgot(false);setAnswerOk(false);setAns('');setFErr('')}} style={{background:'none',border:'none',color:'rgba(255,255,255,0.75)',fontSize:13,cursor:'pointer',padding:6}}>Annuler, retour à la connexion</button>
+ <button onClick={()=>{setForgot(false);setAnswerOk(false);setAns('');setFErr('');setTries(0)}} style={{background:'none',border:'none',color:'rgba(255,255,255,0.75)',fontSize:13,cursor:'pointer',padding:6}}>Annuler, retour à la connexion</button>
+ </div>
+ )
+ if(forgot&&(showWipe||!config.securityQuestion)) return (
+ <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
+ <IconCircle icon={ShieldCheck} bg="rgba(255,255,255,0.15)" fg="#fff" size={64} iconSize={30}/>
+ <h1 style={{color:'#fff',fontSize:19,fontWeight:800,marginTop:16,textAlign:'center'}}>Accès protégé</h1>
+ <p style={{color:'rgba(255,255,255,0.8)',fontSize:14,textAlign:'center',marginTop:10,lineHeight:'20px',maxWidth:320}}>
+ {config.securityQuestion?'La réponse à la question de sécurité est inconnue ou incorrecte. ':''}Le PIN de <strong>{config.tontineName}</strong> ne peut pas être réinitialisé ici. Contactez l'administrateur de la tontine.
+ </p>
+ {(config.adminName||config.phone)&&(
+ <div style={{width:'100%',maxWidth:300,marginTop:18,backgroundColor:'rgba(255,255,255,0.12)',borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:6}}>
+ {config.adminName&&<div style={{color:'#fff',fontSize:14}}>Administrateur : <strong>{config.adminName}</strong></div>}
+ {config.phone&&<div style={{color:'#fff',fontSize:14}}>Téléphone : <a href={'tel:'+config.phone} style={{color:'#fff',fontWeight:700}}>{config.phone}</a></div>}
+ </div>
+ )}
+ <RecoveryPanel config={config} onResetPin={(np)=>{onResetPin?.(np);setForgot(false);setShowWipe(false);setAnswerOk(false);setAns('');setTries(0);setFErr('');setPin('');setErr('PIN modifié. Connectez-vous.')}}/>
+ <button onClick={()=>{setForgot(false);setShowWipe(false);setAnswerOk(false);setAns('');setTries(0);setFErr('')}} style={{width:'100%',maxWidth:300,marginTop:20,padding:13,backgroundColor:'#fff',color:C.gd,border:'none',borderRadius:12,fontSize:14,fontWeight:800,cursor:'pointer'}}>
+ Retour à la connexion
+ </button>
  </div>
  )
  if(forgot) return (
@@ -2596,6 +2694,7 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  const logoInputRef=useRef(null)
  const [logoBusy,setLogoBusy]=useState(false)
  const [editField,setEditField]=useState(null)
+ const [securityModalOpen,setSecurityModalOpen]=useState(false)
  const openEdit=(cfg)=>setEditField(cfg)
  const closeEdit=()=>setEditField(null)
  const saveEdit=(rawVal)=>{
@@ -2711,6 +2810,7 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  return (
  <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
  {pinFlow&&<PinModal {...pinModalProps()} error={pinError} onClearError={()=>setPinError('')} onConfirm={pinFlow==='disable'?handleDisableVerify:handlePinStep} onCancel={cancelPin}/>}
+ {securityModalOpen&&<SecurityQuestionModal config={config} onSave={(q,h)=>{onUpdateConfig({...config,securityQuestion:q,securityAnswerHash:h});setSecurityModalOpen(false)}} onCancel={()=>setSecurityModalOpen(false)}/>}
  {editField&&<EditFieldModal title={editField.title} placeholder={editField.placeholder} initialValue={String(editField.value??'')} multiline={editField.kind==='textarea'} type={editField.kind==='date'?'date':editField.kind.startsWith('number')?'number':'text'} onSave={saveEdit} onCancel={closeEdit}/>}
  {datesModalOpen&&<CotisationDatesModal config={config} onSave={(vals)=>{onUpdateConfig({...config,...vals});setDatesModalOpen(false)}} onCancel={()=>setDatesModalOpen(false)}/>}
  {currencyModalOpen&&<CurrencyModal current={config.currency} onSave={(cur)=>{onUpdateConfig({...config,currency:cur});setCurrencyModalOpen(false)}} onCancel={()=>setCurrencyModalOpen(false)}/>}
@@ -2847,6 +2947,7 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  onClick={()=>openEdit({key:'penaltyRate',kind:'number-percent',title:'Taux de pénalité',placeholder:'0 pour désactiver',value:config.penaltyRate||0})}/>
  <Item icon={ShieldCheck} bg={C.pur} fg={C.purd} label="Contrôle de crédibilité" sub="Alerte au versement selon l'historique de paiement" right={<div style={{width:46,height:26,borderRadius:13,backgroundColor:(config.fraudControl!==false)?C.g:C.grb,position:'relative',transition:'background .2s',flexShrink:0}}><div style={{position:'absolute',top:3,left:(config.fraudControl!==false)?23:3,width:20,height:20,borderRadius:10,backgroundColor:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,.3)',transition:'left .2s'}}/></div>}
  onClick={()=>onUpdateConfig({...config,fraudControl:!(config.fraudControl!==false)})}/>
+ <Item icon={ShieldCheck} bg={C.pur} fg={C.purd} label="Question de sécurité" sub={config.securityQuestion?'Définie — permet de réinitialiser le PIN':'Non définie — PIN non récupérable'} right={<ChevronRight size={16} color={C.text2}/>} onClick={()=>setSecurityModalOpen(true)}/>
  <Item icon={RotateCw} bg={C.pur} fg={C.purd} label="Avancer au cycle suivant" sub={currentCycleNow>=nbSlotsTotal?`Dernier cycle atteint (${currentCycleNow}/${nbSlotsTotal})`:`Actuellement : Cycle ${currentCycleNow}/${nbSlotsTotal}`} right={<ChevronRight size={16} color={currentCycleNow>=nbSlotsTotal?C.grb:C.text2}/>}
  onClick={()=>{if(currentCycleNow>=nbSlotsTotal){setConfirmCycleOpen('blocked')}else{setConfirmCycleOpen('confirm')}}}/>
  </Section>
