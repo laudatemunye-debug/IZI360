@@ -7,7 +7,6 @@ import { newChallenge, recoveryRef, recoveryAvailable, verifyRecovery } from '..
 import { useState, useRef } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import izi360Mark from '../assets/logo-light.png'
 import tontineLogoDefault from '../assets/logo-likelemba.png'
 import { getAppLogo, setAppLogo, resetAppLogo } from '../data/appIdentity'
 import {
@@ -146,7 +145,7 @@ const Logo = ({ src, size=36, bg='#fff', radius, border }) => (
   <div style={{width:size,height:size,borderRadius:radius??size*0.26,backgroundColor:bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden',border:border?`1px solid ${C.grb}`:'none'}}>
     {src
       ? <img src={src} alt="Logo" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-      : <img src={izi360Mark} alt="IZI360" style={{width:'78%',height:'78%',objectFit:'contain'}}/>}
+      : <img src={getAppLogo() || tontineLogoDefault} alt="Likelemba" style={{width:'78%',height:'78%',objectFit:'contain'}}/>}
   </div>
 )
 
