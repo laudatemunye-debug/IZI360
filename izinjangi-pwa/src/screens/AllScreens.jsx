@@ -1839,13 +1839,10 @@ function Recu({receipt,config,onBack,onNew,onDelete}) {
  {l:'Membre', v:receipt.memberName},
  ...(receipt.slotOrders&&receipt.slotOrders.length?[{l:"Tour(s)",v:receipt.slotOrders.map(o=>`#${o}`).join(', ')}]:receipt.slotOrder?[{l:'Tour',v:`#${receipt.slotOrder}`}]:[]),
  ...(receipt.cycle?[{l:'Cycle',v:`Cycle ${receipt.cycle}`}]:[]),
- ...(receipt.lines?receipt.lines.map(l=>({l:`Cycle ${l.cycle}${receipt.multiSlot?` · Tour #${l.slotOrder}`:''}${l.full?'':' (partiel)'}`,v:fmt(l.amount+(l.penalty||0),sym)})):[]),
- ...(receipt.after&&receipt.after.length?receipt.after.map(a=>({l:`Reste à payer · Cycle ${a.cycle}${receipt.multiSlot?` · Tour #${a.slotOrder}`:''}`,v:fmt(a.amount,sym)})):[]),
  {l:'Mode', v:receipt.mode},
  {l:'Date', v:fmtDate(receipt.date)},
  ...(receipt.createdAt?[{l:'Émis le',v:fmtDateTime(receipt.createdAt)}]:[]),
  ...(receipt.note?[{l:'Note',v:receipt.note}]:[]),
- ...(receipt.lines?[{l:'Total payé',v:fmt(receipt.amount,sym)}]:[]),
  ].map(({l,v})=>(
  <div key={l} style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
  <span style={{fontSize:12,color:C.text2}}>{l}</span>
@@ -1853,6 +1850,48 @@ function Recu({receipt,config,onBack,onNew,onDelete}) {
  </div>
  ))}
  </div>
+ {receipt.lines&&receipt.lines.length>0&&(()=>{
+ const th={padding:'8px 6px',color:C.gd,fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:0.4}
+ const td={padding:'9px 6px',fontSize:13,color:C.text}
+ return (
+ <div style={{padding:'4px 16px 14px'}}>
+ <table style={{width:'100%',borderCollapse:'collapse'}}>
+ <thead>
+ <tr style={{backgroundColor:C.gl}}>
+ <th style={{...th,textAlign:'left',borderRadius:'8px 0 0 8px'}}>Cycle</th>
+ {receipt.multiSlot&&<th style={{...th,textAlign:'left'}}>Tour</th>}
+ <th style={{...th,textAlign:'center'}}>Statut</th>
+ <th style={{...th,textAlign:'right',borderRadius:'0 8px 8px 0'}}>Montant</th>
+ </tr>
+ </thead>
+ <tbody>
+ {receipt.lines.map(l=>(
+ <tr key={l.cycle+'-'+l.slotOrder} style={{borderBottom:`1px solid ${C.gr}`}}>
+ <td style={{...td,fontWeight:700}}>{l.cycle}</td>
+ {receipt.multiSlot&&<td style={td}>#{l.slotOrder}</td>}
+ <td style={{...td,textAlign:'center'}}><span style={{fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:10,backgroundColor:l.full?C.gl:C.ambl,color:l.full?C.gd:C.ambd}}>{l.full?'Payé':'Partiel'}</span></td>
+ <td style={{...td,textAlign:'right',fontWeight:700,whiteSpace:'nowrap'}}>{fmt(l.amount+(l.penalty||0),sym)}</td>
+ </tr>
+ ))}
+ {(receipt.after||[]).map(a=>(
+ <tr key={'r'+a.cycle+'-'+a.slotOrder} style={{borderBottom:`1px solid ${C.gr}`,backgroundColor:C.rdl}}>
+ <td style={{...td,fontWeight:700,color:C.rd}}>{a.cycle}</td>
+ {receipt.multiSlot&&<td style={{...td,color:C.rd}}>#{a.slotOrder}</td>}
+ <td style={{...td,textAlign:'center'}}><span style={{fontSize:11,fontWeight:700,color:C.rd}}>Reste à payer</span></td>
+ <td style={{...td,textAlign:'right',fontWeight:700,color:C.rd,whiteSpace:'nowrap'}}>{fmt(a.amount,sym)}</td>
+ </tr>
+ ))}
+ </tbody>
+ <tfoot>
+ <tr style={{backgroundColor:C.gl}}>
+ <td colSpan={receipt.multiSlot?3:2} style={{...td,fontWeight:800,color:C.gd,borderRadius:'8px 0 0 8px'}}>Total payé</td>
+ <td style={{...td,textAlign:'right',fontWeight:800,color:C.g,fontSize:15,whiteSpace:'nowrap',borderRadius:'0 8px 8px 0'}}>{fmt(receipt.amount,sym)}</td>
+ </tr>
+ </tfoot>
+ </table>
+ </div>
+ )
+ })()}
  <div style={{margin:'0 16px',height:1,backgroundColor:C.grb}}/>
  <div style={{padding:'10px 16px 16px',textAlign:'center'}}>
  <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — Likelemba v1.0</div>
@@ -1875,6 +1914,49 @@ function Recu({receipt,config,onBack,onNew,onDelete}) {
 }
 
 /* ---------------------------- Paiement ---------------------------- */
+
+function PayTable({lines,after,total,multi,sym}) {
+ const th={padding:'8px 6px',color:C.gd,fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:0.4}
+ const td={padding:'9px 6px',fontSize:13,color:C.text}
+ return (
+ <div style={{backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:10,overflow:'hidden'}}>
+ <table style={{width:'100%',borderCollapse:'collapse'}}>
+ <thead>
+ <tr style={{backgroundColor:C.gl}}>
+ <th style={{...th,textAlign:'left',paddingLeft:12}}>Cycle</th>
+ {multi&&<th style={{...th,textAlign:'left'}}>Tour</th>}
+ <th style={{...th,textAlign:'center'}}>Statut</th>
+ <th style={{...th,textAlign:'right',paddingRight:12}}>Montant</th>
+ </tr>
+ </thead>
+ <tbody>
+ {lines.map(l=>(
+ <tr key={l.cycle+'-'+l.slotOrder} style={{borderBottom:`1px solid ${C.gr}`}}>
+ <td style={{...td,paddingLeft:12,fontWeight:700}}>{l.cycle}</td>
+ {multi&&<td style={td}>#{l.slotOrder}</td>}
+ <td style={{...td,textAlign:'center'}}><span style={{fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:10,backgroundColor:l.full?C.gl:C.ambl,color:l.full?C.gd:C.ambd}}>{l.full?'Payé':'Partiel'}</span></td>
+ <td style={{...td,paddingRight:12,textAlign:'right',fontWeight:700,whiteSpace:'nowrap'}}>{fmt(l.amount+(l.penalty||0),sym)}</td>
+ </tr>
+ ))}
+ {(after||[]).map(a=>(
+ <tr key={'r'+a.cycle+'-'+a.slotOrder} style={{borderBottom:`1px solid ${C.gr}`,backgroundColor:C.rdl}}>
+ <td style={{...td,paddingLeft:12,fontWeight:700,color:C.rd}}>{a.cycle}</td>
+ {multi&&<td style={{...td,color:C.rd}}>#{a.slotOrder}</td>}
+ <td style={{...td,textAlign:'center'}}><span style={{fontSize:11,fontWeight:700,color:C.rd}}>Reste à payer</span></td>
+ <td style={{...td,paddingRight:12,textAlign:'right',fontWeight:700,color:C.rd,whiteSpace:'nowrap'}}>{fmt(a.amount,sym)}</td>
+ </tr>
+ ))}
+ </tbody>
+ <tfoot>
+ <tr style={{backgroundColor:C.gl}}>
+ <td colSpan={multi?3:2} style={{...td,paddingLeft:12,fontWeight:800,color:C.gd}}>Total payé</td>
+ <td style={{...td,paddingRight:12,textAlign:'right',fontWeight:800,color:C.g,fontSize:15,whiteSpace:'nowrap'}}>{fmt(total,sym)}</td>
+ </tr>
+ </tfoot>
+ </table>
+ </div>
+ )
+}
 
 export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBack,preselectMemberId}) {
  const sym=config.currency?.symbol||config.currency?.code||'F'
@@ -2001,35 +2083,20 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  )}
 
  {member&&A>0&&(
- <div style={{backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:10,overflow:'hidden'}}>
- <div style={{padding:'8px 12px',fontSize:11,fontWeight:700,color:C.text2,textTransform:'uppercase',letterSpacing:0.5,backgroundColor:C.gr}}>Répartition automatique</div>
- {lines.map(l=>(
- <div key={l.cycle+'-'+l.slotOrder} style={{display:'flex',justifyContent:'space-between',padding:'8px 12px',borderTop:`0.5px solid ${C.gr}`,fontSize:13}}>
- <span style={{color:C.text}}>{lineLabel(l)}{l.full?'':' (partiel)'}</span>
- <span style={{fontWeight:700,color:l.full?C.g:C.amb}}>{fmt(l.amount+l.penalty,sym)}</span>
- </div>
- ))}
- {after.map(a=>(
- <div key={'r'+a.cycle+'-'+a.slotOrder} style={{display:'flex',justifyContent:'space-between',padding:'8px 12px',borderTop:`0.5px solid ${C.gr}`,fontSize:13,backgroundColor:C.rdl}}>
- <span style={{color:C.rd}}>Reste à payer · {lineLabel(a)}</span>
- <span style={{fontWeight:700,color:C.rd}}>{fmt(a.amount,sym)}</span>
- </div>
- ))}
- <div style={{display:'flex',justifyContent:'space-between',padding:'10px 12px',backgroundColor:C.gl}}>
- <span style={{fontSize:13,fontWeight:700,color:C.gd}}>Total payé</span>
- <span style={{fontSize:16,fontWeight:800,color:C.g}}>{fmt(totalPaid,sym)}</span>
- </div>
+ <div>
+ <div style={{fontSize:11,fontWeight:700,color:C.text2,textTransform:'uppercase',letterSpacing:0.5,marginBottom:6}}>Répartition automatique</div>
+ <PayTable lines={lines} after={after} total={totalPaid} multi={multi} sym={sym}/>
  </div>
  )}
 
  <div style={{display:'flex',gap:8}}>
- <div style={{flex:1}}>
+ <div style={{flex:1,minWidth:0}}>
  <label style={lbl}>Mode de paiement</label>
  <select style={inp} value={form.mode} onChange={e=>f({mode:e.target.value})}>
  {MODES.map(m=><option key={m}>{m}</option>)}
  </select>
  </div>
- <div style={{flex:1}}>
+ <div style={{flex:1,minWidth:0}}>
  <label style={lbl}>Date</label>
  <input style={inp} type="date" value={form.date} onChange={e=>f({date:e.target.value})}/>
  </div>
@@ -2049,21 +2116,15 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  <div style={{position:'fixed',inset:0,backgroundColor:'rgba(0,0,0,0.55)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
  <div style={{width:'100%',maxWidth:480,maxHeight:'90dvh',overflowY:'auto',backgroundColor:C.white,borderRadius:'20px 20px 0 0',padding:'22px 20px calc(env(safe-area-inset-bottom) + 20px)',boxSizing:'border-box'}}>
  <div style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:14}}>Confirmer le paiement</div>
- <div style={{backgroundColor:C.bg,borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:8,marginBottom:18}}>
- {[
- {l:'Membre',v:member?.name||''},
- {l:'Montant reçu',v:fmt(totalPaid,sym)},
- ...lines.map(l=>({l:`${lineLabel(l)}${l.full?'':' (partiel)'}`,v:fmt(l.amount+l.penalty,sym)})),
- ...after.map(a=>({l:`Reste · ${lineLabel(a)}`,v:fmt(a.amount,sym)})),
- {l:'Mode',v:form.mode},
- {l:'Date',v:fmtDate(form.date)},
- ].map(({l,v})=>(
+ <div style={{backgroundColor:C.bg,borderRadius:12,padding:'12px 14px',display:'flex',flexDirection:'column',gap:6,marginBottom:12}}>
+ {[{l:'Membre',v:member?.name||''},{l:'Mode',v:form.mode},{l:'Date',v:fmtDate(form.date)}].map(({l,v})=>(
  <div key={l} style={{display:'flex',justifyContent:'space-between'}}>
  <span style={{fontSize:12,color:C.text2}}>{l}</span>
  <span style={{fontSize:13,fontWeight:700,color:C.text}}>{v}</span>
  </div>
  ))}
  </div>
+ <div style={{marginBottom:18}}><PayTable lines={lines} after={after} total={totalPaid} multi={multi} sym={sym}/></div>
  <div style={{display:'flex',gap:10}}>
  <button onClick={()=>setConfirmOpen(false)} style={{flex:1,padding:13,backgroundColor:C.gr,color:C.text2,border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer'}}>Annuler</button>
  <button onClick={submit} style={{flex:1,padding:13,backgroundColor:C.g,color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:700,cursor:'pointer'}}>Confirmer</button>
