@@ -62,3 +62,14 @@ body {
     width: 100% !important;
   }
 }
+
+
+/* anti-glissement-horizontal : écrans fixes, pas de mouvement gauche/droite */
+html, body, #root {
+  overflow-x: hidden;
+  max-width: 100vw;
+  overscroll-behavior-x: none;
+}
+body {
+  position: relative;
+}

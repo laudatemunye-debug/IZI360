@@ -52,7 +52,7 @@ const TYPES_PAY = [
  {key:'versement', label:'Versement cagnotte'},
 ]
 
-const MODES = ['Espèces','Mobile Money','Virement','Orange Money','Wave','MTN MoMo','Autre']
+const MODES = ['Espèces','M-Pesa','Airtel Money','Orange Money','Afrimoney','Virement bancaire','Autre']
 
 const CURRENCIES = [
  {code:'FCFA',symbol:'FCFA',name:'Franc CFA BCEAO'},
@@ -2259,7 +2259,7 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  </div>
  )
  })()}
- {config.fraudControl&&versForm.beneficiary&&(()=>{
+ {(config.fraudControl!==false)&&versForm.beneficiary&&(()=>{
  const m=members.find(x=>x.id===versForm.beneficiary)
  if(!m) return null
  const cr=memberCredibility(m,config,payments,currentCycle)
@@ -2795,8 +2795,8 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  <Item icon={CalendarClock} bg={C.bll} fg={C.bld} label="Nombre de tours" sub={`${config.nbSlots||config.nbMembers||'?'} tours`} right={<ChevronRight size={16} color={C.text2}/>}/>
  <Item icon={Percent} bg={C.ambl} fg={C.ambd} label="Pénalité de retard" sub={`${config.penaltyRate||0}% par cycle de retard`} right={<ChevronRight size={16} color={C.text2}/>}
  onClick={()=>openEdit({key:'penaltyRate',kind:'number-percent',title:'Taux de pénalité',placeholder:'0 pour désactiver',value:config.penaltyRate||0})}/>
- <Item icon={ShieldCheck} bg={C.pur} fg={C.purd} label="Contrôle de crédibilité" sub="Alerte au versement selon l'historique de paiement" right={<Badge label={config.fraudControl?'Actif':'Inactif'} type={config.fraudControl?'ok':'info'}/>}
- onClick={()=>onUpdateConfig({...config,fraudControl:!config.fraudControl})}/>
+ <Item icon={ShieldCheck} bg={C.pur} fg={C.purd} label="Contrôle de crédibilité" sub="Alerte au versement selon l'historique de paiement" right={<div style={{width:46,height:26,borderRadius:13,backgroundColor:(config.fraudControl!==false)?C.g:C.grb,position:'relative',transition:'background .2s',flexShrink:0}}><div style={{position:'absolute',top:3,left:(config.fraudControl!==false)?23:3,width:20,height:20,borderRadius:10,backgroundColor:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,.3)',transition:'left .2s'}}/></div>}
+ onClick={()=>onUpdateConfig({...config,fraudControl:!(config.fraudControl!==false)})}/>
  <Item icon={RotateCw} bg={C.pur} fg={C.purd} label="Avancer au cycle suivant" sub={currentCycleNow>=nbSlotsTotal?`Dernier cycle atteint (${currentCycleNow}/${nbSlotsTotal})`:`Actuellement : Cycle ${currentCycleNow}/${nbSlotsTotal}`} right={<ChevronRight size={16} color={currentCycleNow>=nbSlotsTotal?C.grb:C.text2}/>}
  onClick={()=>{if(currentCycleNow>=nbSlotsTotal){setConfirmCycleOpen('blocked')}else{setConfirmCycleOpen('confirm')}}}/>
  </Section>
