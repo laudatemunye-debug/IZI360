@@ -1,13 +1,13 @@
 import { getCycleDueDate } from '../data/frequency'
 // ============================================================
-// IZI NJANGI — AllScreens.jsx
+// Likelemba — AllScreens.jsx
 // Design cohérent, iconographie lucide-react uniquement (zéro emoji)
 // ============================================================
 import { useState, useRef } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import izi360Mark from '../assets/logo-light.png'
-import tontineLogoDefault from '../assets/logo-tontine.jpg'
+import tontineLogoDefault from '../assets/logo-likelemba.png'
 import { getAppLogo, setAppLogo, resetAppLogo } from '../data/appIdentity'
 import {
   ArrowLeft, Check, X, ChevronRight, Bell, Pencil, Coins, RotateCw,
@@ -94,7 +94,7 @@ async function shareViaPDF(el,receiptInfo,tontineName) {
    const blob = pdf.output('blob')
    const file = new File([blob],`recu-${receiptInfo.receiptNum}.pdf`,{type:'application/pdf'})
    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-     await navigator.share({files:[file],title:'Reçu IZI NJANGI',text:msg}); return
+     await navigator.share({files:[file],title:'Reçu Likelemba',text:msg}); return
    }
    const url = URL.createObjectURL(blob)
    const a = document.createElement('a'); a.href=url; a.download=`recu-${receiptInfo.receiptNum}.pdf`; a.click()
@@ -331,7 +331,7 @@ export function TontineSelectScreen({tontines, onSelect, onNew, onExit}) {
  <div style={{width:56,height:56,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px'}}>
  <img src={getAppLogo() || tontineLogoDefault} alt="Logo" onError={(e)=>{e.currentTarget.onerror=null;e.currentTarget.src=tontineLogoDefault}} style={{width:'70%',height:'70%',objectFit:'contain',borderRadius:8}}/>
  </div>
- <h1 style={{color:'#fff',fontSize:22,fontWeight:800,letterSpacing:0.5,margin:0}}>IZI NJANGI</h1>
+ <h1 style={{color:'#fff',fontSize:22,fontWeight:800,letterSpacing:0.5,margin:0}}>Likelemba</h1>
  <p style={{color:'rgba(255,255,255,0.75)',fontSize:12,marginTop:4}}>Sélectionnez votre tontine</p>
  </div>
  <div style={{flex:1,backgroundColor:C.bg,borderRadius:'24px 24px 0 0',padding:'20px 16px',overflowY:'auto'}}>
@@ -397,15 +397,14 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  const btn={backgroundColor:C.g,color:'#fff',border:'none',borderRadius:12,padding:13,fontSize:15,fontWeight:700,cursor:'pointer',marginTop:8,width:'100%'}
 
  if(step===0) return (
- <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
- <div style={{width:80,height:80,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:20,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:20}}>
-   <img src={getAppLogo() || tontineLogoDefault} alt="Logo" style={{width:'70%',height:'70%',objectFit:'contain',borderRadius:10}}/>
+ <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.bg,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px'}}>
+ <div style={{width:96,height:96,borderRadius:26,backgroundColor:C.white,border:`1px solid ${C.grb}`,boxShadow:'0 8px 24px rgba(8,80,65,0.14)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+ <img src={getAppLogo() || tontineLogoDefault} alt="Logo" style={{width:'70%',height:'70%',objectFit:'contain',borderRadius:12}}/>
  </div>
- <h1 style={{color:'#fff',fontSize:32,fontWeight:800,letterSpacing:1,margin:0}}>IZI NJANGI</h1>
- <p style={{color:'rgba(255,255,255,0.8)',fontSize:16,textAlign:'center',marginTop:8,lineHeight:'24px'}}>Gestion de tontine<br/>simple et fiable</p>
- <button onClick={()=>setStep(1)} style={{backgroundColor:'#fff',color:C.g,border:'none',borderRadius:14,padding:'14px 28px',marginTop:40,fontSize:16,fontWeight:800,cursor:'pointer'}}>Créer ma tontine</button>
- <p style={{color:'rgba(255,255,255,0.6)',fontSize:12,textAlign:'center',marginTop:20}}>100% hors ligne · Données locales</p>
- {onBack&&<button onClick={onBack} style={{background:'none',border:'1px solid rgba(255,255,255,0.4)',borderRadius:10,padding:'10px 24px',color:'rgba(255,255,255,0.8)',fontSize:13,cursor:'pointer',marginTop:12}}>Retour à mes tontines</button>}
+ <h1 style={{color:C.gd,fontSize:34,fontWeight:800,margin:'22px 0 0',letterSpacing:-0.5}}>Likelemba</h1>
+ <p style={{color:C.text2,fontSize:15,margin:'6px 0 0'}}>Gestion de tontine</p>
+ <button onClick={()=>setStep(1)} style={{backgroundColor:C.g,color:'#fff',border:'none',borderRadius:14,padding:'15px 40px',marginTop:44,fontSize:16,fontWeight:800,cursor:'pointer',minWidth:240}}>Créer ma tontine</button>
+ {onBack&&<button onClick={onBack} style={{background:'none',border:'none',color:C.gd,fontSize:14,fontWeight:600,cursor:'pointer',marginTop:14,padding:8}}>Retour à mes tontines</button>}
  </div>
  )
  if(step===1) return (
@@ -608,7 +607,7 @@ export function LockScreen({config,onUnlock,onForgotPin}) {
  <div style={{width:64,height:64,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:12,flexShrink:0}}>
    <Lock size={30} color="#fff"/>
  </div>
- <h1 style={{color:'#fff',fontSize:24,fontWeight:800,letterSpacing:1,margin:0}}>IZI NJANGI</h1>
+ <h1 style={{color:'#fff',fontSize:24,fontWeight:800,letterSpacing:1,margin:0}}>Likelemba</h1>
  <p style={{color:'rgba(255,255,255,0.75)',fontSize:13,marginBottom:24}}>{config.tontineName}</p>
  <input type="text" placeholder="Nom d'utilisateur" value={username} onChange={e=>{setUsername(e.target.value);setErr('')}}
  style={{width:'100%',maxWidth:280,backgroundColor:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'10px 14px',fontSize:14,color:'#fff',outline:'none',marginBottom:20,textAlign:'center'}}/>
@@ -1106,7 +1105,7 @@ export function AddMembreScreen({members,config,payouts=[],onBack,onSave}) {
  </div>
  <div style={{margin:'0 16px',height:1,backgroundColor:C.grb}}/>
  <div style={{padding:'10px 16px 16px',textAlign:'center'}}>
- <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — IZI NJANGI v1.0</div>
+ <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — Likelemba v1.0</div>
  </div>
  </div>
  <button onClick={catchupImprimer} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:C.bl,color:'#fff',border:'none',borderRadius:12,padding:13,fontSize:14,fontWeight:700,cursor:'pointer'}}><Printer size={16}/> Imprimer la facture</button>
@@ -1437,7 +1436,7 @@ export function FicheMembreScreen({member, members, payments, payouts=[], config
          </div>
          <div style={{margin:'0 16px',height:1,backgroundColor:C.grb}}/>
          <div style={{padding:'10px 16px 16px',textAlign:'center'}}>
-           <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — IZI NJANGI v1.0</div>
+           <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — Likelemba v1.0</div>
          </div>
        </div>
        <button onClick={async()=>{ if(exitReceiptRef.current) await printPDFElement(exitReceiptRef.current) }} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:C.bl,color:'#fff',border:'none',borderRadius:12,padding:13,fontSize:14,fontWeight:700,cursor:'pointer'}}><Printer size={16}/> Imprimer la facture</button>
@@ -1482,7 +1481,7 @@ export function FicheMembreScreen({member, members, payments, payouts=[], config
          </div>
          <div style={{margin:'0 16px',height:1,backgroundColor:C.grb}}/>
          <div style={{padding:'10px 16px 16px',textAlign:'center'}}>
-           <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — IZI NJANGI v1.0</div>
+           <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — Likelemba v1.0</div>
          </div>
        </div>
        <button onClick={async()=>{ if(addSlotReceiptRef.current) await printPDFElement(addSlotReceiptRef.current) }} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:C.bl,color:'#fff',border:'none',borderRadius:12,padding:13,fontSize:14,fontWeight:700,cursor:'pointer'}}><Printer size={16}/> Imprimer la facture</button>
@@ -1693,7 +1692,7 @@ function Recu({receipt,config,onBack,onNew,onDelete}) {
  </div>
  <div style={{margin:'0 16px',height:1,backgroundColor:C.grb}}/>
  <div style={{padding:'10px 16px 16px',textAlign:'center'}}>
- <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — IZI NJANGI v1.0</div>
+ <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — Likelemba v1.0</div>
  </div>
  </div>
  <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:16}}>
@@ -2180,7 +2179,7 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  </div>
  <div style={{margin:'0 16px',height:1,backgroundColor:C.grb}}/>
  <div style={{padding:'10px 16px 16px',textAlign:'center'}}>
- <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — IZI NJANGI v1.0</div>
+ <div style={{fontSize:10,color:C.text2,letterSpacing:0.4}}>Powered by IZIsoft — Likelemba v1.0</div>
  </div>
  </div>
  <button onClick={factureWhatsapp} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:'#25D366',color:'#fff',border:'none',borderRadius:12,padding:13,fontSize:14,fontWeight:700,cursor:'pointer'}}><Share2 size={16}/> Envoyer la facture (WhatsApp)</button>
@@ -2844,7 +2843,7 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  </Section>
 
  <div style={{textAlign:'center',padding:16,fontSize:11,color:C.text2}}>
- <div style={{fontWeight:700,color:C.g}}>IZI NJANGI v1.0</div>
+ <div style={{fontWeight:700,color:C.g}}>Likelemba v1.0</div>
  <div style={{marginTop:3,letterSpacing:0.4}}>Powered by IZIsoft</div>
  </div>
  </div>

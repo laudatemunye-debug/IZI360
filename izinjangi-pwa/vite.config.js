@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'IZI NJANGI — Gestion de tontine',
-        short_name: 'IZI NJANGI',
+        name: 'Likelemba — Gestion de tontine',
+        short_name: 'Likelemba',
         description: 'Gestion de tontine simple et fiable, 100% hors ligne.',
         theme_color: '#1D9E75',
         background_color: '#1D9E75',

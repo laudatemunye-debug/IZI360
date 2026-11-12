@@ -1,60 +1,20 @@
 import { useState, useEffect } from 'react'
 import { getAssociations, createAssociation, migrateLegacyTontinesIfNeeded } from './data/associations'
-import AssociationSelectScreen from './screens/association/AssociationSelectScreen'
-import AssociationSetupScreen from './screens/association/AssociationSetupScreen'
-import AssociationDashboard from './screens/association/AssociationDashboard'
-import ModulePlaceholder from './screens/association/ModulePlaceholder'
 import TontineModule from './modules/tontine/TontineModule'
 
+// Likelemba : app dédiée uniquement à la tontine.
+// On utilise une seule association interne (type "groupe"), invisible pour l'utilisateur.
 export default function App() {
-  const [loading, setLoading] = useState(true)
-  const [associations, setAssociations] = useState([])
-  const [view, setView] = useState('assocSelect')
-  const [activeAssoc, setActiveAssoc] = useState(null)
-  const [activeModule, setActiveModule] = useState(null)
+  const [assoc, setAssoc] = useState(null)
 
   useEffect(() => {
     migrateLegacyTontinesIfNeeded()
-    setAssociations(getAssociations())
-    setLoading(false)
+    const list = getAssociations()
+    const a = list.find(x => x.type === 'groupe') || list[0] || createAssociation({ type: 'groupe', name: 'Likelemba' })
+    setAssoc(a)
   }, [])
 
-  const refreshAssociations = () => setAssociations(getAssociations())
-
-  const openAssociation = (assoc) => {
-    setActiveAssoc(assoc)
-    if (assoc.type === 'groupe') {
-      setActiveModule('tontine')
-      setView('module')
-    } else {
-      setView('dashboard')
-    }
-  }
-
-  const handleCreateAssociation = ({ type, name }) => {
-    const assoc = createAssociation({ type, name })
-    refreshAssociations()
-    openAssociation(assoc)
-  }
-
-  const openModule = (moduleKey) => {
-    setActiveModule(moduleKey)
-    setView('module')
-  }
-
-  const backToAssociations = () => {
-    setActiveAssoc(null)
-    setActiveModule(null)
-    setView('assocSelect')
-    refreshAssociations()
-  }
-
-  const backToDashboard = () => {
-    setActiveModule(null)
-    setView('dashboard')
-  }
-
-  if (loading) {
+  if (!assoc) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100dvh', backgroundColor: '#1D9E75' }}>
         <p style={{ color: '#fff', fontSize: 16 }}>Chargement…</p>
@@ -62,53 +22,5 @@ export default function App() {
     )
   }
 
-  if (view === 'assocSelect') {
-    return (
-      <AssociationSelectScreen
-        associations={associations}
-        onSelect={openAssociation}
-        onNew={() => setView('assocSetup')}
-      />
-    )
-  }
-
-  if (view === 'assocSetup') {
-    return (
-      <AssociationSetupScreen
-        onDone={handleCreateAssociation}
-        onBack={associations.length > 0 ? () => setView('assocSelect') : null}
-      />
-    )
-  }
-
-  if (view === 'dashboard' && activeAssoc) {
-    return (
-      <AssociationDashboard
-        association={activeAssoc}
-        onOpenModule={openModule}
-        onBack={backToAssociations}
-      />
-    )
-  }
-
-  if (view === 'module' && activeAssoc && activeModule === 'tontine') {
-    return (
-      <TontineModule
-        assocId={activeAssoc.id}
-        onExit={activeAssoc.type === 'groupe' ? backToAssociations : backToDashboard}
-      />
-    )
-  }
-
-  if (view === 'module' && activeAssoc) {
-    const label = `Module ${activeModule}`
-    return (
-      <ModulePlaceholder
-        moduleLabel={label}
-        onBack={activeAssoc.type === 'groupe' ? backToAssociations : backToDashboard}
-      />
-    )
-  }
-
-  return null
+  return <TontineModule assocId={assoc.id} onExit={() => {}} />
 }
