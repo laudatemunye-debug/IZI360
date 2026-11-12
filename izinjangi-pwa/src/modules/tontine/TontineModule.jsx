@@ -296,7 +296,7 @@ export default function TontineModule({ assocId, onExit }) {
   )
 
   if (appState === 'locked') return (
-    <LockScreen config={config} onUnlock={handleUnlock} onForgotPin={handleReset} />
+    <LockScreen onResetPin={(pin)=>handleUpdateConfig({...config,pin})} config={config} onUnlock={handleUnlock} onForgotPin={handleReset} />
   )
 
   const wrap = (child) => (

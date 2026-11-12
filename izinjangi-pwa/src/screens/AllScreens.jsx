@@ -363,7 +363,7 @@ export function TontineSelectScreen({tontines, onSelect, onNew, onExit}) {
 
 export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  const [step,setStep]=useState(0)
- const [form,setForm]=useState({tontineName:'',adminName:'',phone:'',cotisation:'',frequencyUnit:'mois',frequencyCount:1,cotisationDates:[],cotisationDays:[],currency:null,nbSlots:'',username:'',pin:'',pinConfirm:''})
+ const [form,setForm]=useState({tontineName:'',adminName:'',phone:'',cotisation:'',frequencyUnit:'mois',frequencyCount:1,cotisationDates:[],cotisationDays:[],currency:null,nbSlots:'',username:'',pin:'',pinConfirm:'',securityQuestion:'',securityAnswer:''})
  const [currSearch,setCurrSearch]=useState('')
  const [pinError,setPinError]=useState('')
  const filteredCurr=CURRENCIES.filter(c=>c.name.toLowerCase().includes(currSearch.toLowerCase())||c.code.toLowerCase().includes(currSearch.toLowerCase()))
@@ -384,12 +384,15 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  if(!form.username.trim()) return alert("Nom d'utilisateur obligatoire.")
  if(form.pin.length!==4) return alert('Le PIN doit contenir 4 chiffres.')
  if(form.pin!==form.pinConfirm){setPinError('Les PINs ne correspondent pas.');return}
+ if(!form.securityQuestion){setPinError('Choisissez une question de sécurité.');return}
+ if(normAnswer(form.securityAnswer).length<3){setPinError('La réponse doit contenir au moins 3 caractères.');return}
  handleCreate();return
  }
  setStep(s=>s+1)
  }
- const handleCreate=()=>{
- const config={tontineName:form.tontineName,adminName:form.adminName,phone:form.phone,cotisation:Number(form.cotisation),frequency:buildFrequencyLabel(form.frequencyUnit,form.frequencyCount),frequencyUnit:form.frequencyUnit,frequencyCount:form.frequencyCount,cotisationDates:form.cotisationDates,cotisationDays:form.cotisationDays,currency:form.currency,username:form.username.trim().toLowerCase(),pin:form.pin,createdAt:nowISO(),currentCycle:1,nbSlots:Number(form.nbSlots)||0,nbMembers:Number(form.nbSlots)||0,penaltyRate:0}
+ const handleCreate=async()=>{
+ const ansHash=await hashAnswer(form.securityAnswer)
+ const config={tontineName:form.tontineName,adminName:form.adminName,phone:form.phone,cotisation:Number(form.cotisation),frequency:buildFrequencyLabel(form.frequencyUnit,form.frequencyCount),frequencyUnit:form.frequencyUnit,frequencyCount:form.frequencyCount,cotisationDates:form.cotisationDates,cotisationDays:form.cotisationDays,currency:form.currency,username:form.username.trim().toLowerCase(),pin:form.pin,securityQuestion:form.securityQuestion,securityAnswerHash:ansHash,createdAt:nowISO(),currentCycle:1,nbSlots:Number(form.nbSlots)||0,nbMembers:Number(form.nbSlots)||0,penaltyRate:0}
  onDone(config)
  }
  const inp={backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:8,padding:'10px 12px',fontSize:14,width:'100%',color:C.text,outline:'none',marginTop:4,boxSizing:'border-box',maxWidth:'100%'}
@@ -534,7 +537,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  if(step===3) return (
  <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
  <SetupHeader title="Identifiants de connexion" sub="Étape 3 / 3 — Sécurisez l'accès" step={step} onBack={back}/>
- <div style={{flex:1,padding:16,display:'flex',flexDirection:'column',gap:12}}>
+ <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12}}>
  <p style={{fontSize:14,color:C.text2,margin:0}}>Ces identifiants protègent l'accès à votre tontine</p>
  {[
  {label:"Nom d'utilisateur *", key:'username', type:'text', placeholder:'Ex: admin', pw:false},
@@ -547,10 +550,21 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  value={form[f.key]} onChange={e=>{setForm(p=>({...p,[f.key]:e.target.value}));setPinError('')}}/>
  </div>
  ))}
+ <div>
+ <label style={lbl}>Question de sécurité *</label>
+ <select style={{...inp,cursor:'pointer'}} value={form.securityQuestion} onChange={e=>{setForm(p=>({...p,securityQuestion:e.target.value}));setPinError('')}}>
+ <option value="">— Choisir une question —</option>
+ {SECURITY_QUESTIONS.map(q=><option key={q} value={q}>{q}</option>)}
+ </select>
+ </div>
+ <div>
+ <label style={lbl}>Réponse *</label>
+ <input style={inp} type="text" placeholder="Votre réponse secrète" value={form.securityAnswer} onChange={e=>{setForm(p=>({...p,securityAnswer:e.target.value}));setPinError('')}}/>
+ </div>
  {pinError&&<p style={{color:C.rd,fontSize:12,margin:0}}>{pinError}</p>}
  <div style={{backgroundColor:C.ambl,border:`1px solid #FAC775`,borderRadius:8,padding:10,display:'flex',gap:8}}>
    <TriangleAlert size={15} color={C.ambd} style={{marginTop:1,flexShrink:0}}/>
-   <p style={{fontSize:12,color:C.ambd,margin:0}}>Notez bien vos identifiants. En cas d'oubli, vous devrez réinitialiser l'app.</p>
+   <p style={{fontSize:12,color:C.ambd,margin:0}}>Notez bien vos identifiants et la réponse secrète : en cas d'oubli du PIN, la question de sécurité permet de le réinitialiser.</p>
  </div>
  <button onClick={next} style={btn}>Créer ma tontine</button>
  </div>
@@ -559,14 +573,24 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  return null
 }
 
+const SECURITY_QUESTIONS=["Quel est le nom de votre école primaire ?","Quel est le prénom de votre meilleur ami d'enfance ?","Dans quelle ville êtes-vous né(e) ?","Quel était le nom de votre premier animal ?","Quel est votre plat préféré ?","Quel est le nom de votre mère avant son mariage ?"]
+const normAnswer=(t)=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')
+const hashAnswer=async(t)=>{const n=normAnswer(t);try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('likelemba:'+n));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}catch{return 'plain:'+n}}
+
 /* ---------------------------- Verrouillage ---------------------------- */
 
-export function LockScreen({config,onUnlock,onForgotPin}) {
+export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  const [username,setUsername]=useState('')
  const [pin,setPin]=useState('')
  const [err,setErr]=useState('')
  const [forgot,setForgot]=useState(false)
  const [confirmName,setConfirmName]=useState('')
+ const [showWipe,setShowWipe]=useState(false)
+ const [ans,setAns]=useState('')
+ const [answerOk,setAnswerOk]=useState(false)
+ const [newPin,setNewPin]=useState('')
+ const [newPin2,setNewPin2]=useState('')
+ const [fErr,setFErr]=useState('')
  const press=d=>{
  const np=pin+d; setPin(np); setErr('')
  if(np.length===4){
@@ -577,6 +601,33 @@ export function LockScreen({config,onUnlock,onForgotPin}) {
  }
  const del=()=>setPin(p=>p.slice(0,-1))
 
+ if(forgot&&config.securityQuestion&&!showWipe) return (
+ <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
+ <IconCircle icon={ShieldCheck} bg="rgba(255,255,255,0.15)" fg="#fff" size={64} iconSize={30}/>
+ <h1 style={{color:'#fff',fontSize:19,fontWeight:800,marginTop:16,textAlign:'center'}}>Réinitialiser le PIN</h1>
+ <div style={{width:'100%',maxWidth:300,marginTop:18}}>
+ {!answerOk?(<>
+ <p style={{color:'rgba(255,255,255,0.85)',fontSize:14,lineHeight:'20px',margin:'0 0 10px',textAlign:'center'}}>{config.securityQuestion}</p>
+ <input value={ans} onChange={e=>{setAns(e.target.value);setFErr('')}} placeholder="Votre réponse" style={{width:'100%',backgroundColor:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'10px 12px',fontSize:14,color:'#fff',outline:'none',boxSizing:'border-box'}}/>
+ {fErr&&<p style={{color:'#FFB4B4',fontSize:12,margin:'8px 0 0',textAlign:'center'}}>{fErr}</p>}
+ <button onClick={async()=>{const h=await hashAnswer(ans);if(h===config.securityAnswerHash){setAnswerOk(true);setFErr('')}else setFErr('Réponse incorrecte.')}} style={{width:'100%',marginTop:14,padding:13,backgroundColor:'#fff',color:C.gd,border:'none',borderRadius:12,fontSize:14,fontWeight:800,cursor:'pointer'}}>Vérifier</button>
+ </>):(<>
+ <p style={{color:'rgba(255,255,255,0.85)',fontSize:14,margin:'0 0 10px',textAlign:'center'}}>Réponse correcte. Choisissez un nouveau PIN.</p>
+ <input type="password" inputMode="numeric" maxLength={4} value={newPin} onChange={e=>{setNewPin(e.target.value);setFErr('')}} placeholder="Nouveau PIN (4 chiffres)" style={{width:'100%',backgroundColor:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'10px 12px',fontSize:14,color:'#fff',outline:'none',boxSizing:'border-box',marginBottom:10}}/>
+ <input type="password" inputMode="numeric" maxLength={4} value={newPin2} onChange={e=>{setNewPin2(e.target.value);setFErr('')}} placeholder="Confirmer le PIN" style={{width:'100%',backgroundColor:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'10px 12px',fontSize:14,color:'#fff',outline:'none',boxSizing:'border-box'}}/>
+ {fErr&&<p style={{color:'#FFB4B4',fontSize:12,margin:'8px 0 0',textAlign:'center'}}>{fErr}</p>}
+ <button onClick={()=>{
+ if(!/^\d{4}$/.test(newPin)) return setFErr('Le PIN doit contenir 4 chiffres.')
+ if(newPin!==newPin2) return setFErr('Les PIN ne correspondent pas.')
+ onResetPin?.(newPin)
+ setForgot(false);setAnswerOk(false);setAns('');setNewPin('');setNewPin2('');setFErr('');setPin('');setErr('PIN modifié. Connectez-vous.')
+ }} style={{width:'100%',marginTop:14,padding:13,backgroundColor:'#fff',color:C.gd,border:'none',borderRadius:12,fontSize:14,fontWeight:800,cursor:'pointer'}}>Enregistrer le nouveau PIN</button>
+ </>)}
+ </div>
+ <button onClick={()=>setShowWipe(true)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.6)',fontSize:12,cursor:'pointer',padding:10,marginTop:10,textDecoration:'underline'}}>Je ne connais pas la réponse</button>
+ <button onClick={()=>{setForgot(false);setAnswerOk(false);setAns('');setFErr('')}} style={{background:'none',border:'none',color:'rgba(255,255,255,0.75)',fontSize:13,cursor:'pointer',padding:6}}>Annuler, retour à la connexion</button>
+ </div>
+ )
  if(forgot) return (
  <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
    <IconCircle icon={TriangleAlert} bg="rgba(255,255,255,0.15)" fg="#fff" size={64} iconSize={30}/>
@@ -596,7 +647,7 @@ export function LockScreen({config,onUnlock,onForgotPin}) {
      style={{width:'100%',maxWidth:300,marginTop:14,padding:13,backgroundColor:confirmName.trim()===config.tontineName.trim()?C.rd:'rgba(255,255,255,0.12)',color:'#fff',border:'none',borderRadius:12,fontSize:14,fontWeight:700,cursor:confirmName.trim()===config.tontineName.trim()?'pointer':'default'}}>
      Réinitialiser définitivement
    </button>
-   <button onClick={()=>{setForgot(false);setConfirmName('')}} style={{background:'none',border:'none',color:'rgba(255,255,255,0.75)',fontSize:13,cursor:'pointer',padding:10,marginTop:6}}>
+   <button onClick={()=>{setForgot(false);setConfirmName('');setShowWipe(false)}} style={{background:'none',border:'none',color:'rgba(255,255,255,0.75)',fontSize:13,cursor:'pointer',padding:10,marginTop:6}}>
      Annuler, retour à la connexion
    </button>
  </div>
