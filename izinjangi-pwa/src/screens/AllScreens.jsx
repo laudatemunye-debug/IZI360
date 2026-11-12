@@ -640,6 +640,7 @@ function RecoveryPanel({config,onResetPin}) {
  <button onClick={async()=>{try{await navigator.clipboard.writeText(code);setCopied(true)}catch{}}} style={{...wbtn,marginTop:0,padding:8}}>{copied?'Copié':'Copier le code'}</button>
  <div style={{color:'rgba(255,255,255,0.75)',fontSize:12,margin:'14px 0 6px'}}>Collez ici le code de réponse reçu :</div>
  <input value={resp} onChange={e=>{setResp(e.target.value);setErr('')}} placeholder="Code de réponse" style={box}/>
+ <button onClick={async()=>{try{setResp(await navigator.clipboard.readText());setErr('')}catch{setErr('Collez le code manuellement (appui long dans le champ).')}}} style={{...wbtn,marginTop:8,padding:8}}>Coller</button>
  {err&&<p style={{color:'#FFB4B4',fontSize:12,margin:'8px 0 0'}}>{err}</p>}
  <button onClick={async()=>{if(await verifyRecovery(code,resp)){setOk(true);setErr('')}else setErr('Code de réponse incorrect.')}} style={{...wbtn,backgroundColor:'#fff',color:C.gd,border:'none'}}>Vérifier</button>
  </>):(<>
