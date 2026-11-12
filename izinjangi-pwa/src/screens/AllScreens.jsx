@@ -783,6 +783,17 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  )
 }
 
+const payBase=(p)=>Number(p.baseAmount!=null?p.baseAmount:p.amount)||0
+const slotPaidAmount=(payments,order,cycle)=>payments.filter(p=>p.type==='cotisation'&&p.slotOrder===order&&p.cycle===cycle).reduce((t,p)=>t+payBase(p),0)
+const isSlotComplete=(payments,order,cycle,cot)=>{const need=Number(cot||0);const got=slotPaidAmount(payments,order,cycle);return need>0?got>=need:got>0}
+const slotRemaining=(payments,order,cycle,cot)=>Math.max(0,Number(cot||0)-slotPaidAmount(payments,order,cycle))
+const completeSlots=(payments,cycle,cot)=>{const out=new Set();const orders=new Set(payments.filter(p=>p.type==='cotisation'&&p.cycle===cycle).map(p=>p.slotOrder));orders.forEach(o=>{if(isSlotComplete(payments,o,cycle,cot)) out.add(o)});return out}
+const slotCompletePay=(payments,order,cycle,cot)=>{
+ if(!isSlotComplete(payments,order,cycle,cot)) return undefined
+ const list=payments.filter(p=>p.type==='cotisation'&&p.slotOrder===order&&p.cycle===cycle)
+ return [...list].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).pop()
+}
+
 const tontineNotStarted=(config)=>!!config?.startDate&&config.startDate>new Date().toLocaleDateString('en-CA')
 
 const memberCredibility=(m,config,payments,currentCycle)=>{
@@ -795,7 +806,7 @@ const memberCredibility=(m,config,payments,currentCycle)=>{
  if(!due) continue
  const special=payments.some(p=>p.type==='cotisation'&&p.slotOrder===o&&p.cycle===c&&(p.lateJoin||p.mode==='Rattrapage'||String(p.id).startsWith('ext_')))
  if(special) continue
- const pay=payments.find(p=>p.type==='cotisation'&&p.slotOrder===o&&p.cycle===c)
+ const pay=slotCompletePay(payments,o,c,config.cotisation)
  const dueStr=due.toLocaleDateString('en-CA')
  if(pay){
  if(!pay.date||pay.date<=dueStr) onTime++
@@ -818,7 +829,7 @@ export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvance
 
  const cyclePayments=payments.filter(p=>p.cycle===currentCycle&&p.type==='cotisation')
  const totalCollected=cyclePayments.reduce((s,p)=>s+(p.amount||0),0)
- const paidSlotOrders=new Set(cyclePayments.map(p=>p.slotOrder))
+ const paidSlotOrders=completeSlots(payments,currentCycle,config.cotisation)
  const closedSlots=new Set(payouts.map(p=>p.slotOrder||p.cycle))
  const activeSlots=Array.from({length:nbSlots},(_,i)=>i+1).filter(o=>!closedSlots.has(o))
  const unpaidSlots=tontineNotStarted(config)?[]:activeSlots.filter(o=>!paidSlotOrders.has(o))
@@ -999,7 +1010,7 @@ export function MembresScreen({members,payments,config,onAddMember,onSelectMembe
  const [search,setSearch]=useState('')
  const [filter,setFilter]=useState('tous')
  const cycle=config.currentCycle||1
- const paidIds=new Set(payments.filter(p=>p.cycle===cycle&&p.type==='cotisation').map(p=>p.memberId))
+ const paidIds=new Set(members.filter(m=>(m.slots||[{order:m.order}]).every(sl=>isSlotComplete(payments,sl.order,cycle,config.cotisation))).map(m=>m.id))
  const getStatus=m=>{
  if(m.status==='sorti') return 'sorti'
  if(tontineNotStarted(config)) return 'attente'
@@ -1828,10 +1839,13 @@ function Recu({receipt,config,onBack,onNew,onDelete}) {
  {l:'Membre', v:receipt.memberName},
  ...(receipt.slotOrders&&receipt.slotOrders.length?[{l:"Tour(s)",v:receipt.slotOrders.map(o=>`#${o}`).join(', ')}]:receipt.slotOrder?[{l:'Tour',v:`#${receipt.slotOrder}`}]:[]),
  ...(receipt.cycle?[{l:'Cycle',v:`Cycle ${receipt.cycle}`}]:[]),
+ ...(receipt.lines?receipt.lines.map(l=>({l:`Cycle ${l.cycle}${receipt.multiSlot?` · Tour #${l.slotOrder}`:''}${l.full?'':' (partiel)'}`,v:fmt(l.amount+(l.penalty||0),sym)})):[]),
+ ...(receipt.after&&receipt.after.length?receipt.after.map(a=>({l:`Reste à payer · Cycle ${a.cycle}${receipt.multiSlot?` · Tour #${a.slotOrder}`:''}`,v:fmt(a.amount,sym)})):[]),
  {l:'Mode', v:receipt.mode},
  {l:'Date', v:fmtDate(receipt.date)},
  ...(receipt.createdAt?[{l:'Émis le',v:fmtDateTime(receipt.createdAt)}]:[]),
  ...(receipt.note?[{l:'Note',v:receipt.note}]:[]),
+ ...(receipt.lines?[{l:'Total payé',v:fmt(receipt.amount,sym)}]:[]),
  ].map(({l,v})=>(
  <div key={l} style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
  <span style={{fontSize:12,color:C.text2}}>{l}</span>
@@ -1867,55 +1881,80 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  const base=Number(config.cotisation||0)
  const currentCycle=config.currentCycle||1
  const penaltyRate=config.penaltyRate||0
+ const penaltyUnit=Math.round(base*penaltyRate/100)
+ const nbCycles=Math.max(Number(config.nbSlots||config.nbMembers||0),currentCycle)
 
  const [view,setView]=useState('form')
  const [receipt,setReceipt]=useState(null)
- const [form,setForm]=useState({memberId:preselectMemberId||'',slotOrders:[],mode:'Espèces',date:new Date().toISOString().split('T')[0],note:'',withPenalty:false})
+ const [form,setForm]=useState({memberId:preselectMemberId||'',amount:'',mode:'Espèces',date:new Date().toISOString().split('T')[0],note:'',withPenalty:false})
  const [errors,setErrors]=useState({})
+ const [confirmOpen,setConfirmOpen]=useState(false)
  const f=patch=>{setForm(p=>({...p,...patch}));setErrors({})}
 
- const isSlotPaid=(memberId,order)=>payments.some(p=>p.memberId===memberId&&p.slotOrder===order&&p.cycle===currentCycle&&p.type==='cotisation')
- const activeMembers=members.filter(m=>{
- if(m.status==='sorti') return false
- const s=m.slots||[{order:m.order||1}]
- return s.some(sl=>!isSlotPaid(m.id,sl.order))
- })
+ const slotsOf=(m)=>[...(m.slots||[{order:m.order||1}])].sort((a,b)=>a.order-b.order)
+ const remainingOf=(m)=>{let t=0;slotsOf(m).forEach(s=>{for(let c=1;c<=nbCycles;c++) t+=slotRemaining(payments,s.order,c,base)});return t}
+ const activeMembers=members.filter(m=>m.status!=='sorti'&&remainingOf(m)>0)
  const member=members.find(m=>m.id===form.memberId)
- const memberSlots=member?.slots||(member?[{slotId:'single',order:member.order||1,slotNum:1}]:[])
- const unpaidSlots=memberSlots.filter(s=>!isSlotPaid(form.memberId,s.order)).sort((a,b)=>a.order-b.order)
+ const memberSlots=member?slotsOf(member):[]
+ const multi=memberSlots.length>1
+ const A=Math.max(0,Math.round(Number(form.amount)||0))
 
- const nbSelected=form.slotOrders.length
- const penaltyAmt=form.withPenalty?Math.round(base*penaltyRate/100):0
- const totalAmt=(base+penaltyAmt)*nbSelected
+ const allocate=(amt)=>{
+ let left=Math.round(amt)
+ const out=[]
+ for(let c=1;c<=nbCycles&&left>0;c++){
+ for(const s of memberSlots){
+ if(left<=0) break
+ const rem=slotRemaining(payments,s.order,c,base)
+ if(rem>0){ const take=Math.min(rem,left); out.push({cycle:c,slotOrder:s.order,amount:take,full:take>=rem}); left-=take }
+ }
+ }
+ return {lines:out,left}
+ }
+ const lateOf=(al)=>al.lines.filter(l=>l.cycle<currentCycle).length
+ let nPen=0
+ if(form.withPenalty&&penaltyUnit>0&&member&&A>0){
+ const lateMax=lateOf(allocate(A))
+ for(let t=0;t<=lateMax;t++){ if(lateOf(allocate(A-penaltyUnit*t))>=t) nPen=t }
+ }
+ const alloc=member?allocate(A-penaltyUnit*nPen):{lines:[],left:0}
+ let penLeft=nPen
+ const lines=alloc.lines.map(l=>{ let pen=0; if(l.cycle<currentCycle&&penLeft>0){ pen=penaltyUnit; penLeft-- } return {...l,penalty:pen} })
+ const totalPaid=lines.reduce((t,l)=>t+l.amount+l.penalty,0)
+ const penTotal=lines.reduce((t,l)=>t+l.penalty,0)
+ const tooHigh=alloc.left>0
+ const maxOk=A-alloc.left
+ const after=[]
+ if(member){ for(let c=1;c<=currentCycle;c++){ memberSlots.forEach(s=>{ const got=lines.filter(l=>l.cycle===c&&l.slotOrder===s.order).reduce((t,l)=>t+l.amount,0); const rem=slotRemaining(payments,s.order,c,base)-got; if(rem>0) after.push({cycle:c,slotOrder:s.order,amount:rem}) }) } }
+ const dueNow=member?(()=>{let t=0;for(let c=1;c<=currentCycle;c++) memberSlots.forEach(s=>{t+=slotRemaining(payments,s.order,c,base)});return t})():0
 
  const validate=()=>{
  const e={}
  if(!form.memberId) e.memberId='Sélectionnez un membre.'
- if(form.slotOrders.length===0) e.slotOrder='Sélectionnez au moins un tour.'
+ if(!(A>0)) e.amount='Saisissez le montant reçu.'
+ else if(tooHigh) e.amount=`Montant trop élevé. Maximum : ${fmt(maxOk,sym)}.`
+ else if(lines.length===0) e.amount="Ce membre n'a rien à payer."
  setErrors(e)
  return Object.keys(e).length===0
  }
-
- const [confirmOpen,setConfirmOpen]=useState(false)
-
  const requestSubmit=()=>{ if(validate()) setConfirmOpen(true) }
 
  const submit=()=>{
  const receiptNum=genRec()
  const createdAt=nowISO()
- const orders=[...form.slotOrders].sort((a,b)=>a-b)
- const newPayments=orders.map(order=>({id:genId(),type:'cotisation',memberId:form.memberId,memberName:member?.name||'',memberPhone:member?.phone||'',slotOrder:order,cycle:currentCycle,amount:base+penaltyAmt,baseAmount:base,penalty:penaltyAmt,mode:form.mode,date:form.date,note:form.note,receiptNum,createdAt}))
+ const newPayments=lines.map(l=>({id:genId(),type:'cotisation',memberId:form.memberId,memberName:member?.name||'',memberPhone:member?.phone||'',slotOrder:l.slotOrder,cycle:l.cycle,amount:l.amount+l.penalty,baseAmount:l.amount,penalty:l.penalty,partial:!l.full,mode:form.mode,date:form.date,note:form.note,receiptNum,createdAt}))
  onSaveBatch(newPayments)
- setReceipt({receiptNum,memberName:member?.name||'',slotOrders:orders,cycle:currentCycle,amount:totalAmt,baseAmount:base,penalty:penaltyAmt*orders.length,mode:form.mode,date:form.date,note:form.note,createdAt,type:'cotisation'})
+ setReceipt({receiptNum,memberName:member?.name||'',amount:totalPaid,baseAmount:totalPaid-penTotal,penalty:penTotal,mode:form.mode,date:form.date,note:form.note,createdAt,type:'cotisation',lines,after,multiSlot:multi})
  setConfirmOpen(false); setView('recu')
  }
 
- const reset=()=>{setView('form');setReceipt(null);setForm({memberId:'',slotOrders:[],mode:'Espèces',date:new Date().toISOString().split('T')[0],note:'',withPenalty:false});setErrors({})}
+ const reset=()=>{setView('form');setReceipt(null);setForm({memberId:'',amount:'',mode:'Espèces',date:new Date().toISOString().split('T')[0],note:'',withPenalty:false});setErrors({})}
 
  if(view==='recu') return <Recu receipt={receipt} config={config} onBack={onBack} onNew={reset}/>
 
  const lbl={fontSize:12,fontWeight:600,color:C.text2,marginBottom:3,display:'block'}
  const inp={backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:8,padding:'10px 12px',fontSize:14,width:'100%',color:C.text,outline:'none',marginTop:4,boxSizing:'border-box',maxWidth:'100%'}
+ const lineLabel=(l)=>`Cycle ${l.cycle}${multi?` · Tour #${l.slotOrder}`:''}`
 
  return (
  <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
@@ -1923,16 +1962,15 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  <BackBtn onClick={onBack}/>
  <div>
  <div style={{color:'#fff',fontSize:17,fontWeight:700}}>Enregistrer un paiement</div>
- <div style={{color:'rgba(255,255,255,0.8)',fontSize:11,marginTop:2}}>Cycle {currentCycle} · {fmt(base,sym)}</div>
+ <div style={{color:'rgba(255,255,255,0.8)',fontSize:11,marginTop:2}}>Cycle {currentCycle} · {fmt(base,sym)} par tour</div>
  </div>
  </div>
  <div style={{flex:1,overflowY:'auto',padding:16,paddingBottom:100,display:'flex',flexDirection:'column',gap:14}}>
  <div>
  <label style={lbl}>Membre *</label>
- <select style={errors.memberId?{...inp,border:`1px solid ${C.rd}`}:inp} value={form.memberId}
- onChange={e=>f({memberId:e.target.value,slotOrders:[]})}>
+ <select style={errors.memberId?{...inp,border:`1px solid ${C.rd}`}:inp} value={form.memberId} onChange={e=>f({memberId:e.target.value})}>
  <option value="">— Sélectionner un membre —</option>
- {activeMembers.sort((a,b)=>(a.slots?.[0]?.order||a.order||0)-(b.slots?.[0]?.order||b.order||0)).map(m=>(
+ {[...activeMembers].sort((a,b)=>(a.slots?.[0]?.order||a.order||0)-(b.slots?.[0]?.order||b.order||0)).map(m=>(
  <option key={m.id} value={m.id}>{m.name}{m.slots?.length>1?` (${m.slots.length} places)`:''}</option>
  ))}
  </select>
@@ -1940,50 +1978,49 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  </div>
 
  {member&&(
+ <div style={{backgroundColor:C.gl,borderRadius:8,padding:'10px 12px',fontSize:12,color:C.gd,lineHeight:1.6}}>
+ {memberSlots.length} place{multi?'s':''} · cotisation {fmt(base,sym)} par tour et par cycle<br/>
+ Dû à ce jour (cycles 1 à {currentCycle}) : <strong>{fmt(dueNow,sym)}</strong>
+ </div>
+ )}
+
  <div>
- <label style={lbl}>Tour(s) à payer * <span style={{color:C.text2,fontWeight:400}}>({nbSelected}/{unpaidSlots.length})</span></label>
- {unpaidSlots.length===0 ? (
- <div style={{marginTop:6,backgroundColor:C.gl,border:`1px solid ${C.g}`,borderRadius:8,padding:'8px 12px',fontSize:12,color:C.gd}}>Tous les tours de ce membre sont déjà payés pour ce cycle.</div>
- ) : (
- <>
- <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:6}}>
- {unpaidSlots.map(slot=>{
- const active=form.slotOrders.includes(slot.order)
- return (
- <button key={slot.slotId||slot.order} onClick={()=>f({slotOrders:active?form.slotOrders.filter(o=>o!==slot.order):[...form.slotOrders,slot.order]})}
- style={{flex:'1 1 calc(50% - 4px)',padding:'12px 8px',borderRadius:10,border:`2px solid ${active?C.g:C.grb}`,backgroundColor:active?C.g:C.white,color:active?'#fff':C.text,cursor:'pointer',textAlign:'center'}}>
- <div style={{fontSize:14,fontWeight:700}}>Tour #{slot.order}</div>
- <div style={{fontSize:10,marginTop:3}}>{active?'Sélectionné':'À payer'}</div>
- </button>
- )
- })}
+ <label style={lbl}>Montant reçu *</label>
+ <input style={errors.amount?{...inp,border:`1px solid ${C.rd}`}:inp} type="number" inputMode="numeric" min="0" placeholder={`Ex: ${base*2}`} value={form.amount} onChange={e=>f({amount:e.target.value})}/>
+ {errors.amount&&<p style={{color:C.rd,fontSize:12,marginTop:4}}>{errors.amount}</p>}
  </div>
- {unpaidSlots.length>1 && <button onClick={()=>f({slotOrders:nbSelected===unpaidSlots.length?[]:unpaidSlots.map(s=>s.order)})} style={{marginTop:8,background:'none',border:'none',color:C.gd,fontSize:12,fontWeight:600,cursor:'pointer',padding:0}}>{nbSelected===unpaidSlots.length?'Tout désélectionner':`Sélectionner toutes les places (${unpaidSlots.length})`}</button>}
- </>
- )}
- {errors.slotOrder&&<p style={{color:C.rd,fontSize:12,marginTop:4}}>{errors.slotOrder}</p>}
- </div>
- )}
 
- {member&&unpaidSlots.length===1&&form.slotOrders.length===0&&(()=>{setTimeout(()=>f({slotOrders:[unpaidSlots[0].order]}),0);return null})()}
-
- {penaltyRate>0&&(
+ {penaltyRate>0&&member&&(
  <div style={{backgroundColor:C.ambl,borderRadius:8,padding:'10px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
  <div>
  <div style={{fontSize:13,color:C.ambd,fontWeight:600,display:'flex',alignItems:'center',gap:5}}><Percent size={13}/> Pénalité de retard ({penaltyRate}%)</div>
- <div style={{fontSize:11,color:C.amb,marginTop:2}}>+ {fmt(Math.round(base*penaltyRate/100),sym)}</div>
+ <div style={{fontSize:11,color:C.amb,marginTop:2}}>+ {fmt(penaltyUnit,sym)} par cycle passé payé, déduit du montant reçu</div>
  </div>
  <Toggle on={form.withPenalty} onChange={()=>f({withPenalty:!form.withPenalty})}/>
  </div>
  )}
 
- <div style={{backgroundColor:C.gl,borderRadius:8,padding:'10px 12px'}}>
- <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
- <span style={{fontSize:13,color:C.gd,fontWeight:600}}>Montant à payer</span>
- <span style={{fontSize:18,fontWeight:800,color:C.g}}>{fmt(totalAmt,sym)}</span>
+ {member&&A>0&&(
+ <div style={{backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:10,overflow:'hidden'}}>
+ <div style={{padding:'8px 12px',fontSize:11,fontWeight:700,color:C.text2,textTransform:'uppercase',letterSpacing:0.5,backgroundColor:C.gr}}>Répartition automatique</div>
+ {lines.map(l=>(
+ <div key={l.cycle+'-'+l.slotOrder} style={{display:'flex',justifyContent:'space-between',padding:'8px 12px',borderTop:`0.5px solid ${C.gr}`,fontSize:13}}>
+ <span style={{color:C.text}}>{lineLabel(l)}{l.full?'':' (partiel)'}</span>
+ <span style={{fontWeight:700,color:l.full?C.g:C.amb}}>{fmt(l.amount+l.penalty,sym)}</span>
  </div>
- {nbSelected>0&&<div style={{fontSize:11,color:C.text2,marginTop:4}}>{nbSelected} tour{nbSelected>1?'s':''} × {fmt(base,sym)}{penaltyAmt>0?` + ${fmt(penaltyAmt,sym)} pénalité/tour`:''}</div>}
+ ))}
+ {after.map(a=>(
+ <div key={'r'+a.cycle+'-'+a.slotOrder} style={{display:'flex',justifyContent:'space-between',padding:'8px 12px',borderTop:`0.5px solid ${C.gr}`,fontSize:13,backgroundColor:C.rdl}}>
+ <span style={{color:C.rd}}>Reste à payer · {lineLabel(a)}</span>
+ <span style={{fontWeight:700,color:C.rd}}>{fmt(a.amount,sym)}</span>
  </div>
+ ))}
+ <div style={{display:'flex',justifyContent:'space-between',padding:'10px 12px',backgroundColor:C.gl}}>
+ <span style={{fontSize:13,fontWeight:700,color:C.gd}}>Total payé</span>
+ <span style={{fontSize:16,fontWeight:800,color:C.g}}>{fmt(totalPaid,sym)}</span>
+ </div>
+ </div>
+ )}
 
  <div style={{display:'flex',gap:8}}>
  <div style={{flex:1}}>
@@ -2003,21 +2040,21 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  <input style={inp} type="text" placeholder="Ex: Paiement anticipé..." value={form.note} onChange={e=>f({note:e.target.value})}/>
  </div>
 
- <button onClick={requestSubmit} disabled={unpaidSlots.length===0}
- style={{backgroundColor:unpaidSlots.length===0?C.grb:C.g,color:'#fff',border:'none',borderRadius:12,padding:14,fontSize:15,fontWeight:700,cursor:unpaidSlots.length===0?'not-allowed':'pointer',opacity:unpaidSlots.length===0?0.6:1,marginBottom:16}}>
+ <button onClick={requestSubmit} disabled={!member||!(A>0)}
+ style={{backgroundColor:(!member||!(A>0))?C.grb:C.g,color:'#fff',border:'none',borderRadius:12,padding:14,fontSize:15,fontWeight:700,cursor:(!member||!(A>0))?'not-allowed':'pointer',opacity:(!member||!(A>0))?0.6:1,marginBottom:16}}>
  Enregistrer
  </button>
  </div>
  {confirmOpen && (
  <div style={{position:'fixed',inset:0,backgroundColor:'rgba(0,0,0,0.55)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
- <div style={{width:'100%',maxWidth:480,backgroundColor:C.white,borderRadius:'20px 20px 0 0',padding:'22px 20px calc(env(safe-area-inset-bottom) + 20px)'}}>
+ <div style={{width:'100%',maxWidth:480,maxHeight:'90dvh',overflowY:'auto',backgroundColor:C.white,borderRadius:'20px 20px 0 0',padding:'22px 20px calc(env(safe-area-inset-bottom) + 20px)',boxSizing:'border-box'}}>
  <div style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:14}}>Confirmer le paiement</div>
  <div style={{backgroundColor:C.bg,borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:8,marginBottom:18}}>
  {[
  {l:'Membre',v:member?.name||''},
- {l:'Tour(s)',v:form.slotOrders.slice().sort((a,b)=>a-b).map(o=>`#${o}`).join(', ')},
- {l:'Cycle',v:`Cycle ${currentCycle}`},
- {l:'Montant',v:fmt(totalAmt,sym)},
+ {l:'Montant reçu',v:fmt(totalPaid,sym)},
+ ...lines.map(l=>({l:`${lineLabel(l)}${l.full?'':' (partiel)'}`,v:fmt(l.amount+l.penalty,sym)})),
+ ...after.map(a=>({l:`Reste · ${lineLabel(a)}`,v:fmt(a.amount,sym)})),
  {l:'Mode',v:form.mode},
  {l:'Date',v:fmtDate(form.date)},
  ].map(({l,v})=>(
@@ -2046,7 +2083,7 @@ export function ImpayesScreen({config,members,payments,payouts,onBack,onPay}) {
  const nbSlots=config.nbSlots||config.nbMembers||members.length||1
  const closedSlots=new Set(payouts.map(p=>p.slotOrder||p.cycle))
  const activeSlots=Array.from({length:nbSlots},(_,i)=>i+1).filter(o=>!closedSlots.has(o))
- const paidSlots=new Set(payments.filter(p=>p.cycle===currentCycle&&p.type==='cotisation').map(p=>p.slotOrder))
+ const paidSlots=completeSlots(payments,currentCycle,config.cotisation)
  const unpaid=(tontineNotStarted(config)?[]:activeSlots.filter(o=>!paidSlots.has(o))).map(order=>{
  const member=members.find(m=>m.slots?m.slots.some(s=>s.order===order):m.order===order)
  return {order,member}
@@ -2100,7 +2137,7 @@ export function NotificationsScreen({config,members,payments,payouts,forcedAdvan
  const currentCycle=config.currentCycle||1
  const nbSlots=config.nbSlots||config.nbMembers||members.length||1
  const cyclePayments=payments.filter(p=>p.cycle===currentCycle&&p.type==='cotisation')
- const paidSlotOrders=new Set(cyclePayments.map(p=>p.slotOrder))
+ const paidSlotOrders=completeSlots(payments,currentCycle,config.cotisation)
  const closedSlots=new Set(payouts.map(p=>p.slotOrder||p.cycle))
  const activeSlots=Array.from({length:nbSlots},(_,i)=>i+1).filter(o=>!closedSlots.has(o))
  const unpaidSlots=tontineNotStarted(config)?[]:activeSlots.filter(o=>!paidSlotOrders.has(o))
@@ -2190,7 +2227,7 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  const totalCollected=payments.filter(p=>p.type==='cotisation').reduce((s,p)=>s+(p.amount||0),0)
  const totalPaid=payouts.reduce((s,p)=>s+(p.amount||0),0)
  const cycleCollected=payments.filter(p=>p.type==='cotisation'&&p.cycle===currentCycle).reduce((s,p)=>s+(p.amount||0),0)
- const paidSlots=new Set(payments.filter(p=>p.cycle===currentCycle&&p.type==='cotisation').map(p=>p.slotOrder))
+ const paidSlots=completeSlots(payments,currentCycle,config.cotisation)
  const closedSlots=new Set(payouts.map(p=>p.slotOrder||p.cycle))
  const activeSlots=Array.from({length:nbSlots},(_,i)=>i+1).filter(o=>!closedSlots.has(o))
  const unpaidCount=tontineNotStarted(config)?0:activeSlots.filter(o=>!paidSlots.has(o)).length
@@ -2203,16 +2240,16 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  const targetCycle=versForm.targetCycle?Number(versForm.targetCycle):(pendingCycles[0]||currentCycle)
  const targetPayments=payments.filter(p=>p.cycle===targetCycle&&p.type==='cotisation')
  const targetBrut=targetPayments.reduce((s,p)=>s+(p.amount||0),0)
- const targetPaidSlots=new Set(targetPayments.map(p=>p.slotOrder))
+ const targetPaidSlots=completeSlots(payments,targetCycle,config.cotisation)
  const targetUnpaidMembers=activeSlots.filter(o=>!targetPaidSlots.has(o)).map(order=>members.find(m=>m.slots?m.slots.some(s=>s.order===order):m.order===order)).filter(Boolean)
  const targetFraisAmt=Math.round(targetBrut*fraisPct/100)
  const targetNet=targetBrut-targetFraisAmt
  const enCaisse=payments.filter(p=>p.type==='cotisation'&&!closedCycles.has(p.cycle)).reduce((s,p)=>s+(p.amount||0),0)
  const lateRows=tontineNotStarted(config)?[]:members.filter(m=>m.status!=='sorti').map(m=>{
  const orders=m.slots?m.slots.map(x=>x.order):[m.order].filter(Boolean)
- let late=0
- orders.forEach(o=>{ for(let c=1;c<=currentCycle;c++){ if(!payments.some(p=>p.type==='cotisation'&&p.slotOrder===o&&p.cycle===c)) late++ } })
- return {m,late}
+ let late=0,owed=0
+ orders.forEach(o=>{ for(let c=1;c<=currentCycle;c++){ {const rem=slotRemaining(payments,o,c,config.cotisation);if(rem>0){late++;owed+=rem}} } })
+ return {m,late,owed}
  }).filter(r=>r.late>0)
 
  const slotRows=Array.from({length:nbSlots},(_,i)=>{
@@ -2475,10 +2512,10 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  {lateRows.length>0&&(
  <div style={{margin:'0 14px 8px',backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:10,overflow:'hidden'}}>
  <div style={{padding:'8px 12px',fontSize:11,fontWeight:700,color:C.rd,textTransform:'uppercase',letterSpacing:0.5,backgroundColor:C.rdl}}>Retards par membre</div>
- {lateRows.map(({m,late})=>(
+ {lateRows.map(({m,late,owed})=>(
  <div key={m.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',borderTop:`0.5px solid ${C.gr}`}}>
  <span style={{fontSize:13,fontWeight:600,color:C.text}}>{m.name}</span>
- <span style={{fontSize:12,color:C.rd,fontWeight:700}}>{late} tour{late>1?'s':''} · {fmt(late*(config.cotisation||0),sym)}</span>
+ <span style={{fontSize:12,color:C.rd,fontWeight:700}}>{late} tour{late>1?'s':''} · {fmt(owed,sym)}</span>
  </div>
  ))}
  </div>
