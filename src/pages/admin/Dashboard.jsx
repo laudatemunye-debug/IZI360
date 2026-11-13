@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import QRCode from 'qrcode'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import LikelembaAdmin from './LikelembaAdmin'
 
 const API = 'https://izi360-backend.vercel.app/api'
 const SITE_URL = 'https://izi-360.vercel.app'
@@ -456,6 +457,7 @@ export default function AdminDashboard() {
     { key: 'beautycrm', label: 'Beauty CRM', icon: '💄' },
     { key: 'formations', label: 'Formations', icon: '🎓' },
     { key: 'autorisations', label: 'Autorisations & Accès', icon: '🔐' },
+    { key: 'likelemba', label: 'Likelemba', icon: '📱' },
   ]
 
   const inp = { width: '100%', padding: '10px 12px', backgroundColor: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', color: T.text, fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }
@@ -512,6 +514,7 @@ export default function AdminDashboard() {
         )}
         {message && <div style={{ backgroundColor: T.accentDim, border: `1px solid rgba(29,158,117,0.3)`, borderRadius: '8px', padding: '10px 16px', marginBottom: '20px', color: T.accent, fontSize: '14px' }}>{message}</div>}
         {loading && <p style={{ color: T.textSub }}>Chargement...</p>}
+        {!loading && page === 'likelemba' && <LikelembaAdmin api={API} headers={headers} T={T} />}
 
         {/* DASHBOARD */}
         {!loading && page === 'stats' && (
