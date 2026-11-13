@@ -4,11 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=auto" />
     <meta name="theme-color" content="#1D9E75" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Likelemba" />
     <meta name="description" content="Gestion de tontine simple et fiable, 100% hors ligne." />
     <title>Likelemba — Gestion de tontine</title>
@@ -21,7 +21,7 @@
       var sa=window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
       var h=window.innerHeight,w=window.innerWidth;
       var sh=Math.max(screen.width,screen.height);
-      if(ios&&sa&&h>w&&sh>h&&sh-h<=50){de.style.setProperty('--app-h',sh+'px');de.style.setProperty('--app-gap',(sh-h)+'px')}
+      if(false&&ios&&sa&&h>w&&sh>h&&sh-h<=50){de.style.setProperty('--app-h',sh+'px');de.style.setProperty('--app-gap',(sh-h)+'px')}
       else{de.style.removeProperty('--app-h');de.style.removeProperty('--app-gap')}
     }catch(e){}
   }
