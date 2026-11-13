@@ -12,7 +12,7 @@ const items = [
 
 export default function BottomNav({ current, onNav }) {
   return (
-    <div style={{ position:'fixed', bottom:'calc(var(--app-gap, 0px) * -1)', left:0, right:0, backgroundColor:C.white, borderTop:`1px solid ${C.grb}`, display:'flex', maxWidth:480, margin:'0 auto', zIndex:100, paddingBottom:'env(safe-area-inset-bottom)' }}>
+    <div style={{ position:'fixed', bottom:0, left:0, right:0, backgroundColor:C.white, borderTop:`1px solid ${C.grb}`, display:'flex', maxWidth:480, margin:'0 auto', zIndex:100, paddingBottom:'env(safe-area-inset-bottom)' }}>
       {items.map(({ key, label, Icon }) => {
         const active = current === key
         return (
