@@ -123,4 +123,4 @@ html, body { background: #ffffff; }
 
 /* fixed-root-v1 : l'app remplit tout l'écran */
 html, body { height: 100% !important; margin: 0; overflow: hidden; background: #f4f4ef !important; }
-#root { position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; height: auto !important; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#root { position: fixed !important; top: 0; left: 0; right: 0; bottom: auto; height: var(--app-h, 100%) !important; overflow-y: auto; -webkit-overflow-scrolling: touch; }
