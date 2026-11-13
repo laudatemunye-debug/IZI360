@@ -116,3 +116,7 @@ div:has(> input[type="date"]) { min-width: 0; }
 /* fill-screen-v1 */
 html, body { height: var(--app-h, 100%); }
 #root { height: var(--app-h, 100%); }
+
+/* safe-area-v1 */
+html, body { background: #ffffff; }
+#root { background: #f4f4ef; }
