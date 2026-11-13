@@ -112,3 +112,7 @@ input[type="date"], input[type="time"], input[type="datetime-local"] {
 }
 input[type="date"]::-webkit-date-and-time-value { text-align: left; min-width: 0; }
 div:has(> input[type="date"]) { min-width: 0; }
+
+/* fill-screen-v1 */
+html, body { height: var(--app-h, 100%); }
+#root { height: var(--app-h, 100%); }

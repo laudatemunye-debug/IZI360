@@ -15,8 +15,8 @@ export default function AssociationDashboard({ association, onOpenModule, onBack
   const typeLabel = ASSOCIATION_TYPES[association.type]?.label || association.type
 
   return (
-    <div style={{ position: 'fixed', inset: 0, height: '100dvh', display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
-      <div style={{ width: '100%', maxWidth: 1100, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, height: 'var(--app-h, 100dvh)', display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
+      <div style={{ width: '100%', maxWidth: 1100, display: 'flex', flexDirection: 'column', height: 'var(--app-h, 100dvh)', overflow: 'hidden' }}>
 
         <div style={{ backgroundColor: C.g, padding: 'calc(env(safe-area-inset-top) + 16px) 20px 16px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: 9, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>

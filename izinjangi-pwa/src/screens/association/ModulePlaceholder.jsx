@@ -4,8 +4,8 @@ const C = { g: '#1D9E75', text2: '#5F5E5A', grb: '#D3D1C7', white: '#FFFFFF', bg
 
 export default function ModulePlaceholder({ moduleLabel, onBack }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, height: '100dvh', display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
-      <div style={{ width: '100%', maxWidth: 680, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, height: 'var(--app-h, 100dvh)', display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
+      <div style={{ width: '100%', maxWidth: 680, display: 'flex', flexDirection: 'column', height: 'var(--app-h, 100dvh)', overflow: 'hidden' }}>
 
         <div style={{ backgroundColor: C.g, padding: 'calc(env(safe-area-inset-top) + 16px) 20px 16px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: 9, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>

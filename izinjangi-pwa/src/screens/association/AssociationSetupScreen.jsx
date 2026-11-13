@@ -27,8 +27,8 @@ export default function AssociationSetupScreen({ onDone, onBack }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, height: '100dvh', display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
-      <div style={{ width: '100%', maxWidth: 720, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, height: 'var(--app-h, 100dvh)', display: 'flex', justifyContent: 'center', backgroundColor: C.bg }}>
+      <div style={{ width: '100%', maxWidth: 720, display: 'flex', flexDirection: 'column', height: 'var(--app-h, 100dvh)', overflow: 'hidden' }}>
 
         <div style={{ backgroundColor: C.g, padding: 'calc(env(safe-area-inset-top) + 16px) 20px 16px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           {onBack && (

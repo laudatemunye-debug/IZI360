@@ -12,6 +12,25 @@
     <meta name="apple-mobile-web-app-title" content="Likelemba" />
     <meta name="description" content="Gestion de tontine simple et fiable, 100% hors ligne." />
     <title>Likelemba — Gestion de tontine</title>
+  <script>/* app-h-fix */
+(function(){
+  function setH(){
+    var de=document.documentElement;
+    try{
+      var ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+      var sa=window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
+      var h=window.innerHeight,w=window.innerWidth;
+      var sh=Math.max(screen.width,screen.height);
+      if(ios&&sa&&h>w&&sh>h&&sh-h<=50){de.style.setProperty('--app-h',sh+'px')}
+      else{de.style.removeProperty('--app-h')}
+    }catch(e){}
+  }
+  setH();
+  window.addEventListener('resize',setH);
+  window.addEventListener('orientationchange',function(){setTimeout(setH,300)});
+  window.addEventListener('pageshow',setH);
+})();
+</script>
   </head>
   <body>
     <div id="root"></div>

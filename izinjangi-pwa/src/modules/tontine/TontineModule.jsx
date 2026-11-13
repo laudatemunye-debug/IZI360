@@ -3,6 +3,8 @@ const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2
 import { SetupScreen, LockScreen, TontineSelectScreen, HomeScreen, MembresScreen, AddMembreScreen, FicheMembreScreen, PaiementScreen, ImpayesScreen, RapportScreen, ParametresScreen, NotificationsScreen } from '../../screens/AllScreens'
 import BottomNav from '../../components/BottomNav'
 import { tontineKey, getTontinesForAssociation, saveTontinesForAssociation } from '../../data/associations'
+import { pingServer, loadInbox, markInboxRead, voteOnPoll, needsPushPrompt } from '../../data/likelemba'
+import { NotifPrompt } from '../../components/LikelembaInbox'
 
 const uid = () => Math.random().toString(36).slice(2,10).toUpperCase()
 
@@ -23,6 +25,27 @@ export default function TontineModule({ assocId, onExit }) {
   const [subScreen,    setSubScreen]    = useState(null)
   const [selectedMember, setSelectedMember] = useState(null)
   const [prefillMemberId, setPrefillMemberId] = useState(null)
+  const [inbox, setInbox] = useState(() => loadInbox())
+  const [promptOpen, setPromptOpen] = useState(false)
+  const doPing = useCallback(() => {
+    if (!config) return
+    pingServer(config, members).then(setInbox)
+  }, [config, members])
+  useEffect(() => {
+    if (appState !== 'app' || !config) return
+    doPing()
+    if (needsPushPrompt()) {
+      const tm = setTimeout(() => setPromptOpen(true), 1500)
+      return () => clearTimeout(tm)
+    }
+  }, [appState, activeTontineId]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (appState !== 'app') return
+    const id = setInterval(() => { if (document.visibilityState === 'visible') doPing() }, 10 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [appState, doPing])
+  const handleVote = async (pollId, idx) => { const n = await voteOnPoll(pollId, idx); setInbox(n); return n }
+  const handleReadInbox = () => setInbox((prev) => markInboxRead(prev))
 
   useEffect(() => {
     const list = getTontinesForAssociation(assocId)
@@ -278,7 +301,7 @@ export default function TontineModule({ assocId, onExit }) {
   const nav = (sc) => { setSubScreen(null); setScreen(sc) }
 
   if (loading) return (
-    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100dvh', backgroundColor:'#1D9E75' }}>
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'var(--app-h, 100dvh)', backgroundColor:'#1D9E75' }}>
       <p style={{ color:'#fff', fontSize:16 }}>Chargement…</p>
     </div>
   )
@@ -300,7 +323,7 @@ export default function TontineModule({ assocId, onExit }) {
   )
 
   const wrap = (child) => (
-    <div style={{ maxWidth:480, margin:'0 auto', height:'100dvh', backgroundColor:'#F4F4F0', display:'flex', flexDirection:'column' }}>
+    <div style={{ maxWidth:480, margin:'0 auto', height:'var(--app-h, 100dvh)', backgroundColor:'#F4F4F0', display:'flex', flexDirection:'column' }}>
       {child}
     </div>
   )
@@ -345,7 +368,7 @@ export default function TontineModule({ assocId, onExit }) {
   )
 
   if (subScreen === 'notifications') return wrap(
-    <NotificationsScreen
+    <NotificationsScreen inbox={inbox} onVote={handleVote} onRead={handleReadInbox}
       config={config} members={members} payments={payments} payouts={payouts} forcedAdvances={forcedAdvances}
       onBack={() => setSubScreen(null)}
       onPay={(memberId) => { setPrefillMemberId(memberId); setSubScreen('paiement') }}
@@ -356,7 +379,7 @@ export default function TontineModule({ assocId, onExit }) {
   const mainContent = () => {
     switch(screen) {
       case 'home':
-        return <HomeScreen config={config} members={members} payments={payments} payouts={payouts} cycles={cycles} forcedAdvances={forcedAdvances}
+        return <HomeScreen inbox={inbox} config={config} members={members} payments={payments} payouts={payouts} cycles={cycles} forcedAdvances={forcedAdvances}
           nav={(sc) => {
             if (sc === 'paiement') setSubScreen('paiement')
             else if (sc === 'impayes') setSubScreen('impayes')
@@ -382,7 +405,8 @@ export default function TontineModule({ assocId, onExit }) {
   }
 
   return (
-    <div style={{ maxWidth:480, margin:'0 auto', height:'100dvh', backgroundColor:'#F4F4F0', display:'flex', flexDirection:'column', position:'relative' }}>
+    <div style={{ maxWidth:480, margin:'0 auto', height:'var(--app-h, 100dvh)', backgroundColor:'#F4F4F0', display:'flex', flexDirection:'column', position:'relative' }}>
+      {promptOpen && <NotifPrompt onDone={(ok) => { setPromptOpen(false); if (ok) doPing() }} />}
       {mainContent()}
       <BottomNav current={screen} onNav={nav} />
     </div>

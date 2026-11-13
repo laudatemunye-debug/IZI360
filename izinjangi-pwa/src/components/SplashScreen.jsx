@@ -4,7 +4,7 @@ import { getAppLogo } from '../data/appIdentity'
 export default function SplashScreen({ progress = 0 }) {
   const pct = Math.min(100, Math.max(0, Math.round(progress)))
   return (
-    <div style={{ height: '100dvh', maxWidth: 480, margin: '0 auto', backgroundColor: '#F4F4F0', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(env(safe-area-inset-top) + 14vh) 32px calc(env(safe-area-inset-bottom) + 40px)', boxSizing: 'border-box' }}>
+    <div style={{ height: 'var(--app-h, 100dvh)', maxWidth: 480, margin: '0 auto', backgroundColor: '#F4F4F0', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(env(safe-area-inset-top) + 14vh) 32px calc(env(safe-area-inset-bottom) + 40px)', boxSizing: 'border-box' }}>
       <div style={{ width: 112, height: 112, borderRadius: 30, backgroundColor: '#fff', border: '1px solid #D3D1C7', boxShadow: '0 10px 28px rgba(8,80,65,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img src={getAppLogo() || logoLikelemba} alt="Likelemba" style={{ width: '72%', height: '72%', objectFit: 'contain', borderRadius: 12 }} />
       </div>

@@ -1,5 +1,8 @@
 import { getCycleDueDate } from '../data/frequency'
 import { newChallenge, recoveryRef, recoveryAvailable, verifyRecovery } from '../data/recovery'
+import SuperAdmin from '../components/SuperAdmin'
+import { InboxSection, inboxHas } from '../components/LikelembaInbox'
+import { unreadCount } from '../data/likelemba'
 // ============================================================
 // Likelemba — AllScreens.jsx
 // Design cohérent, iconographie lucide-react uniquement (zéro emoji)
@@ -361,7 +364,7 @@ const SetupHeader = ({title,sub,step,onBack}) => (
 
 export function TontineSelectScreen({tontines, onSelect, onNew, onExit}) {
  return (
- <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column'}}>
+ <div style={{height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column'}}>
  <div style={{padding:'calc(env(safe-area-inset-top) + 14px) 24px 18px',textAlign:'center'}}>
  {onExit && (
    <div style={{textAlign:'left',marginBottom:6}}>
@@ -440,7 +443,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  const btn={backgroundColor:C.g,color:'#fff',border:'none',borderRadius:12,padding:13,fontSize:15,fontWeight:700,cursor:'pointer',marginTop:8,width:'100%'}
 
  if(step===0) return (
- <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.bg,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px'}}>
+ <div style={{height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',backgroundColor:C.bg,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px'}}>
  <div style={{width:96,height:96,borderRadius:26,backgroundColor:C.white,border:`1px solid ${C.grb}`,boxShadow:'0 8px 24px rgba(8,80,65,0.14)',display:'flex',alignItems:'center',justifyContent:'center'}}>
  <img src={getAppLogo() || tontineLogoDefault} alt="Logo" style={{width:'70%',height:'70%',objectFit:'contain',borderRadius:12}}/>
  </div>
@@ -451,7 +454,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  </div>
  )
  if(step===1) return (
- <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
+ <div style={{height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
  <SetupHeader title="Nouvelle tontine" sub="Étape 1 / 3 — Informations" step={step} onBack={back}/>
  <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12}}>
  {[
@@ -552,7 +555,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  </div>
  )
  if(step===2) return (
- <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
+ <div style={{height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
  <SetupHeader title="Devise" sub="Étape 2 / 3 — Sélectionnez votre devise" step={step} onBack={back}/>
  <div style={{padding:'12px 16px 8px'}}>
  <input style={inp} placeholder="Rechercher..." value={currSearch} onChange={e=>setCurrSearch(e.target.value)}/>
@@ -575,7 +578,7 @@ export function SetupScreen({onDone, existingUsernames=[], onBack=null}) {
  </div>
  )
  if(step===3) return (
- <div style={{height:'100dvh',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
+ <div style={{height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',backgroundColor:C.bg}}>
  <SetupHeader title="Identifiants de connexion" sub="Étape 3 / 3 — Sécurisez l'accès" step={step} onBack={back}/>
  <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12}}>
  <p style={{fontSize:14,color:C.text2,margin:0}}>Ces identifiants protègent l'accès à votre tontine</p>
@@ -681,7 +684,7 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  const del=()=>setPin(p=>p.slice(0,-1))
 
  if(forgot&&config.securityQuestion&&!showWipe) return (
- <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
+ <div style={{position:'fixed',inset:0,height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
  <IconCircle icon={ShieldCheck} bg="rgba(255,255,255,0.15)" fg="#fff" size={64} iconSize={30}/>
  <h1 style={{color:'#fff',fontSize:19,fontWeight:800,marginTop:16,textAlign:'center'}}>Réinitialiser le PIN</h1>
  <div style={{width:'100%',maxWidth:300,marginTop:18}}>
@@ -708,7 +711,7 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  </div>
  )
  if(forgot&&(showWipe||!config.securityQuestion)) return (
- <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
+ <div style={{position:'fixed',inset:0,height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
  <IconCircle icon={ShieldCheck} bg="rgba(255,255,255,0.15)" fg="#fff" size={64} iconSize={30}/>
  <h1 style={{color:'#fff',fontSize:19,fontWeight:800,marginTop:16,textAlign:'center'}}>Accès protégé</h1>
  <p style={{color:'rgba(255,255,255,0.8)',fontSize:14,textAlign:'center',marginTop:10,lineHeight:'20px',maxWidth:320}}>
@@ -727,7 +730,7 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  </div>
  )
  if(forgot) return (
- <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
+ <div style={{position:'fixed',inset:0,height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',backgroundColor:C.gd,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,overflowY:'auto',boxSizing:'border-box'}}>
    <IconCircle icon={TriangleAlert} bg="rgba(255,255,255,0.15)" fg="#fff" size={64} iconSize={30}/>
    <h1 style={{color:'#fff',fontSize:19,fontWeight:800,marginTop:16,textAlign:'center'}}>PIN oublié</h1>
    <p style={{color:'rgba(255,255,255,0.75)',fontSize:13,textAlign:'center',marginTop:10,lineHeight:'19px',maxWidth:320}}>
@@ -752,7 +755,7 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  )
 
  return (
- <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'calc(env(safe-area-inset-top) + 20px) 24px calc(env(safe-area-inset-bottom) + 20px)',overflowY:'auto',boxSizing:'border-box'}}>
+ <div style={{position:'fixed',inset:0,height:'var(--app-h, 100dvh)',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'calc(env(safe-area-inset-top) + 20px) 24px calc(env(safe-area-inset-bottom) + 20px)',overflowY:'auto',boxSizing:'border-box'}}>
  <div style={{width:64,height:64,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:12,flexShrink:0}}>
    <Lock size={30} color="#fff"/>
  </div>
@@ -821,7 +824,7 @@ const memberCredibility=(m,config,payments,currentCycle)=>{
 
 /* ---------------------------- Accueil ---------------------------- */
 
-export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvances=[],nav}) {
+export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvances=[],nav,inbox=null}) {
  const sym=config.currency?.symbol||config.currency?.code||'F'
  const currentCycle=config.currentCycle||1
  const nbSlots=config.nbSlots||config.nbMembers||members.length||1
@@ -857,6 +860,9 @@ export function HomeScreen({config,members,payments,payouts,cycles,forcedAdvance
  const fm=members.find(m=>m.id===f.memberId)
  notifications.push({id:'forced-'+f.id,type:'forced',title:'Versement en retard',sub:`Faute de cotisation de ${f.memberName} — Cycle ${f.cycle}`,icon:TriangleAlert,bg:C.rdl,fg:C.rd,members:fm?[fm]:[],cycle:f.cycle})
  })
+
+ const inboxUnread=unreadCount(inbox)
+ if(inboxUnread>0) notifications.push({id:'likelemba-inbox',type:'likelemba',title:'Annonces Likelemba',sub:`${inboxUnread} nouveau${inboxUnread>1?'x':''}`,icon:Bell,bg:C.gl,fg:C.gd})
 
  const quickActions = [
    { Icon:Wallet,      label:'Enregistrer\npaiement', color:C.gl,  fg:C.gd,  screen:'paiement'  },
@@ -2193,7 +2199,7 @@ export function ImpayesScreen({config,members,payments,payouts,onBack,onPay}) {
 
 /* ---------------------------- Rapport ---------------------------- */
 
-export function NotificationsScreen({config,members,payments,payouts,forcedAdvances=[],onBack,onPay,onVerser}) {
+export function NotificationsScreen({config,members,payments,payouts,forcedAdvances=[],onBack,onPay,onVerser,inbox=null,onVote,onRead}) {
  const sym=config.currency?.symbol||config.currency?.code||'F'
  const currentCycle=config.currentCycle||1
  const nbSlots=config.nbSlots||config.nbMembers||members.length||1
@@ -2239,7 +2245,8 @@ export function NotificationsScreen({config,members,payments,payouts,forcedAdvan
  </div>
  </div>
  <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12}}>
- {notifications.length===0&&<div style={{backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:12,padding:24,textAlign:'center',color:C.text2,fontSize:13}}>Aucune notification pour le moment.</div>}
+ <InboxSection inbox={inbox} onVote={onVote} onRead={onRead}/>
+ {notifications.length===0&&!inboxHas(inbox)&&<div style={{backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:12,padding:24,textAlign:'center',color:C.text2,fontSize:13}}>Aucune notification pour le moment.</div>}
  {notifications.map(n=>(
  <div key={n.id} style={{backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:12,padding:14}}>
  <div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
@@ -2793,6 +2800,9 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  const [logoBusy,setLogoBusy]=useState(false)
  const [editField,setEditField]=useState(null)
  const [securityModalOpen,setSecurityModalOpen]=useState(false)
+ const [saOpen,setSaOpen]=useState(false)
+ const saRef=useRef({n:0,t:0})
+ const diagRef=useRef({n:0,t:0})
  const openEdit=(cfg)=>setEditField(cfg)
  const closeEdit=()=>setEditField(null)
  const saveEdit=(rawVal)=>{
@@ -2908,6 +2918,7 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  return (
  <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
  {pinFlow&&<PinModal {...pinModalProps()} error={pinError} onClearError={()=>setPinError('')} onConfirm={pinFlow==='disable'?handleDisableVerify:handlePinStep} onCancel={cancelPin}/>}
+ {saOpen&&<SuperAdmin onClose={()=>setSaOpen(false)}/>}
  {securityModalOpen&&<SecurityQuestionModal config={config} onSave={(q,h)=>{onUpdateConfig({...config,securityQuestion:q,securityAnswerHash:h});setSecurityModalOpen(false)}} onCancel={()=>setSecurityModalOpen(false)}/>}
  {editField&&<EditFieldModal title={editField.title} placeholder={editField.placeholder} initialValue={String(editField.value??'')} multiline={editField.kind==='textarea'} type={editField.kind==='date'?'date':editField.kind.startsWith('number')?'number':'text'} onSave={saveEdit} onCancel={closeEdit}/>}
  {datesModalOpen&&<CotisationDatesModal config={config} onSave={(vals)=>{onUpdateConfig({...config,...vals});setDatesModalOpen(false)}} onCancel={()=>setDatesModalOpen(false)}/>}
@@ -3093,8 +3104,8 @@ export function ParametresScreen({config,members,payments,payouts,assocId,onUpda
  </Section>
 
  <div style={{textAlign:'center',padding:16,fontSize:11,color:C.text2}}>
- <div style={{fontWeight:700,color:C.g}}>Likelemba v1.0</div>
- <div style={{marginTop:3,letterSpacing:0.4}}>Powered by IZIsoft</div>
+ <div onClick={()=>{const r=diagRef.current;const now=Date.now();r.n=(now-r.t>2500)?1:r.n+1;r.t=now;if(r.n>=5){r.n=0;alert(['innerH='+window.innerHeight,'screenH='+screen.height,'vvH='+(window.visualViewport?Math.round(window.visualViewport.height):'-'),'standalone='+(window.navigator.standalone===true),'app-h='+getComputedStyle(document.documentElement).getPropertyValue('--app-h'),'rootH='+Math.round((document.getElementById('root')||{getBoundingClientRect:()=>({height:0})}).getBoundingClientRect().height)].join('\n'))}}} style={{fontWeight:700,color:C.g,userSelect:'none',WebkitUserSelect:'none'}}>Likelemba v1.0</div>
+ <div onClick={()=>{const now=Date.now();const r=saRef.current;r.n=(now-r.t>2500)?1:r.n+1;r.t=now;if(r.n>=7){r.n=0;setSaOpen(true)}}} style={{marginTop:3,letterSpacing:0.4,userSelect:'none',WebkitUserSelect:'none'}}>Powered by IZIsoft</div>
  </div>
  </div>
  </div>
