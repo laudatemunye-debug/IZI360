@@ -752,7 +752,7 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  )
 
  return (
- <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px 24px calc(env(safe-area-inset-bottom) + 24px)',overflowY:'auto',boxSizing:'border-box'}}>
+ <div style={{position:'fixed',inset:0,height:'100dvh',maxWidth:480,margin:'0 auto',backgroundColor:C.g,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'calc(env(safe-area-inset-top) + 20px) 24px calc(env(safe-area-inset-bottom) + 20px)',overflowY:'auto',boxSizing:'border-box'}}>
  <div style={{width:64,height:64,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:12,flexShrink:0}}>
    <Lock size={30} color="#fff"/>
  </div>
@@ -764,12 +764,12 @@ export function LockScreen({config,onUnlock,onForgotPin,onResetPin}) {
  {[0,1,2,3].map(i=><div key={i} style={{width:16,height:16,borderRadius:8,border:'2px solid rgba(255,255,255,0.6)',backgroundColor:pin.length>i?'#fff':'transparent'}}/>)}
  </div>
  {err?<p style={{color:'#FFB4B4',fontSize:13,marginBottom:8}}>{err}</p>:<div style={{height:21}}/>}
- <div style={{display:'flex',flexDirection:'column',gap:12,marginTop:8}}>
+ <div style={{display:'flex',flexDirection:'column',gap:'min(12px,1.4vh)',marginTop:8}}>
  {PAD_KEYS.map((row,ri)=>(
- <div key={ri} style={{display:'flex',gap:16}}>
+ <div key={ri} style={{display:'flex',gap:'min(16px,2.2vw)'}}>
  {row.map((k,ki)=>(
  <button key={ki} onClick={()=>k==='del'?del():k&&press(k)} disabled={!k}
- style={{width:72,height:72,borderRadius:36,backgroundColor:k?'rgba(255,255,255,0.15)':'transparent',border:'none',color:'#fff',fontSize:22,fontWeight:600,cursor:k?'pointer':'default',opacity:k?1:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+ style={{width:'min(72px,9vh)',height:'min(72px,9vh)',borderRadius:'50%',backgroundColor:k?'rgba(255,255,255,0.15)':'transparent',border:'none',color:'#fff',fontSize:22,fontWeight:600,cursor:k?'pointer':'default',opacity:k?1:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
    {k==='del' ? <X size={22}/> : k}
  </button>
  ))}
