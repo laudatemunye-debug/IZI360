@@ -21,8 +21,8 @@
       var sa=window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
       var h=window.innerHeight,w=window.innerWidth;
       var sh=Math.max(screen.width,screen.height);
-      if(ios&&sa&&h>w&&sh>h&&sh-h<=50){de.style.setProperty('--app-h',sh+'px')}
-      else{de.style.removeProperty('--app-h')}
+      if(ios&&sa&&h>w&&sh>h&&sh-h<=50){de.style.setProperty('--app-h',sh+'px');de.style.setProperty('--app-gap',(sh-h)+'px')}
+      else{de.style.removeProperty('--app-h');de.style.removeProperty('--app-gap')}
     }catch(e){}
   }
   setH();
