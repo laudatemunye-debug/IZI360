@@ -1,6 +1,7 @@
 import { getCycleDueDate } from '../data/frequency'
 import { newChallenge, recoveryRef, recoveryAvailable, verifyRecovery } from '../data/recovery'
 import SuperAdmin from '../components/SuperAdmin'
+import { elementToPDF } from '../data/pdfRender'
 import { InboxSection, inboxHas } from '../components/LikelembaInbox'
 import { unreadCount } from '../data/likelemba'
 // ============================================================
@@ -77,15 +78,6 @@ const AV_COLORS = [
 
 const PAD_KEYS = [['1','2','3'],['4','5','6'],['7','8','9'],['','0','del']]
 
-async function elementToPDF(el) {
- const canvas = await html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true})
- const imgData = canvas.toDataURL('image/png')
- const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a6'})
- const w = pdf.internal.pageSize.getWidth()
- const h = (canvas.height*w)/canvas.width
- pdf.addImage(imgData,'PNG',0,0,w,Math.min(h,pdf.internal.pageSize.getHeight()))
- return pdf
-}
 async function printPDFElement(el) {
  try { const pdf = await elementToPDF(el); pdf.autoPrint(); window.open(pdf.output('bloburl'),'_blank') }
  catch(e){ console.error('PDF error',e); window.print() }
