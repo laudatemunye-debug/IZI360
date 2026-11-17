@@ -124,3 +124,20 @@ html, body { background: #ffffff; }
 /* fixed-root-v1 : l'app remplit tout l'écran */
 html, body { height: 100% !important; margin: 0; overflow: hidden; background: #f4f4ef !important; }
 #root { position: fixed !important; top: 0; left: 0; right: 0; bottom: auto; height: var(--app-h, 100%) !important; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* viewport-robust-v1 : l'app suit la zone réellement visible, les listes défilent */
+html, body { touch-action: auto !important; }
+#root {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  width: 100%;
+  height: auto !important;
+  overflow: hidden !important;
+  touch-action: auto !important;
+}
+[style*="var(--app-h"] { height: 100% !important; }
+[style*="overflow-y: auto"] {
+  min-height: 0;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+}
