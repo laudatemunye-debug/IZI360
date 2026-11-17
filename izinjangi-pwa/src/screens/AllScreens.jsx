@@ -8,7 +8,7 @@ import { unreadCount } from '../data/likelemba'
 // Likelemba — AllScreens.jsx
 // Design cohérent, iconographie lucide-react uniquement (zéro emoji)
 // ============================================================
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import tontineLogoDefault from '../assets/logo-likelemba.png'
@@ -78,8 +78,8 @@ const AV_COLORS = [
 
 const PAD_KEYS = [['1','2','3'],['4','5','6'],['7','8','9'],['','0','del']]
 
-async function printPDFElement(el) {
- try { const pdf = await elementToPDF(el); pdf.autoPrint(); window.open(pdf.output('bloburl'),'_blank') }
+async function printPDFElement(el,opts) {
+ try { const pdf = await elementToPDF(el,opts); pdf.autoPrint(); window.open(pdf.output('bloburl'),'_blank') }
  catch(e){ console.error('PDF error',e); window.print() }
 }
 async function shareViaPDF(el,receiptInfo,tontineName) {
@@ -96,11 +96,11 @@ async function shareViaPDF(el,receiptInfo,tontineName) {
    setTimeout(()=>{ URL.revokeObjectURL(url); window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank') },800)
  } catch(e){ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank') }
 }
-async function shareDocPDF(el,filename,phone,textMsg) {
+async function shareDocPDF(el,filename,phone,textMsg,opts) {
  const digits=(phone||'').replace(/[^0-9]/g,'')
  const waUrl = digits ? `https://wa.me/${digits}?text=${encodeURIComponent(textMsg)}` : `https://wa.me/?text=${encodeURIComponent(textMsg)}`
  try {
- const pdf = await elementToPDF(el)
+ const pdf = await elementToPDF(el,opts)
  const blob = pdf.output('blob')
  const file = new File([blob],filename,{type:'application/pdf'})
  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
@@ -2269,6 +2269,305 @@ export function NotificationsScreen({config,members,payments,payouts,forcedAdvan
  )
 }
 
+const fdShort=(d)=>d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}):''
+const safeName=(s)=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'membre'
+
+function buildReport(config,members,payments){
+ const cot=Number(config.cotisation||0)
+ const currentCycle=config.currentCycle||1
+ const nbCycles=Math.max(Number(config.nbSlots||config.nbMembers||0),currentCycle)
+ const started=!tontineNotStarted(config)
+ const rows=members.filter(m=>m.status!=='sorti').map(m=>{
+ const slots=[...(m.slots||[{order:m.order||1}])].sort((a,b)=>a.order-b.order)
+ const pays=payments.filter(p=>p.type==='cotisation'&&p.memberId===m.id)
+ const received=pays.reduce((t,p)=>t+(Number(p.amount)||0),0)
+ const cycles=[]
+ let paid=0,rest=0,lateOwed=0,lateCount=0,futureRest=0
+ for(let c=1;c<=nbCycles;c++){
+ slots.forEach(s=>{
+ const got=slotPaidAmount(payments,s.order,c)
+ const rem=Math.max(0,cot-got)
+ const late=started&&c<=currentCycle&&rem>0
+ cycles.push({cycle:c,order:s.order,got,rem,late})
+ paid+=got
+ rest+=rem
+ if(late){lateOwed+=rem;lateCount++}
+ if(c>currentCycle) futureRest+=rem
+ })
+ }
+ const totalDue=nbCycles*slots.length*cot
+ const nowDone=slots.every(s=>isSlotComplete(payments,s.order,currentCycle,config.cotisation))
+ const nowAmount=slots.reduce((t,s)=>t+slotPaidAmount(payments,s.order,currentCycle),0)
+ const groups=new Map()
+ pays.forEach(p=>{
+ const key=p.receiptNum||p.id
+ if(!groups.has(key)) groups.set(key,{key,date:p.date,mode:p.mode,receiptNum:p.receiptNum,total:0,lines:[]})
+ const g=groups.get(key)
+ g.total+=Number(p.amount)||0
+ g.lines.push({cycle:p.cycle,order:p.slotOrder,amount:payBase(p),penalty:Number(p.penalty)||0,partial:!!p.partial})
+ })
+ const tx=[...groups.values()].map(g=>({...g,lines:g.lines.sort((a,b)=>a.cycle-b.cycle||a.order-b.order)})).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')))
+ return {m,slots,received,paid,rest,futureRest,totalDue,pct:totalDue>0?Math.min(100,paid*100/totalDue):0,lateOwed,lateCount,cycles,nowDone,nowAmount,tx}
+ })
+ return {cot,currentCycle,nbCycles,started,rows}
+}
+
+const docTh={padding:'7px 8px',fontSize:11,fontWeight:700,color:C.gd,textTransform:'uppercase',letterSpacing:0.4,textAlign:'left',backgroundColor:C.gl}
+const docTd={padding:'7px 8px',fontSize:12,color:C.text,borderBottom:`1px solid ${C.gr}`}
+
+function DocShell({config,title,sub,width,innerRef,children}) {
+ return (
+ <div ref={innerRef} style={{width,backgroundColor:C.white,color:C.text}}>
+ <div style={{backgroundColor:C.g,padding:'18px 16px',textAlign:'center'}}>
+ <div style={{margin:'0 auto',width:48}}><Logo src={config.logo} size={48} bg="#fff" radius={24} border/></div>
+ <div style={{color:'#fff',fontSize:15,fontWeight:700,marginTop:8}}>{config.tontineName}</div>
+ <div style={{color:'rgba(255,255,255,0.85)',fontSize:11,marginTop:3,letterSpacing:0.5,textTransform:'uppercase'}}>{title}</div>
+ </div>
+ <div style={{padding:'12px 16px 0',fontSize:11,color:C.text2}}>{sub}</div>
+ <div style={{padding:'10px 16px 16px'}}>{children}</div>
+ <div style={{padding:'0 16px 14px',textAlign:'center',fontSize:10,color:C.text2}}>Powered by IZIsoft — Likelemba</div>
+ </div>
+ )
+}
+
+function DocListe({kind,data,config,sym,innerRef}) {
+ const today=fdShort(new Date().toISOString())
+ let title='',cols=[],body=[],total=null
+ if(kind==='payes'){
+ const list=data.rows.filter(r=>r.nowDone)
+ title=`Membres à jour — Cycle ${data.currentCycle}`
+ cols=['Membre','Places','Montant du cycle']
+ body=list.map(r=>[r.m.name,String(r.slots.length),fmt(r.nowAmount,sym)])
+ total=['Total',String(list.length)+' membre(s)',fmt(list.reduce((t,r)=>t+r.nowAmount,0),sym)]
+ } else if(kind==='contrib'){
+ title='Contributions par personne'
+ cols=['Membre','Versé','Reste jusqu’à la fin']
+ body=data.rows.map(r=>[r.m.name+(r.slots.length>1?` (${r.slots.length} places)`:''),fmt(r.paid,sym),fmt(r.rest,sym)])
+ total=['Total',fmt(data.rows.reduce((t,r)=>t+r.paid,0),sym),fmt(data.rows.reduce((t,r)=>t+r.rest,0),sym)]
+ } else {
+ const list=data.rows.filter(r=>r.lateCount>0)
+ title='Membres en retard'
+ cols=['Membre','Cycles en retard','Montant dû']
+ body=list.map(r=>[r.m.name,[...new Set(r.cycles.filter(x=>x.late).map(x=>x.cycle))].join(', '),fmt(r.lateOwed,sym)])
+ total=['Total',String(list.length)+' membre(s)',fmt(list.reduce((t,r)=>t+r.lateOwed,0),sym)]
+ }
+ return (
+ <DocShell config={config} title={title} sub={`Édité le ${today} · Cycle ${data.currentCycle}/${data.nbCycles}`} width={560} innerRef={innerRef}>
+ <table style={{width:'100%',borderCollapse:'collapse'}}>
+ <thead><tr>{cols.map((c,i)=><th key={c} style={{...docTh,textAlign:i===0?'left':'right'}}>{c}</th>)}</tr></thead>
+ <tbody>
+ {body.map((r,ri)=>(<tr key={ri}>{r.map((v,i)=><td key={i} style={{...docTd,textAlign:i===0?'left':'right',fontWeight:i===0?700:400}}>{v}</td>)}</tr>))}
+ {body.length===0&&<tr><td colSpan={3} style={{...docTd,color:C.text2}}>Aucun membre.</td></tr>}
+ </tbody>
+ {total&&<tfoot><tr>{total.map((v,i)=><td key={i} style={{padding:'8px',fontSize:12,fontWeight:800,color:C.gd,backgroundColor:C.gl,textAlign:i===0?'left':'right'}}>{v}</td>)}</tr></tfoot>}
+ </table>
+ </DocShell>
+ )
+}
+
+
+function DocMembre({r,data,config,sym,innerRef}) {
+ const multi=r.slots.length>1
+ const shown=r.cycles.filter(x=>x.got>0||x.late)
+ const summary=[
+ ['Membre',r.m.name],
+ ['Places',String(r.slots.length)],
+ ['Total versé',fmt(r.received,sym)],
+ ['Reste à payer jusqu’à la fin',fmt(r.rest,sym)],
+ ['Retard actuel',r.lateOwed>0?fmt(r.lateOwed,sym):'Aucun'],
+ ]
+ return (
+ <DocShell config={config} title="Relevé de contributions" sub={`Édité le ${fdShort(new Date().toISOString())} · Cycle ${data.currentCycle}/${data.nbCycles}`} width={360} innerRef={innerRef}>
+ <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
+ {summary.map(([k,v])=>(
+ <div key={k} style={{display:'flex',justifyContent:'space-between'}}>
+ <span style={{fontSize:12,color:C.text2}}>{k}</span>
+ <span style={{fontSize:12,fontWeight:700,color:C.text}}>{v}</span>
+ </div>
+ ))}
+ </div>
+ <div style={{fontSize:11,fontWeight:700,color:C.gd,textTransform:'uppercase',letterSpacing:0.4,marginBottom:6}}>Paiements reçus</div>
+ <table style={{width:'100%',borderCollapse:'collapse',marginBottom:14}}>
+ <thead><tr><th style={docTh}>Date</th><th style={docTh}>Mode</th><th style={{...docTh,textAlign:'right'}}>Montant</th></tr></thead>
+ <tbody>
+ {r.tx.map(g=>(
+ <tr key={g.key}>
+ <td style={docTd}>{fdShort(g.date)}</td>
+ <td style={docTd}>{g.mode}</td>
+ <td style={{...docTd,textAlign:'right',fontWeight:700}}>{fmt(g.total,sym)}</td>
+ </tr>
+ ))}
+ {r.tx.length===0&&<tr><td colSpan={3} style={{...docTd,color:C.text2}}>Aucun paiement.</td></tr>}
+ </tbody>
+ <tfoot><tr>
+ <td colSpan={2} style={{padding:'8px',fontSize:12,fontWeight:800,color:C.gd,backgroundColor:C.gl}}>Total versé</td>
+ <td style={{padding:'8px',fontSize:12,fontWeight:800,color:C.g,backgroundColor:C.gl,textAlign:'right'}}>{fmt(r.received,sym)}</td>
+ </tr></tfoot>
+ </table>
+ {shown.length>0&&(<>
+ <div style={{fontSize:11,fontWeight:700,color:C.gd,textTransform:'uppercase',letterSpacing:0.4,marginBottom:6}}>Détail par cycle</div>
+ <table style={{width:'100%',borderCollapse:'collapse'}}>
+ <thead><tr><th style={docTh}>Cycle</th>{multi&&<th style={docTh}>Tour</th>}<th style={{...docTh,textAlign:'right'}}>Versé</th><th style={{...docTh,textAlign:'right'}}>Reste</th></tr></thead>
+ <tbody>
+ {shown.map(x=>(
+ <tr key={x.cycle+'-'+x.order}>
+ <td style={docTd}>{x.cycle}</td>
+ {multi&&<td style={docTd}>#{x.order}</td>}
+ <td style={{...docTd,textAlign:'right'}}>{fmt(x.got,sym)}</td>
+ <td style={{...docTd,textAlign:'right',color:x.rem>0?C.rd:C.text,fontWeight:x.rem>0?700:400}}>{x.rem>0?fmt(x.rem,sym):'—'}</td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ </>)}
+ {r.futureRest>0&&<div style={{fontSize:11,color:C.text2,marginTop:10}}>Cycles à venir : {fmt(r.futureRest,sym)} restent à verser jusqu’à la fin de la tontine.</div>}
+ </DocShell>
+ )
+}
+
+
+function RapportListes({config,members,payments}) {
+ const sym=config.currency?.symbol||config.currency?.code||'F'
+ const data=buildReport(config,members,payments)
+ const [tab,setTab]=useState('payes')
+ const [open,setOpen]=useState(null)
+ const [job,setJob]=useState(null)
+ const docRef=useRef(null)
+ const paidRows=data.rows.filter(r=>r.nowDone)
+ const lateRows=data.rows.filter(r=>r.lateCount>0)
+ const busy=!!job
+ const labels={payes:'Membres à jour',contrib:'Contributions par personne',retards:'Membres en retard'}
+
+ useEffect(()=>{
+ if(!job) return
+ let alive=true
+ const tm=setTimeout(async()=>{
+ try{
+ const el=docRef.current
+ if(el){
+ const isM=job.kind==='membre'
+ const r=isM?data.rows.find(x=>x.m.id===job.id):null
+ const opts=isM?undefined:{width:595.28,minHeight:841.89}
+ const fname=isM?`releve-${safeName(r&&r.m.name)}.pdf`:`${safeName(labels[job.kind])}-${safeName(config.tontineName)}.pdf`
+ const text=isM?`Bonjour ${r?r.m.name:''}, voici votre relevé de contributions — ${config.tontineName}.`:`${config.tontineName} — ${labels[job.kind]}`
+ if(job.action==='print') await printPDFElement(el,opts)
+ else await shareDocPDF(el,fname,isM?((r&&r.m.phone)||''):'',text,opts)
+ }
+ }catch(e){ console.error('Rapport PDF',e) }
+ if(alive) setJob(null)
+ },120)
+ return ()=>{alive=false;clearTimeout(tm)}
+ },[job]) // eslint-disable-line react-hooks/exhaustive-deps
+
+ const card={backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:12,padding:12}
+ const chip=(on)=>({padding:'6px 14px',borderRadius:20,border:`1px solid ${on?C.g:C.grb}`,backgroundColor:on?C.gl:C.white,color:on?C.gd:C.text2,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'})
+ const pBtn={flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,backgroundColor:C.g,color:'#fff',border:'none',borderRadius:8,padding:'9px 10px',fontSize:12,fontWeight:700,cursor:busy?'wait':'pointer',opacity:busy?0.6:1,fontFamily:'inherit'}
+ const wBtn={...pBtn,backgroundColor:'#25D366'}
+ const sub={fontSize:11,fontWeight:700,color:C.text2,textTransform:'uppercase',letterSpacing:0.5}
+
+ const btns=(kind,id)=>(
+ <div style={{display:'flex',gap:8,marginTop:10}}>
+ <button disabled={busy} onClick={()=>setJob({kind,id,action:'print'})} style={pBtn}><Printer size={14}/> Imprimer</button>
+ <button disabled={busy} onClick={()=>setJob({kind,id,action:'share'})} style={wBtn}><Share2 size={14}/> Envoyer</button>
+ </div>
+ )
+
+ const detail=(r,mode)=>(
+ <div style={{borderTop:`1px solid ${C.gr}`,marginTop:10,paddingTop:10,display:'flex',flexDirection:'column',gap:8}}>
+ {mode==='contrib'&&(<>
+ <div style={sub}>Paiements reçus</div>
+ {r.tx.length===0&&<div style={{fontSize:12,color:C.text2}}>Aucun paiement enregistré.</div>}
+ {r.tx.map(g=>(
+ <div key={g.key} style={{backgroundColor:C.gr,borderRadius:8,padding:'8px 10px'}}>
+ <div style={{display:'flex',justifyContent:'space-between'}}>
+ <span style={{fontSize:13,fontWeight:800,color:C.g}}>{fmt(g.total,sym)}</span>
+ <span style={{fontSize:11,color:C.text2}}>{fdShort(g.date)} · {g.mode}</span>
+ </div>
+ <div style={{fontSize:11,color:C.text2,marginTop:3}}>{g.lines.map(l=>`Cycle ${l.cycle}${r.slots.length>1?` · Tour #${l.order}`:''} : ${fmt(l.amount+l.penalty,sym)}${l.partial?' (partiel)':''}`).join('  ·  ')}</div>
+ </div>
+ ))}
+ <div style={{fontSize:12,color:C.text}}>Reste à verser jusqu’à la fin : <strong>{fmt(r.rest,sym)}</strong></div>
+ </>)}
+ {mode==='retard'&&(<>
+ <div style={sub}>Cycles en retard</div>
+ {r.cycles.filter(x=>x.late).map(x=>(
+ <div key={x.cycle+'-'+x.order} style={{display:'flex',justifyContent:'space-between',backgroundColor:C.rdl,borderRadius:8,padding:'8px 10px',fontSize:12}}>
+ <span style={{color:C.rd,fontWeight:700}}>Cycle {x.cycle}{r.slots.length>1?` · Tour #${x.order}`:''}</span>
+ <span style={{color:C.rd,fontWeight:700}}>{fmt(x.rem,sym)}{x.got>0?` (déjà ${fmt(x.got,sym)})`:''}</span>
+ </div>
+ ))}
+ </>)}
+ {btns('membre',r.m.id)}
+ <div style={{fontSize:10,color:C.text2,textAlign:'center'}}>Relevé personnel : tous les paiements de {r.m.name}</div>
+ </div>
+ )
+
+ const row=(r,right,sub2,mode)=>(
+ <div key={r.m.id} style={{borderTop:`1px solid ${C.gr}`,padding:'10px 0'}}>
+ <div onClick={()=>setOpen(open===r.m.id?null:r.m.id)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,cursor:'pointer'}}>
+ <div style={{minWidth:0}}>
+ <div style={{fontSize:13,fontWeight:700,color:C.text}}>{r.m.name}{r.slots.length>1?` · ${r.slots.length} places`:''}</div>
+ <div style={{fontSize:11,color:C.text2,marginTop:2}}>{sub2}</div>
+ </div>
+ <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+ {right}
+ <ChevronRight size={15} color={C.text2} style={{transition:'transform .2s',transform:open===r.m.id?'rotate(90deg)':'none'}}/>
+ </div>
+ </div>
+ {mode==='contrib'&&<div style={{marginTop:8}}><ProgBar pct={r.pct}/></div>}
+ {open===r.m.id&&detail(r,mode)}
+ </div>
+ )
+
+ const docEl=!job?null:(job.kind==='membre'
+ ?(data.rows.find(x=>x.m.id===job.id)?<DocMembre r={data.rows.find(x=>x.m.id===job.id)} data={data} config={config} sym={sym} innerRef={docRef}/>:null)
+ :<DocListe kind={job.kind} data={data} config={config} sym={sym} innerRef={docRef}/>)
+
+ return (
+ <div style={{margin:'4px 14px 14px'}}>
+ <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>
+ {[['payes',`Ont payé (${paidRows.length})`],['contrib','Contributions'],['retards',`Retards (${lateRows.length})`]].map(([k,l])=>(
+ <button key={k} onClick={()=>{setTab(k);setOpen(null)}} style={chip(tab===k)}>{l}</button>
+ ))}
+ </div>
+ <div style={card}>
+ {tab==='payes'&&(<>
+ <div style={sub}>Cycle {data.currentCycle} · {paidRows.length}/{data.rows.length} membre(s) à jour</div>
+ {paidRows.length===0&&<div style={{fontSize:12,color:C.text2,padding:'12px 0'}}>Personne n’a encore payé ce cycle.</div>}
+ {paidRows.map(r=>(
+ <div key={r.m.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:`1px solid ${C.gr}`,padding:'10px 0',marginTop:paidRows[0]===r?8:0}}>
+ <div>
+ <div style={{fontSize:13,fontWeight:700,color:C.text}}>{r.m.name}</div>
+ <div style={{fontSize:11,color:C.text2,marginTop:2}}>{r.slots.length} place{r.slots.length>1?'s':''}</div>
+ </div>
+ <div style={{fontSize:13,fontWeight:800,color:C.g}}>{fmt(r.nowAmount,sym)}</div>
+ </div>
+ ))}
+ {btns('payes')}
+ </>)}
+ {tab==='contrib'&&(<>
+ <div style={sub}>Versé et reste à verser jusqu’au cycle {data.nbCycles}</div>
+ <div style={{marginTop:6}}>
+ {data.rows.length===0&&<div style={{fontSize:12,color:C.text2,padding:'12px 0'}}>Aucun membre.</div>}
+ {data.rows.map(r=>row(r,<div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:800,color:C.g}}>{fmt(r.paid,sym)}</div><div style={{fontSize:10,color:C.text2}}>reste {fmt(r.rest,sym)}</div></div>,`${Math.round(r.pct)} % de ${fmt(r.totalDue,sym)}`,'contrib'))}
+ </div>
+ {btns('contrib')}
+ </>)}
+ {tab==='retards'&&(<>
+ <div style={sub}>{lateRows.length} membre(s) en retard · {fmt(lateRows.reduce((t,r)=>t+r.lateOwed,0),sym)}</div>
+ <div style={{marginTop:6}}>
+ {lateRows.length===0&&<div style={{fontSize:12,color:C.text2,padding:'12px 0'}}>{data.started?'Aucun retard.':'La tontine n’a pas encore démarré.'}</div>}
+ {lateRows.map(r=>row(r,<div style={{fontSize:13,fontWeight:800,color:C.rd}}>{fmt(r.lateOwed,sym)}</div>,`${r.lateCount} cycle${r.lateCount>1?'s':''} en retard`,'retard'))}
+ </div>
+ {lateRows.length>0&&btns('retards')}
+ </>)}
+ </div>
+ {docEl&&<div aria-hidden="true" style={{position:'fixed',left:-10000,top:0,pointerEvents:'none'}}>{docEl}</div>}
+ </div>
+ )
+}
+
+
 export function RapportScreen({config,members,payments,payouts,cycles,forcedAdvances,onPayout,onRenew,onForceAdvance,onUpdateConfig,onBack}) {
  const sym=config.currency?.symbol||config.currency?.code||'F'
  const nbSlots=config.nbSlots||config.nbMembers||members.length||1
@@ -2569,20 +2868,10 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  </div>
  ))}
  </div>
- {lateRows.length>0&&(
- <div style={{margin:'0 14px 8px',backgroundColor:C.white,border:`1px solid ${C.grb}`,borderRadius:10,overflow:'hidden'}}>
- <div style={{padding:'8px 12px',fontSize:11,fontWeight:700,color:C.rd,textTransform:'uppercase',letterSpacing:0.5,backgroundColor:C.rdl}}>Retards par membre</div>
- {lateRows.map(({m,late,owed})=>(
- <div key={m.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 12px',borderTop:`0.5px solid ${C.gr}`}}>
- <span style={{fontSize:13,fontWeight:600,color:C.text}}>{m.name}</span>
- <span style={{fontSize:12,color:C.rd,fontWeight:700}}>{late} tour{late>1?'s':''} · {fmt(owed,sym)}</span>
- </div>
- ))}
- </div>
- )}
  <button onClick={()=>{setVersForm(p=>({...p,targetCycle:String(pendingCycles[0]||currentCycle)}));setVersView(true)}} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,backgroundColor:C.gd,color:'#fff',border:'none',borderRadius:10,padding:'12px 16px',margin:'0 14px 12px',width:'calc(100% - 28px)',fontSize:14,fontWeight:700,cursor:'pointer'}}>
  <Banknote size={16}/> Verser la cagnotte{pendingCycles.length>1?` (${pendingCycles.length} en attente)`:` — Cycle ${currentCycle}${currentSlotMember?` → ${currentSlotMember.name}`:''}`}
  </button>
+ <RapportListes config={config} members={members} payments={payments}/>
  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 14px 6px'}}>
  <span style={{fontSize:11,fontWeight:700,color:C.text2,textTransform:'uppercase',letterSpacing:0.5}}>Tableau des tours</span>
  </div>
@@ -2608,10 +2897,6 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  </div>
  ))}
  </div>
- </div>
- <div style={{display:'flex',gap:8,padding:'0 14px 8px'}}>
- <button onClick={printRapport} style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,backgroundColor:C.g,color:'#fff',border:'none',borderRadius:8,padding:10,fontSize:12,fontWeight:700,cursor:'pointer'}}><Printer size={14}/> Imprimer PDF</button>
- <button onClick={shareRapport} style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,backgroundColor:'#25D366',color:'#fff',border:'none',borderRadius:8,padding:10,fontSize:12,fontWeight:700,cursor:'pointer'}}><Share2 size={14}/> WhatsApp PDF</button>
  </div>
  <div style={{textAlign:'center',padding:12,fontSize:10,color:C.text2}}>Powered by IZIsoft</div>
  </div>

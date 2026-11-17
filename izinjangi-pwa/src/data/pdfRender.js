@@ -83,14 +83,15 @@ function textLines(node, cs) {
     .filter(Boolean)
 }
 
-async function vectorPDF(root) {
+async function vectorPDF(root, opts) {
   const rr = root.getBoundingClientRect()
   if (!rr.width || !rr.height) throw new Error('élément vide')
-  const k = A6_W / rr.width
+  const pageW = (opts && opts.width) || A6_W
+  const k = pageW / rr.width
   const ox = rr.left
   const oy = rr.top
-  const pageH = Math.max(A6_H, rr.height * k)
-  const pdf = new jsPDF({ unit: 'pt', format: [A6_W, pageH], orientation: 'portrait', compress: true })
+  const pageH = Math.max((opts && opts.minHeight) || A6_H, rr.height * k)
+  const pdf = new jsPDF({ unit: 'pt', format: [pageW, pageH], orientation: 'portrait', compress: true })
 
   const alpha = (a, fn) => {
     if (a >= 0.995) { fn(); return }
@@ -260,22 +261,22 @@ async function vectorPDF(root) {
 }
 
 // Repli : capture haute résolution (4x), sans déformation
-async function rasterPDF(el) {
+async function rasterPDF(el, opts) {
   const rect = el.getBoundingClientRect()
   const scale = Math.max(1, Math.min(4, 6000 / Math.max(rect.width, rect.height, 1)))
   const canvas = await html2canvas(el, { scale, backgroundColor: '#ffffff', useCORS: true })
-  const pw = 105
+  const pw = ((opts && opts.width) || A6_W) / 2.8346
   const h = (pw * canvas.height) / canvas.width
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pw, Math.max(148, h)] })
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pw, Math.max(((opts && opts.minHeight) || A6_H) / 2.8346, h)] })
   pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pw, h, undefined, 'FAST')
   return pdf
 }
 
-export async function elementToPDF(el) {
+export async function elementToPDF(el, opts) {
   try {
-    return await vectorPDF(el)
+    return await vectorPDF(el, opts)
   } catch (e) {
     console.warn('PDF vectoriel indisponible, repli image haute résolution', e)
-    return rasterPDF(el)
+    return rasterPDF(el, opts)
   }
 }
