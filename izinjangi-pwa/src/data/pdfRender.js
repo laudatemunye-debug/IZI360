@@ -91,7 +91,7 @@ async function vectorPDF(root, opts) {
   const ox = rr.left
   const oy = rr.top
   const pageH = Math.max((opts && opts.minHeight) || A6_H, rr.height * k)
-  const pdf = new jsPDF({ unit: 'pt', format: [pageW, pageH], orientation: 'portrait', compress: true })
+  const pdf = new jsPDF({ unit: 'pt', format: [pageW, pageH], orientation: pageW > pageH ? 'landscape' : 'portrait', compress: true })
 
   const alpha = (a, fn) => {
     if (a >= 0.995) { fn(); return }
@@ -267,7 +267,7 @@ async function rasterPDF(el, opts) {
   const canvas = await html2canvas(el, { scale, backgroundColor: '#ffffff', useCORS: true })
   const pw = ((opts && opts.width) || A6_W) / 2.8346
   const h = (pw * canvas.height) / canvas.width
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pw, Math.max(((opts && opts.minHeight) || A6_H) / 2.8346, h)] })
+  const pdf = new jsPDF({ orientation: pw > Math.max(((opts && opts.minHeight) || A6_H) / 2.8346, h) ? 'landscape' : 'portrait', unit: 'mm', format: [pw, Math.max(((opts && opts.minHeight) || A6_H) / 2.8346, h)] })
   pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pw, h, undefined, 'FAST')
   return pdf
 }

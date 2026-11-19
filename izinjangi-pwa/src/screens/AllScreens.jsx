@@ -2426,6 +2426,89 @@ function DocMembre({r,data,config,sym,innerRef}) {
 }
 
 
+function DocEvolution({data,config,sym,innerRef}) {
+ const CH=10
+ const cyc=Array.from({length:data.nbCycles},(_,i)=>i+1)
+ const chunks=[]
+ for(let i=0;i<cyc.length;i+=CH) chunks.push(cyc.slice(i,i+CH))
+ const num=(x)=>Number(x||0).toLocaleString('fr-FR')
+ const sd=(iso)=>iso?new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):''
+ const dueTxt=(c)=>{const d=getCycleDueDate(config,c);return d?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'}):''}
+ const paidIn=(r,c)=>r.cycles.filter(x=>x.cycle===c).reduce((t,x)=>t+x.got,0)
+ const dueOf=(r)=>r.slots.length*data.cot
+ const stOf=(r,c)=>{const p=paidIn(r,c);const d=dueOf(r);if(d>0&&p>=d) return 'ok';if(p>0) return 'partial';return r.cycles.some(x=>x.cycle===c&&x.late)?'late':'future'}
+ const paidDate=(r,c)=>{let d='';r.tx.forEach(g=>g.lines.forEach(l=>{if(l.cycle===c&&g.date&&g.date>d) d=g.date}));return d}
+ const short=(s)=>{const t=String(s||'');return t.length>24?t.slice(0,23)+'…':t}
+ const th={padding:'6px 3px',fontSize:10,fontWeight:700,color:C.gd,backgroundColor:C.gl,textAlign:'center',borderLeft:`1px solid ${C.white}`}
+ const cellBg=(st)=>st==='ok'?C.gl:st==='partial'?C.ambl:st==='late'?C.rdl:'transparent'
+ const td=(st)=>({padding:'5px 3px',textAlign:'center',fontSize:11,borderBottom:`1px solid ${C.gr}`,borderLeft:`1px solid ${C.gr}`,backgroundColor:cellBg(st)})
+ const nameTd={padding:'5px 6px',borderBottom:`1px solid ${C.gr}`}
+ const startTxt=config.startDate?fdShort(config.startDate):(config.createdAt?fdShort(config.createdAt)+' (création)':'non définie')
+ const totalPaid=data.rows.reduce((t,r)=>t+r.paid,0)
+ const totalRest=data.rows.reduce((t,r)=>t+r.rest,0)
+ return (
+ <DocShell config={config} title="Évolution de contribution" sub={`Début : ${startTxt} · Cotisation : ${num(data.cot)} ${sym} par place et par tour · ${config.frequency||''} · Tour en cours : ${data.currentCycle}/${data.nbCycles} · Édité le ${fdShort(new Date().toISOString())}`} width={1000} innerRef={innerRef}>
+ <div style={{fontSize:10,color:C.text2,marginBottom:10}}>Montants en {sym}. Vert : payé · Orange : partiel · Rouge : en retard · Vide : à venir. La date sous un montant est celle du paiement.</div>
+ {chunks.map((cols,ci)=>{
+ const last=ci===chunks.length-1
+ return (
+ <div key={ci} style={{marginBottom:16}}>
+ {chunks.length>1&&<div style={{fontSize:11,fontWeight:700,color:C.gd,marginBottom:4}}>Tours {cols[0]} à {cols[cols.length-1]}</div>}
+ <table style={{width:'100%',borderCollapse:'collapse'}}>
+ <thead>
+ <tr>
+ <th style={{...th,textAlign:'left',padding:'6px 6px'}}>Membre</th>
+ {cols.map(c=>(
+ <th key={c} style={{...th,backgroundColor:c===data.currentCycle?C.g:C.gl,color:c===data.currentCycle?'#fff':C.gd}}>
+ <div>Tour {c}</div>
+ <div style={{fontSize:9,fontWeight:400}}>{dueTxt(c)}</div>
+ </th>
+ ))}
+ {last&&<th style={th}>Total versé</th>}
+ {last&&<th style={th}>Reste</th>}
+ </tr>
+ </thead>
+ <tbody>
+ {data.rows.map(r=>(
+ <tr key={r.m.id}>
+ <td style={nameTd}>
+ <div style={{fontSize:12,fontWeight:700,color:C.text}}>{short(r.m.name)}</div>
+ <div style={{fontSize:9,color:C.text2}}>{r.slots.length>1?'Tours':'Tour'} {r.slots.map(s=>'#'+s.order).join(', ')}</div>
+ </td>
+ {cols.map(c=>{
+ const st=stOf(r,c)
+ const p=paidIn(r,c)
+ return (
+ <td key={c} style={td(st)}>
+ {st==='ok'&&<><div style={{fontWeight:800,color:C.gd}}>{num(p)}</div><div style={{fontSize:9,color:C.text2}}>{sd(paidDate(r,c))}</div></>}
+ {st==='partial'&&<><div style={{fontWeight:800,color:C.ambd}}>{num(p)}</div><div style={{fontSize:9,color:C.ambd}}>reste {num(dueOf(r)-p)}</div></>}
+ {st==='late'&&<div style={{fontWeight:700,color:C.rd}}>—</div>}
+ </td>
+ )
+ })}
+ {last&&<td style={{...td('none'),fontWeight:800,color:C.g}}>{num(r.paid)}</td>}
+ {last&&<td style={{...td('none'),fontWeight:700,color:r.rest>0?C.text:C.g}}>{num(r.rest)}</td>}
+ </tr>
+ ))}
+ </tbody>
+ <tfoot>
+ <tr>
+ <td style={{padding:'6px',fontSize:11,fontWeight:800,color:C.gd,backgroundColor:C.gl}}>Total par tour</td>
+ {cols.map(c=>(
+ <td key={c} style={{padding:'6px 3px',fontSize:11,fontWeight:800,color:C.gd,backgroundColor:C.gl,textAlign:'center',borderLeft:`1px solid ${C.white}`}}>{num(data.rows.reduce((t,r)=>t+paidIn(r,c),0))}</td>
+ ))}
+ {last&&<td style={{padding:'6px 3px',fontSize:11,fontWeight:800,color:C.g,backgroundColor:C.gl,textAlign:'center',borderLeft:`1px solid ${C.white}`}}>{num(totalPaid)}</td>}
+ {last&&<td style={{padding:'6px 3px',fontSize:11,fontWeight:800,color:C.gd,backgroundColor:C.gl,textAlign:'center',borderLeft:`1px solid ${C.white}`}}>{num(totalRest)}</td>}
+ </tr>
+ </tfoot>
+ </table>
+ </div>
+ )
+ })}
+ </DocShell>
+ )
+}
+
 function RapportListes({config,members,payments}) {
  const sym=config.currency?.symbol||config.currency?.code||'F'
  const data=buildReport(config,members,payments)
@@ -2436,7 +2519,7 @@ function RapportListes({config,members,payments}) {
  const paidRows=data.rows.filter(r=>r.nowDone)
  const lateRows=data.rows.filter(r=>r.lateCount>0)
  const busy=!!job
- const labels={payes:'Membres à jour',contrib:'Contributions par personne',retards:'Membres en retard'}
+ const labels={payes:'Membres à jour',contrib:'Contributions par personne',retards:'Membres en retard',evolution:'Évolution de contribution'}
 
  useEffect(()=>{
  if(!job) return
@@ -2447,7 +2530,7 @@ function RapportListes({config,members,payments}) {
  if(el){
  const isM=job.kind==='membre'
  const r=isM?data.rows.find(x=>x.m.id===job.id):null
- const opts=isM?undefined:{width:595.28,minHeight:841.89}
+ const opts=isM?undefined:(job.kind==='evolution'?{width:841.89,minHeight:595.28}:{width:595.28,minHeight:841.89})
  const fname=isM?`releve-${safeName(r&&r.m.name)}.pdf`:`${safeName(labels[job.kind])}-${safeName(config.tontineName)}.pdf`
  const text=isM?`Bonjour ${r?r.m.name:''}, voici votre relevé de contributions — ${config.tontineName}.`:`${config.tontineName} — ${labels[job.kind]}`
  if(job.action==='print') await printPDFElement(el,opts)
@@ -2521,10 +2604,15 @@ function RapportListes({config,members,payments}) {
 
  const docEl=!job?null:(job.kind==='membre'
  ?(data.rows.find(x=>x.m.id===job.id)?<DocMembre r={data.rows.find(x=>x.m.id===job.id)} data={data} config={config} sym={sym} innerRef={docRef}/>:null)
- :<DocListe kind={job.kind} data={data} config={config} sym={sym} innerRef={docRef}/>)
+ :(job.kind==='evolution'?<DocEvolution data={data} config={config} sym={sym} innerRef={docRef}/>:<DocListe kind={job.kind} data={data} config={config} sym={sym} innerRef={docRef}/>))
 
  return (
  <div style={{margin:'4px 14px 14px'}}>
+ <div style={{...card,marginBottom:10}}>
+ <div style={{fontSize:13,fontWeight:700,color:C.text}}>Évolution de contribution</div>
+ <div style={{fontSize:11,color:C.text2,marginTop:2,lineHeight:1.4}}>Tableau membres × tours : date de chaque tour et montants versés. Disponible en PDF uniquement.</div>
+ {btns('evolution')}
+ </div>
  <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>
  {[['payes',`Ont payé (${paidRows.length})`],['contrib','Contributions'],['retards',`Retards (${lateRows.length})`]].map(([k,l])=>(
  <button key={k} onClick={()=>{setTab(k);setOpen(null)}} style={chip(tab===k)}>{l}</button>
