@@ -1818,7 +1818,7 @@ function Recu({receipt,config,onBack,onNew,onDelete}) {
  <BackBtn onClick={onBack}/>
  <div style={{color:'#fff',fontSize:17,fontWeight:700}}>Reçu de paiement</div>
  </div>
- <div style={{flex:1,overflowY:'auto',padding:'0 16px 16px'}}>
+ <div style={{flex:1,overflowY:'auto',padding:'0 16px 96px'}}>
  <div ref={recuRef} style={{backgroundColor:C.white,borderRadius:16,overflow:'hidden'}}>
  <div style={{backgroundColor:C.g,padding:'20px 16px',textAlign:'center'}}>
  <div style={{margin:'0 auto',width:56}}><Logo src={config.logo} size={56} bg="#fff" radius={28} border/></div>

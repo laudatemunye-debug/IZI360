@@ -141,3 +141,16 @@ html, body { touch-action: auto !important; }
   touch-action: pan-y !important;
   -webkit-overflow-scrolling: touch;
 }
+
+/* viewport-robust-v2 : l'app est collée aux 4 bords, aucune unité de hauteur */
+#root {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden !important;
+}
+#root > [style*="var(--app-h"] {
+  position: absolute !important;
+  top: 0; bottom: 0; left: 0; right: 0;
+  height: auto !important;
+}
+#root [style*="flex: 1"] { min-height: 0; }
