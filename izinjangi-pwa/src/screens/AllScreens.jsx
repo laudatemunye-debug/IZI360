@@ -789,6 +789,15 @@ const slotCompletePay=(payments,order,cycle,cot)=>{
  return [...list].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).pop()
 }
 
+const effCycleOf=(config)=>{
+ const cur=config.currentCycle||1
+ if(!config.startDate||tontineNotStarted(config)) return cur
+ const nb=Math.max(Number(config.nbSlots||config.nbMembers||0),cur)
+ const end=new Date(); end.setHours(23,59,59,999)
+ let n=0
+ for(let c=1;c<=nb;c++){ const d=getCycleDueDate(config,c); if(!d||d>end) break; n=c }
+ return Math.max(cur,n)
+}
 const tontineNotStarted=(config)=>!!config?.startDate&&config.startDate>new Date().toLocaleDateString('en-CA')
 
 const memberCredibility=(m,config,payments,currentCycle)=>{
@@ -1962,7 +1971,8 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  const currentCycle=config.currentCycle||1
  const penaltyRate=config.penaltyRate||0
  const penaltyUnit=Math.round(base*penaltyRate/100)
- const nbCycles=Math.max(Number(config.nbSlots||config.nbMembers||0),currentCycle)
+ const effCycle=effCycleOf(config)
+ const nbCycles=Math.max(Number(config.nbSlots||config.nbMembers||0),effCycle)
 
  const [view,setView]=useState('form')
  const [receipt,setReceipt]=useState(null)
@@ -1991,7 +2001,7 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  }
  return {lines:out,left}
  }
- const lateOf=(al)=>al.lines.filter(l=>l.cycle<currentCycle).length
+ const lateOf=(al)=>al.lines.filter(l=>l.cycle<effCycle).length
  let nPen=0
  if(form.withPenalty&&penaltyUnit>0&&member&&A>0){
  const lateMax=lateOf(allocate(A))
@@ -1999,14 +2009,14 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  }
  const alloc=member?allocate(A-penaltyUnit*nPen):{lines:[],left:0}
  let penLeft=nPen
- const lines=alloc.lines.map(l=>{ let pen=0; if(l.cycle<currentCycle&&penLeft>0){ pen=penaltyUnit; penLeft-- } return {...l,penalty:pen} })
+ const lines=alloc.lines.map(l=>{ let pen=0; if(l.cycle<effCycle&&penLeft>0){ pen=penaltyUnit; penLeft-- } return {...l,penalty:pen} })
  const totalPaid=lines.reduce((t,l)=>t+l.amount+l.penalty,0)
  const penTotal=lines.reduce((t,l)=>t+l.penalty,0)
  const tooHigh=alloc.left>0
  const maxOk=A-alloc.left
  const after=[]
- if(member){ for(let c=1;c<=currentCycle;c++){ memberSlots.forEach(s=>{ const got=lines.filter(l=>l.cycle===c&&l.slotOrder===s.order).reduce((t,l)=>t+l.amount,0); const rem=slotRemaining(payments,s.order,c,base)-got; if(rem>0) after.push({cycle:c,slotOrder:s.order,amount:rem}) }) } }
- const dueNow=member?(()=>{let t=0;for(let c=1;c<=currentCycle;c++) memberSlots.forEach(s=>{t+=slotRemaining(payments,s.order,c,base)});return t})():0
+ if(member){ for(let c=1;c<=effCycle;c++){ memberSlots.forEach(s=>{ const got=lines.filter(l=>l.cycle===c&&l.slotOrder===s.order).reduce((t,l)=>t+l.amount,0); const rem=slotRemaining(payments,s.order,c,base)-got; if(rem>0) after.push({cycle:c,slotOrder:s.order,amount:rem}) }) } }
+ const dueNow=member?(()=>{let t=0;for(let c=1;c<=effCycle;c++) memberSlots.forEach(s=>{t+=slotRemaining(payments,s.order,c,base)});return t})():0
 
  const validate=()=>{
  const e={}
@@ -2060,7 +2070,7 @@ export function PaiementScreen({config,members,payments,onSave,onSaveBatch,onBac
  {member&&(
  <div style={{backgroundColor:C.gl,borderRadius:8,padding:'10px 12px',fontSize:12,color:C.gd,lineHeight:1.6}}>
  {memberSlots.length} place{multi?'s':''} · cotisation {fmt(base,sym)} par tour et par cycle<br/>
- Dû à ce jour (cycles 1 à {currentCycle}) : <strong>{fmt(dueNow,sym)}</strong>
+ Dû à ce jour (cycles 1 à {effCycle}) : <strong>{fmt(dueNow,sym)}</strong>
  </div>
  )}
 
@@ -2275,7 +2285,8 @@ const safeName=(s)=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''
 function buildReport(config,members,payments){
  const cot=Number(config.cotisation||0)
  const currentCycle=config.currentCycle||1
- const nbCycles=Math.max(Number(config.nbSlots||config.nbMembers||0),currentCycle)
+ const effCycle=effCycleOf(config)
+ const nbCycles=Math.max(Number(config.nbSlots||config.nbMembers||0),effCycle)
  const started=!tontineNotStarted(config)
  const rows=members.filter(m=>m.status!=='sorti').map(m=>{
  const slots=[...(m.slots||[{order:m.order||1}])].sort((a,b)=>a.order-b.order)
@@ -2287,12 +2298,12 @@ function buildReport(config,members,payments){
  slots.forEach(s=>{
  const got=slotPaidAmount(payments,s.order,c)
  const rem=Math.max(0,cot-got)
- const late=started&&c<=currentCycle&&rem>0
+ const late=started&&c<=effCycle&&rem>0
  cycles.push({cycle:c,order:s.order,got,rem,late})
  paid+=got
  rest+=rem
  if(late){lateOwed+=rem;lateCount++}
- if(c>currentCycle) futureRest+=rem
+ if(c>effCycle) futureRest+=rem
  })
  }
  const totalDue=nbCycles*slots.length*cot
@@ -2307,9 +2318,9 @@ function buildReport(config,members,payments){
  g.lines.push({cycle:p.cycle,order:p.slotOrder,amount:payBase(p),penalty:Number(p.penalty)||0,partial:!!p.partial})
  })
  const tx=[...groups.values()].map(g=>({...g,lines:g.lines.sort((a,b)=>a.cycle-b.cycle||a.order-b.order)})).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')))
- return {m,slots,received,paid,rest,futureRest,totalDue,pct:totalDue>0?Math.min(100,paid*100/totalDue):0,lateOwed,lateCount,cycles,nowDone,nowAmount,tx}
+ return {m,slots,received,paid,rest,futureRest,totalDue,pct:totalDue>0?Math.min(100,paid*100/totalDue):0,lateOwed,lateCount,lateCycles:[...new Set(cycles.filter(x=>x.late).map(x=>x.cycle))],cycles,nowDone,nowAmount,tx}
  })
- return {cot,currentCycle,nbCycles,started,rows}
+ return {cot,currentCycle,effCycle,nbCycles,started,rows}
 }
 
 const docTh={padding:'7px 8px',fontSize:11,fontWeight:700,color:C.gd,textTransform:'uppercase',letterSpacing:0.4,textAlign:'left',backgroundColor:C.gl}
@@ -2447,7 +2458,7 @@ function DocEvolution({data,config,sym,innerRef}) {
  const totalPaid=data.rows.reduce((t,r)=>t+r.paid,0)
  const totalRest=data.rows.reduce((t,r)=>t+r.rest,0)
  return (
- <DocShell config={config} title="Évolution de contribution" sub={`Début : ${startTxt} · Cotisation : ${num(data.cot)} ${sym} par place et par tour · ${config.frequency||''} · Tour en cours : ${data.currentCycle}/${data.nbCycles} · Édité le ${fdShort(new Date().toISOString())}`} width={1000} innerRef={innerRef}>
+ <DocShell config={config} title="Évolution de contribution" sub={`Début : ${startTxt} · Cotisation : ${num(data.cot)} ${sym} par place et par tour · ${config.frequency||''} · Tour du jour : ${data.effCycle}/${data.nbCycles} · Édité le ${fdShort(new Date().toISOString())}`} width={1000} innerRef={innerRef}>
  <div style={{fontSize:10,color:C.text2,marginBottom:10}}>Montants en {sym}. Vert : payé · Orange : partiel · Rouge : en retard · Vide : à venir. La date sous un montant est celle du paiement.</div>
  {chunks.map((cols,ci)=>{
  const last=ci===chunks.length-1
@@ -2459,7 +2470,7 @@ function DocEvolution({data,config,sym,innerRef}) {
  <tr>
  <th style={{...th,textAlign:'left',padding:'6px 6px'}}>Membre</th>
  {cols.map(c=>(
- <th key={c} style={{...th,backgroundColor:c===data.currentCycle?C.g:C.gl,color:c===data.currentCycle?'#fff':C.gd}}>
+ <th key={c} style={{...th,backgroundColor:c===data.effCycle?C.g:C.gl,color:c===data.effCycle?'#fff':C.gd}}>
  <div>Tour {c}</div>
  <div style={{fontSize:9,fontWeight:400}}>{dueTxt(c)}</div>
  </th>
@@ -2645,7 +2656,7 @@ function RapportListes({config,members,payments}) {
  <div style={sub}>{lateRows.length} membre(s) en retard · {fmt(lateRows.reduce((t,r)=>t+r.lateOwed,0),sym)}</div>
  <div style={{marginTop:6}}>
  {lateRows.length===0&&<div style={{fontSize:12,color:C.text2,padding:'12px 0'}}>{data.started?'Aucun retard.':'La tontine n’a pas encore démarré.'}</div>}
- {lateRows.map(r=>row(r,<div style={{fontSize:13,fontWeight:800,color:C.rd}}>{fmt(r.lateOwed,sym)}</div>,`${r.lateCount} cycle${r.lateCount>1?'s':''} en retard`,'retard'))}
+ {lateRows.map(r=>row(r,<div style={{fontSize:13,fontWeight:800,color:C.rd}}>{fmt(r.lateOwed,sym)}</div>,`${r.lateCycles.length} cycle${r.lateCycles.length>1?'s':''} en retard · ${r.slots.length} place${r.slots.length>1?'s':''}`,'retard'))}
  </div>
  {lateRows.length>0&&btns('retards')}
  </>)}
@@ -2907,6 +2918,25 @@ export function RapportScreen({config,members,payments,payouts,cycles,forcedAdva
  {lvl==='risque'&&<div style={{marginTop:6,fontWeight:600}}>Attention : ce membre paie souvent en retard ou pas du tout. S'il reçoit la cagnotte maintenant, il pourrait arrêter de cotiser. Envisagez un membre plus fiable.</div>}
  {lvl==='moyen'&&<div style={{marginTop:6}}>Historique irrégulier : surveillez ses prochains paiements.</div>}
  {better.length>0&&<div style={{marginTop:6}}>Plus fiables (pas encore servis) : {better.map(r=>`${r.x.name} (${r.cr.score}%)`).join(', ')}.</div>}
+ </div>
+ )
+ })()}
+ {(()=>{
+ const miss=activeSlots.map(o=>({o,rem:slotRemaining(payments,o,targetCycle,config.cotisation)})).filter(x=>x.rem>0)
+ if(miss.length===0) return null
+ const by=new Map()
+ miss.forEach(x=>{const mb=members.find(m=>m.slots?m.slots.some(s=>s.order===x.o):m.order===x.o);const k=mb?mb.id:'?'+x.o;if(!by.has(k)) by.set(k,{name:mb?mb.name:'Non attribué',n:0,amt:0});const g=by.get(k);g.n++;g.amt+=x.rem})
+ const total=miss.reduce((t,x)=>t+x.rem,0)
+ return (
+ <div style={{backgroundColor:C.rdl,borderRadius:10,padding:12}}>
+ <div style={{fontSize:12,fontWeight:700,color:C.rd,marginBottom:6}}>Non payé pour le tour {targetCycle}</div>
+ {[...by.values()].map(g=>(
+ <div key={g.name} style={{display:'flex',justifyContent:'space-between',fontSize:12,color:C.rd}}>
+ <span>{g.name} · {g.n} place{g.n>1?'s':''}</span><span style={{fontWeight:700}}>{fmt(g.amt,sym)}</span>
+ </div>
+ ))}
+ <div style={{display:'flex',justifyContent:'space-between',marginTop:8,paddingTop:8,borderTop:'1px solid rgba(226,75,74,0.25)',fontSize:13,fontWeight:800,color:C.rd}}><span>Total non payé</span><span>{fmt(total,sym)}</span></div>
+ <div style={{fontSize:11,color:C.text2,marginTop:6}}>Attendu : {fmt(targetBrut+total,sym)} · Collecté : {fmt(targetBrut,sym)}</div>
  </div>
  )
  })()}
